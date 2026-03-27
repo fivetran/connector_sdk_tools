@@ -7,15 +7,18 @@ FRONTEND_DIR="$PROJECT_DIR/frontend"
 LOG_FILE="/tmp/csdk-frontend.log"
 PID_FILE="/tmp/csdk-frontend.pid"
 
-# Check if already running
-if [ -f "$PID_FILE" ] && kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
-    echo "Frontend is already running (PID: $(cat "$PID_FILE"))"
-    exit 1
+# Kill any existing vite preview processes
+EXISTING=$(pgrep -f "vite preview")
+if [ -n "$EXISTING" ]; then
+    echo "Stopping existing frontend processes: $EXISTING"
+    pkill -f "vite preview"
+    sleep 2
+    pkill -9 -f "vite preview" 2>/dev/null
 fi
 
 # Start the frontend preview server
 cd "$FRONTEND_DIR"
-nohup npm run preview -- --host 127.0.0.1 --port 5173 > "$LOG_FILE" 2>&1 &
+nohup npm run preview -- --host 127.0.0.1 --port 5173 --allowedHosts > "$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
 
 echo "Frontend started (PID: $(cat "$PID_FILE"))"

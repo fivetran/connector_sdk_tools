@@ -6,8 +6,8 @@ export default defineConfig({
   envPrefix: ['VITE_'],  // Only expose VITE_ vars to prevent secret leakage
   server: {
     host: '127.0.0.1', // localhost only - accessible via nginx reverse proxy
-    port: 5173,        // dev port for frontend
-    // allowedHosts removed - use default host checking to prevent DNS rebinding attacks
+    port: 5173,
+    allowedHosts: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8001', // backend on same EC2
@@ -15,5 +15,10 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
     },
+  },
+  preview: {
+    host: '127.0.0.1',
+    port: 5173,
+    allowedHosts: true,
   },
 })
