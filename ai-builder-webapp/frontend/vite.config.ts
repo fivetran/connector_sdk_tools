@@ -1,0 +1,19 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  envPrefix: ['VITE_'],  // Only expose VITE_ vars to prevent secret leakage
+  server: {
+    host: '127.0.0.1', // localhost only - accessible via nginx reverse proxy
+    port: 5173,        // dev port for frontend
+    // allowedHosts removed - use default host checking to prevent DNS rebinding attacks
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8001', // backend on same EC2
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+})

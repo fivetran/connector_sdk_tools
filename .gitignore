@@ -1,0 +1,44 @@
+__pycache__/
+.vscode/
+.github/
+
+_agent/
+_attic_/
+venv/
+data/
+workspaces/
+creds/
+output/
+.nicegui/
+examples/
+
+*.pem
+*.db
+.web
+*.zip
+*.py[cod]
+
+.idea/*
+.DS_Store
+calva/
+.clj-kondo/
+.cpcache
+.nrepl-port
+__pycache__/
+.lsp/
+*.pyc
+.python-version
+node_modules/
+**/output.calva-repl
+**/.claude/settings.local.json
+
+# Ignore credential/config JSON files in workspaces (already covered by workspaces/ above)
+# but be explicit about sensitive patterns
+**/configuration.json
+ignore_me.txt
+pwd.txt
+.env*
+*.nginx
+
+# Session storage - NEVER commit (contains sensitive tokens)
+backend/app/sessions.json
