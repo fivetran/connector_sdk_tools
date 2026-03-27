@@ -18,7 +18,7 @@ fi
 
 # Start the frontend preview server
 cd "$FRONTEND_DIR"
-nohup npm run preview -- --host 127.0.0.1 --port 5173 --allowedHosts > "$LOG_FILE" 2>&1 &
+nohup npm run preview -- --host 127.0.0.1 --port 5173 > "$LOG_FILE" 2>&1 &
 echo $! > "$PID_FILE"
 
 echo "Frontend started (PID: $(cat "$PID_FILE"))"
