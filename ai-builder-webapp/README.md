@@ -78,9 +78,12 @@ The frontend will be available at `http://localhost:5173`
 Use the scripts in `scripts/` to manage services:
 
 ```bash
+# Build frontend (required before starting - preview server serves from dist/)
+cd frontend && npm run build && cd ..
+
 # Start services
 ./scripts/start-be.sh    # Start backend
-./scripts/start-fe.sh    # Start frontend
+./scripts/start-fe.sh    # Start frontend (serves built files via vite preview)
 
 # Check status
 ./scripts/status-be.sh   # Check if backend is running
