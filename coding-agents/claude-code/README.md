@@ -8,23 +8,36 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 - [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/)
 
 ## Installation
-### From local folder
+
+### Automatic (coming soon)
+
 ```bash
-cd /path/to/coding-agent-plugins/claude-code
-claude install-plugin .
+fivetran ai setup --agent claude-code
 ```
 
-### Run without installing
-You can load the plugin for a single session without permanently installing it:
+### Via marketplace
 
 ```bash
-claude --plugin-dir /path/to/coding-agent-plugins/claude-code
+/plugin marketplace add fivetran/fivetran_csdk_tools
+/plugin install fivetran-csdk
 ```
 
-## Post-installation
-After installing the plugin, install the tool dependencies:
+### Manual
+
 ```bash
-pip install -r /path/to/coding-agent-plugins/claude-code/tools/requirements.txt
+claude install-plugin /path/to/coding-agents/claude-code
+```
+
+Or load for a single session:
+
+```bash
+claude --plugin-dir /path/to/coding-agents/claude-code
+```
+
+### Post-installation
+Install the tool dependencies:
+```bash
+pip install -r /path/to/coding-agents/claude-code/tools/requirements.txt
 ```
 
 ## Quick Start Tutorial
@@ -33,7 +46,7 @@ pip install -r /path/to/coding-agent-plugins/claude-code/tools/requirements.txt
 
 ```bash
 cd ~/my-connectors  # or wherever you want to create connectors
-claude --plugin-dir /path/to/coding-agent-plugins/claude-code
+claude --plugin-dir /path/to/coding-agents/claude-code
 ```
 
 ### Step 2: Build Your First Connector
@@ -56,7 +69,7 @@ When prompted, open a **separate terminal** and run:
 
 ```bash
 cd ~/my-connectors/<your_connector>
-python /path/to/coding-agent-plugins/claude-code/tools/enter_configuration.py configuration.json
+python /path/to/coding-agents/claude-code/tools/enter_configuration.py configuration.json
 ```
 
 Enter your API credentials when prompted. They are encrypted immediately — Claude never sees them.
@@ -139,7 +152,7 @@ This will:
 After the connector is generated, you'll need to enter your API credentials. Run this in a **separate terminal**:
 
 ```bash
-python /path/to/coding-agent-plugins/claude-code/tools/enter_configuration.py configuration.json
+python /path/to/coding-agents/claude-code/tools/enter_configuration.py configuration.json
 ```
 
 On first run, it will generate an encryption secret and show you the command to add to your shell config. This encrypts your credentials so the AI cannot see them.

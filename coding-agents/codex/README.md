@@ -1,9 +1,17 @@
 # OpenAI Codex CLI Setup
 
-Copy `../AGENTS.md` into your connector project root as `AGENTS.md`. Codex will pick it up automatically.
+### Automatic (coming soon)
+
+```bash
+fivetran ai setup --agent codex
+```
+
+### Manual
+
+Copy `AGENTS.md` into your connector project root:
 
 ```bash
 cp coding-agents/AGENTS.md /path/to/my-connector/AGENTS.md
 ```
 
-Or wait for `fivetran ai setup` to do this automatically.
+Codex will pick it up automatically.
