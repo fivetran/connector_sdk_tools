@@ -5,12 +5,14 @@ AI-powered tools for building, testing, and deploying [Fivetran Connector SDK](h
 ## Repository Structure
 
 ```
-coding-agents/          # AI coding agent integrations
+coding-agents/
+  AGENTS.md              # Shared instructions for all agents (single source of truth)
   claude-code/           # Claude Code plugin (flagship) — skills, subagents, secure tools
-  cursor/                # Cursor instruction files
-  windsurf/              # Windsurf instruction files
-  vscode-copilot/        # VS Code + GitHub Copilot instruction files
-tutorials/              # Step-by-step tutorials for building connectors with AI
+  cursor/                # Cursor setup
+  windsurf/              # Windsurf setup
+  vscode-copilot/        # VS Code + GitHub Copilot setup
+  codex/                 # OpenAI Codex CLI setup
+  gemini-cli/            # Google Gemini CLI setup
 csdk-ai-builder-app/    # Web-based connector builder (React + FastAPI)
 ```
 
@@ -32,9 +34,21 @@ Then use the slash commands in any connector project:
 - `/fix-connector` — Diagnose and fix errors automatically
 - `/deploy-connector` — Deploy to Fivetran
 
-### Cursor / Windsurf / VS Code + Copilot
+### Cursor / Windsurf / VS Code + Copilot / Codex
 
-Copy the appropriate `AGENTS.md` file from `coding-agents/<your-tool>/` into your connector project root. The AI agent will pick up the Fivetran SDK instructions automatically.
+Copy `coding-agents/AGENTS.md` into your connector project root as `AGENTS.md`:
+
+```bash
+cp coding-agents/AGENTS.md /path/to/my-connector/AGENTS.md
+```
+
+### Gemini CLI
+
+Copy `coding-agents/AGENTS.md` into your connector project root as `GEMINI.md`:
+
+```bash
+cp coding-agents/AGENTS.md /path/to/my-connector/GEMINI.md
+```
 
 ### Web App
 
