@@ -1,7 +1,10 @@
 <!-- 
   Shared Fivetran Connector SDK instructions for AI coding agents.
   
-  This file is the single source of truth for all non-Claude-Code agents.
+  This file is self-contained for agents that load a single instruction file.
+  The same content exists in sdk-reference.md in a more structured format,
+  which is used by the Claude Code plugin's subagents.
+  
   `fivetran ai setup` copies this file into the user's connector project as:
     - AGENTS.md  (Cursor, Windsurf, VS Code + Copilot, Codex)
     - GEMINI.md  (Gemini CLI)
