@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Connector"
+  short_description: "Run a Fivetran connector locally and verify results"
+  default_prompt: "Test my connector."

@@ -1,18 +1,3 @@
----
-name: connector-fixer
-description: Debug and fix errors in a Fivetran connector. Use when tests fail or the user reports connector issues.
-tools: Read, Edit, WebFetch, Grep, Glob
-model: sonnet
-maxTurns: 15
-permissionMode: acceptEdits
----
-
-<!--
-  GENERATED FILE — DO NOT EDIT.
-  Canonical source: coding-agents/workflows/fixer.md
-  Regenerate with: bash scripts/sync-plugins.sh
--->
-
 # Fivetran Connector Debugging & Fixing
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.

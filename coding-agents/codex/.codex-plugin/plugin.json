@@ -1,0 +1,23 @@
+{
+  "name": "fivetran-csdk",
+  "version": "0.03.04.001",
+  "description": "Build, test, fix, and deploy Fivetran connectors with AI assistance",
+  "author": {
+    "name": "Fivetran"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Fivetran Connector SDK",
+    "shortDescription": "Build, test, fix, and deploy Fivetran connectors",
+    "longDescription": "AI-assisted workflow for the Fivetran Connector SDK. Research an API, generate a connector, test it locally, diagnose and fix errors, and deploy — all from Codex.",
+    "developerName": "Fivetran",
+    "category": "Coding",
+    "capabilities": ["Interactive", "Read", "Write"],
+    "defaultPrompt": [
+      "Build a Fivetran connector for the <API name> API",
+      "Test my connector",
+      "Fix the error I'm seeing in my connector",
+      "Deploy my connector to Fivetran"
+    ]
+  }
+}

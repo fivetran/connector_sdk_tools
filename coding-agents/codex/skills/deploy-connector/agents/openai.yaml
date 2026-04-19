@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deploy Connector"
+  short_description: "Package and deploy a Fivetran connector"
+  default_prompt: "Deploy my connector to Fivetran."

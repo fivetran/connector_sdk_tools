@@ -1,18 +1,3 @@
----
-name: connector-generator
-description: Generate Fivetran connector code from a validated specification. Use after requirements have been gathered.
-tools: Read, Write, Edit, WebFetch
-model: sonnet
-maxTurns: 20
-permissionMode: acceptEdits
----
-
-<!--
-  GENERATED FILE — DO NOT EDIT.
-  Canonical source: coding-agents/workflows/generator.md
-  Regenerate with: bash scripts/sync-plugins.sh
--->
-
 # Fivetran Connector Code Generation
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Connector"
+  short_description: "Research an API and generate a new Fivetran connector"
+  default_prompt: "Build a Fivetran connector for the $API_NAME API. Sync $TABLES."

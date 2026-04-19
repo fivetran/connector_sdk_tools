@@ -5,54 +5,80 @@ AI-powered tools for building, testing, and deploying [Fivetran Connector SDK](h
 ## Repository Structure
 
 ```
+.claude-plugin/marketplace.json    # Claude Code marketplace
+.agents/plugins/marketplace.json   # Codex marketplace
+scripts/                            # Install helpers + internal sync
 coding-agents/
-  AGENTS.md              # Shared instructions for all agents (single source of truth)
-  claude-code/           # Claude Code plugin (flagship) — skills, subagents, secure tools
-  cursor/                # Cursor setup
-  windsurf/              # Windsurf setup
-  vscode-copilot/        # VS Code + GitHub Copilot setup
-  codex/                 # OpenAI Codex CLI setup
-  gemini-cli/            # Google Gemini CLI setup
-csdk-ai-builder-app/    # Web-based connector builder (React + FastAPI)
+  AGENTS.md                         # Shared instructions for non-plugin agents
+  sdk-reference.md                  # Canonical SDK rules and patterns
+  workflows/                        # Canonical role prompts (validator, generator, fixer)
+  claude-code/                      # Claude Code plugin — skills, subagents, hooks, tools
+  codex/                            # Codex CLI plugin — skills, tools
+  cursor/ windsurf/ vscode-copilot/ gemini-cli/    # Setup instructions per agent
+csdk-ai-builder-app/                # Web-based connector builder (React + FastAPI)
 ```
 
 ## Quick Start
 
-### Claude Code (recommended)
+Each agent uses its native install flow where available. Install scripts in `scripts/` wrap the manual steps.
 
-Install the plugin from this marketplace:
+### Claude Code
 
 ```bash
+# In a Claude Code session:
 /plugin marketplace add fivetran/fivetran_csdk_tools
 /plugin install fivetran-csdk
 ```
 
-Then use the slash commands in any connector project:
+Or run `bash scripts/install-claude-code.sh` to see the full commands.
 
-- `/build-connector` — Research an API and generate a complete connector
-- `/test-connector` — Run and validate your connector locally
-- `/fix-connector` — Diagnose and fix errors automatically
-- `/deploy-connector` — Deploy to Fivetran
+Skills: `/build-connector`, `/test-connector`, `/fix-connector`, `/deploy-connector`.
 
-### Cursor / Windsurf / VS Code + Copilot / Codex
-
-Copy `coding-agents/AGENTS.md` into your connector project root as `AGENTS.md`:
+### Codex CLI
 
 ```bash
-cp coding-agents/AGENTS.md /path/to/my-connector/AGENTS.md
+bash scripts/install-codex.sh
 ```
+
+Prints step-by-step install instructions (enable plugins feature flag, add marketplace, install plugin). See [coding-agents/codex/README.md](coding-agents/codex/README.md) for details.
+
+Skills appear in the `$` popup: `$build_connector`, `$test_connector`, `$fix_connector`, `$deploy_connector`.
+
+### Cursor / Windsurf / VS Code + Copilot
+
+```bash
+bash scripts/install-cursor.sh /path/to/my-connector
+# or install-windsurf.sh / install-vscode-copilot.sh
+```
+
+Copies `coding-agents/AGENTS.md` into your project. The agent picks it up automatically.
 
 ### Gemini CLI
 
-Copy `coding-agents/AGENTS.md` into your connector project root as `GEMINI.md`:
-
 ```bash
-cp coding-agents/AGENTS.md /path/to/my-connector/GEMINI.md
+bash scripts/install-gemini-cli.sh /path/to/my-connector
 ```
+
+Copies `coding-agents/AGENTS.md` → `GEMINI.md`.
 
 ### Web App
 
 See [csdk-ai-builder-app/README.md](csdk-ai-builder-app/README.md) for setup and deployment instructions.
+
+## For Maintainers
+
+Canonical content (edit these):
+- `coding-agents/sdk-reference.md` — SDK rules and patterns
+- `coding-agents/workflows/{validator,generator,fixer}.md` — role prompts
+- `coding-agents/claude-code/tools/` — Python credential and runner tools
+
+Generated content (do NOT edit; regenerate with `bash scripts/sync-plugins.sh`):
+- `coding-agents/claude-code/sdk-reference.md`
+- `coding-agents/claude-code/agents/connector-{validator,generator,fixer}.md`
+- `coding-agents/codex/sdk-reference.md`
+- `coding-agents/codex/tools/*`
+
+Run `bash scripts/sync-plugins.sh` after editing canonical sources.
 
 ## Coming Soon
 

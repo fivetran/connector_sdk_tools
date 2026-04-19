@@ -1,17 +1,3 @@
----
-name: connector-validator
-description: Research API documentation and gather complete requirements for building a Fivetran connector. Use when researching data sources before code generation.
-tools: Read, WebFetch, Glob, Grep
-model: sonnet
-maxTurns: 15
----
-
-<!--
-  GENERATED FILE — DO NOT EDIT.
-  Canonical source: coding-agents/workflows/validator.md
-  Regenerate with: bash scripts/sync-plugins.sh
--->
-
 # Fivetran Connector Validation & Research
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules and patterns.
