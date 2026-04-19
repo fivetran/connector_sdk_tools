@@ -1,9 +1,0 @@
-workspaces/
-app/sessions.json
-.env
-
-# Config pipes (named FIFOs, deleted after use)
-**/.config_pipe
-
-# Configuration sensitivity metadata
-**/.config_metadata.json
