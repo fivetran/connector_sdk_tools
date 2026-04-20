@@ -5,12 +5,12 @@
   The same content exists in sdk-reference.md in a more structured format,
   which is used by the Claude Code plugin's subagents.
   
-  `fivetran ai setup` copies this file into the user's connector project as:
-    - AGENTS.md  (Cursor, Windsurf, VS Code + Copilot, Codex)
+  Install scripts in scripts/ copy this file into the user's connector project as:
+    - AGENTS.md  (Cursor, Windsurf, VS Code + Copilot)
     - GEMINI.md  (Gemini CLI)
-    - CLAUDE.md  (Claude Code, when used without the full plugin)
-  
-  For Claude Code with the full plugin, see coding-agents/claude-code/ instead.
+
+  Codex and Claude Code use the full plugin flow instead; see coding-agents/codex/
+  and coding-agents/claude-code/.
 -->
 
 # Fivetran Connector SDK AI Assistant System Instructions

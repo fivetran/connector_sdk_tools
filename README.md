@@ -15,7 +15,6 @@ coding-agents/
   claude-code/                      # Claude Code plugin — skills, subagents, hooks, tools
   codex/                            # Codex CLI plugin — skills, tools
   cursor/ windsurf/ vscode-copilot/ gemini-cli/    # Setup instructions per agent
-csdk-ai-builder-app/                # Web-based connector builder (React + FastAPI)
 ```
 
 ## Quick Start
@@ -24,10 +23,18 @@ Each agent uses its native install flow where available. Install scripts in `scr
 
 ### Claude Code
 
-```bash
-# In a Claude Code session:
+In a Claude Code session, from GitHub:
+
+```
 /plugin marketplace add fivetran/fivetran_csdk_tools
 /plugin install fivetran-csdk
+```
+
+Or from a local clone (the local marketplace registers as `fivetran-csdk-tools`, so the suffix is required):
+
+```
+/plugin marketplace add /path/to/fivetran_csdk_tools
+/plugin install fivetran-csdk@fivetran-csdk-tools
 ```
 
 Or run `bash scripts/install-claude-code.sh` to see the full commands.
@@ -60,10 +67,6 @@ bash scripts/install-gemini-cli.sh /path/to/my-connector
 ```
 
 Copies `coding-agents/AGENTS.md` → `GEMINI.md`.
-
-### Web App
-
-See [csdk-ai-builder-app/README.md](csdk-ai-builder-app/README.md) for setup and deployment instructions.
 
 ## For Maintainers
 
