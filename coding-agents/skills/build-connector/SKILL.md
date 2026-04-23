@@ -4,12 +4,6 @@ description: Build a new Fivetran connector from a description. Use when the use
 argument-hint: "Describe the connector (e.g., 'Stripe API connector for payments and customers')"
 ---
 
-<!--
-  GENERATED FILE — DO NOT EDIT.
-  Canonical source: coding-agents/skills/build-connector/SKILL.md
-  Regenerate with: bash scripts/sync-plugins.sh
--->
-
 > **Context**: This plugin is for the Fivetran Connector SDK (CSDK). "CSDK" is shorthand for "Connector SDK".
 
 # Build a New Fivetran Connector

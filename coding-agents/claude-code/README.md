@@ -3,9 +3,10 @@
 Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in Claude Code.
 
 ## Prerequisites
-- [Claude Code](https://claude.com/claude-code) installed
 - Python 3.10-3.14
-- [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/)
+- [Claude Code](https://claude.com/claude-code) installed
+- [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
+- A Fivetran account (https://fivetran.com)
 
 ## Installation
 
@@ -54,7 +55,7 @@ claude --plugin-dir /path/to/coding-agents/claude-code
 In the Claude Code chat, describe the connector you want to build:
 
 ```
-/fivetran-csdk:build-connector <describe your data source and what tables you want to sync>
+/build-connector <describe your data source and what tables you want to sync>
 ```
 
 Claude will:
@@ -74,7 +75,7 @@ python /path/to/coding-agents/claude-code/tools/enter_configuration.py configura
 
 Enter your API credentials when prompted. They are encrypted immediately — Claude never sees them.
 
-**First time only:** If `CSDKAI_MASTER_SECRET` is not set, the tool will generate one for you and show instructions to add it to your shell config (e.g., `~/.zshrc`). Add the line, reload your shell, and run the tool again.
+**First time only:** If `FIVETRAN_CSDK_MASTER_SECRET` is not set, the tool will generate one for you and show instructions to add it to your shell config (e.g., `~/.zshrc`). Add the line, reload your shell, and run the tool again.
 
 Go back to Claude Code and tell it you've entered your credentials.
 
@@ -94,13 +95,13 @@ If it fails, Claude will diagnose the issue:
 
 Once testing passes, you can:
 - Ask Claude to add more tables or features
-- Run `/fivetran-csdk:test-connector` anytime to re-test
-- Run `/fivetran-csdk:deploy-connector` when ready to deploy to Fivetran
+- Run `/test-connector` anytime to re-test
+- Run `/deploy-connector` when ready to deploy to Fivetran
 
 ### Example Session
 
 ```
-You: /fivetran-csdk:build-connector <Your API> connector for <tables you want>
+You: /build-connector <Your API> connector for <tables you want>
 
 Claude: I'll build a connector for <Your API>. Let me research the API...
         [researches API docs]
@@ -135,7 +136,7 @@ Claude: Running the connector test...
 
 ### Build a New Connector
 ```
-/fivetran-csdk:build-connector Stripe API connector for payments, customers, and invoices
+/build-connector Stripe API connector for payments, customers, and invoices
 ```
 
 This will:
@@ -159,21 +160,30 @@ On first run, it will generate an encryption secret and show you the command to 
 
 ### Test a Connector
 ```
-/fivetran-csdk:test-connector
+/test-connector
 ```
 
 Runs `fivetran debug`, checks `warehouse.db` for synced data, and reports results.
 
-### Fix a Failing Connector
+### Fix or Modify a Connector
+
+Just describe the problem or change in natural language — no slash command needed:
+
 ```
-/fivetran-csdk:fix-connector Getting authentication error: Invalid API key
+I'm getting an authentication error: Invalid API key
 ```
 
-Classifies the error (credentials vs code), and either guides you on configuration or fixes the code automatically.
+or
+
+```
+Add a "pull requests" table to my GitHub connector
+```
+
+The plugin routes to the `connector-fixer` subagent, which classifies the error (INFRA / FIRST_RUN / CODE), researches the correct SDK pattern, and applies targeted fixes to `connector.py`.
 
 ### Deploy a Connector
 ```
-/fivetran-csdk:deploy-connector
+/deploy-connector
 ```
 
 Validates, runs a final test, and guides you through Fivetran deployment.
@@ -182,13 +192,12 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 
 | Component | Description |
 |-----------|-------------|
-| `/fivetran-csdk:build-connector` | Full generation workflow (research → generate → test → fix) |
-| `/fivetran-csdk:test-connector` | Run and validate connector tests |
-| `/fivetran-csdk:fix-connector` | Diagnose and fix connector errors |
-| `/fivetran-csdk:deploy-connector` | Package and deploy to Fivetran |
+| `/build-connector` | Full generation workflow (research → generate → test → auto-fix) |
+| `/test-connector` | Run and validate connector tests |
+| `/deploy-connector` | Package and deploy to Fivetran |
+| `agents/connector-validator.md` | Subagent for API research and requirements gathering |
 | `agents/connector-generator.md` | Subagent for generating connector code |
-| `agents/connector-validator.md` | Subagent for validating connector output |
-| `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors |
+| `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
 | Hooks | Auto-reminder to test after code changes |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
 | `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |

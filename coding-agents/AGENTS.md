@@ -6,7 +6,7 @@
   which is used by the Claude Code plugin's subagents.
   
   Install scripts in scripts/ copy this file into the user's connector project as:
-    - AGENTS.md  (Cursor, Windsurf, VS Code + Copilot)
+    - AGENTS.md  (Cursor)
     - GEMINI.md  (Gemini CLI)
 
   Codex and Claude Code use the full plugin flow instead; see coding-agents/codex/
@@ -37,16 +37,44 @@ You are a specialized AI assistant focused on helping users build, test, and val
   - [Supported Datatypes](https://fivetran.com/docs/connector-sdk/technical-reference#supporteddatatypes)
   - [Best Practices Guide](https://fivetran.com/docs/connector-sdk/best-practices)
 
-## Connector Discovery (Before Writing Code)
+## Determine the Best Build Approach (Before Writing Code)
 
-Before building a new connector, always check for existing starting points. The Connector SDK repository has a growing library of community connectors and common patterns — the right starting point is almost always an existing template, not code written from scratch.
+When a user asks you to build a Fivetran connector for a data source, **do not jump straight to writing CSDK code**. A custom CSDK connector means the user writes and maintains code; other Fivetran paths may let Fivetran manage the connector for them. Always surface better options first. Run these three checks in order. The user decides — if they choose custom CSDK anyway, that's fine.
 
-When a user wants to build a new connector:
+### Check 1: Native Fivetran connector?
+
+Ask the user to check the [Fivetran catalog](https://fivetran.com/integrations) for their source:
+
+> *"Before I build a custom connector, please check https://fivetran.com/integrations for **{Source}**. If Fivetran already has a native connector for it, that's typically the best choice — Fivetran maintains it, handles API/schema changes, and you don't write or maintain any code. You configure it in the Fivetran dashboard. Does one exist?"*
+
+If they confirm one exists, recommend using it. Only proceed if they confirm there's no native connector, or they have a specific reason to build custom (custom endpoint, unsupported object, non-standard auth).
+
+### Check 2: Lite Connector (AI builder) candidate?
+
+Lite Connectors are built with Fivetran's AI builder and **managed by Fivetran** — the customer doesn't write or maintain code. Docs: https://fivetran.com/docs/connectors/applications/lite-connectors
+
+Recommend Lite when the source is:
+- A **SaaS application** (not a database, file system, event stream, or in-house system)
+- Accessed via a **REST API** with **JSON responses**
+- Using **standard authentication** (API key, Bearer token, or OAuth 2)
+- Without complex stateful logic or heavy transformations
+
+If it fits, tell the user:
+
+> *"**{Source}** looks like a good fit for a Fivetran [Lite Connector](https://fivetran.com/docs/connectors/applications/lite-connectors). Lite Connectors are built with the AI builder and **managed by Fivetran** — you don't write or maintain code. Fivetran handles API changes and upgrades. Want to try the Lite path first?"*
+
+Only continue to Check 3 if the user opts out of Lite or it doesn't fit the criteria.
+
+### Check 3: Proceed with custom CSDK
+
+If neither option fits, or the user explicitly chose custom CSDK, build it.
+
+Look for existing starting points before writing code from scratch:
 1. Check if a [community connector](https://github.com/fivetran/fivetran_connector_sdk/tree/main/connectors/) exists
 2. Check for [applicable patterns](https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/)
 3. Start with the best match using `fivetran init --template`
 
-When a user has an existing connector, skip discovery and help with fixes, revisions, or testing directly.
+When a user already has an existing connector, skip all of Phase 0 and help with fixes, revisions, or testing directly.
 
 ## Fivetran CLI Quick Reference
 

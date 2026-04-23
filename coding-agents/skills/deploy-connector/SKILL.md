@@ -3,12 +3,6 @@ name: deploy-connector
 description: Package and deploy a Fivetran connector to Fivetran. Use when the user wants to deploy or ship their connector.
 ---
 
-<!--
-  GENERATED FILE — DO NOT EDIT.
-  Canonical source: coding-agents/skills/deploy-connector/SKILL.md
-  Regenerate with: bash scripts/sync-plugins.sh
--->
-
 > **Context**: This plugin is for the Fivetran Connector SDK (CSDK). "CSDK" is shorthand for "Connector SDK".
 
 # Deploy Fivetran Connector

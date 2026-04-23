@@ -1,5 +1,7 @@
 # Google Gemini CLI Setup
 
+See the [main README](../../README.md#prerequisites) for prerequisites (Python, Gemini CLI, `fivetran-connector-sdk`, Fivetran account).
+
 ### Automatic (coming soon)
 
 ```bash

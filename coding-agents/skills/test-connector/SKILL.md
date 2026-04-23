@@ -4,12 +4,6 @@ description: Test a Fivetran connector by running fivetran debug and checking th
 argument-hint: "Connector directory name (e.g., 'github_connector')"
 ---
 
-<!--
-  GENERATED FILE — DO NOT EDIT.
-  Canonical source: coding-agents/skills/test-connector/SKILL.md
-  Regenerate with: bash scripts/sync-plugins.sh
--->
-
 > **Context**: This plugin is for the Fivetran Connector SDK (CSDK). "CSDK" is shorthand for "Connector SDK".
 
 # Test Connector

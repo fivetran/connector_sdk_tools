@@ -14,8 +14,19 @@ coding-agents/
   workflows/                        # Canonical role prompts (validator, generator, fixer)
   claude-code/                      # Claude Code plugin — skills, subagents, hooks, tools
   codex/                            # Codex CLI plugin — skills, tools
-  cursor/ windsurf/ vscode-copilot/ gemini-cli/    # Setup instructions per agent
+  cursor/ gemini-cli/              # Setup instructions per agent
 ```
+
+## Prerequisites
+
+Before installing, the user must have:
+
+- **Python 3.10–3.14**
+- **A coding agent** (Claude Code, Codex CLI, Cursor, or Gemini CLI)
+- **Fivetran Connector SDK** — `pip install fivetran-connector-sdk` (provides the `fivetran` CLI and the `fivetran ai` bootstrap command)
+- **A Fivetran account** (signup: https://fivetran.com)
+
+Once those are in place, `fivetran ai` configures the user's chosen coding agent and installs the plugin/skills below.
 
 ## Quick Start
 
@@ -39,7 +50,7 @@ Or from a local clone (the local marketplace registers as `fivetran-csdk-tools`,
 
 Or run `bash scripts/install-claude-code.sh` to see the full commands.
 
-Skills: `/build-connector`, `/test-connector`, `/fix-connector`, `/deploy-connector`.
+Skills: `/build-connector`, `/test-connector`, `/deploy-connector`. (Code fixes are handled in natural language — the agent invokes the `connector-fixer` subagent automatically.)
 
 ### Codex CLI
 
@@ -49,16 +60,15 @@ bash scripts/install-codex.sh
 
 Prints step-by-step install instructions (enable plugins feature flag, add marketplace, install plugin). See [coding-agents/codex/README.md](coding-agents/codex/README.md) for details.
 
-Skills appear in the `$` popup: `$build_connector`, `$test_connector`, `$fix_connector`, `$deploy_connector`.
+Skills appear in the `$` popup: `$build_connector`, `$test_connector`, `$deploy_connector`. (Code fixes are handled in natural language — the plugin guides the agent through the fixer workflow.)
 
-### Cursor / Windsurf / VS Code + Copilot
+### Cursor
 
 ```bash
 bash scripts/install-cursor.sh /path/to/my-connector
-# or install-windsurf.sh / install-vscode-copilot.sh
 ```
 
-Copies `coding-agents/AGENTS.md` into your project. The agent picks it up automatically.
+Copies `coding-agents/AGENTS.md` into your project. Cursor picks it up automatically.
 
 ### Gemini CLI
 

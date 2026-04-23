@@ -8,7 +8,6 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 |---------|-------------|
 | `/build-connector` | User wants to create a new connector |
 | `/test-connector` | User wants to test an existing connector |
-| `/fix-connector` | User reports errors or test failures |
 | `/deploy-connector` | User wants to deploy to Fivetran |
 
 ## Routing
@@ -18,9 +17,9 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "Build/create a connector for X" | Run `/build-connector` |
 | "Help me connect to [data source]" | Run `/build-connector` |
 | "Test my connector" | Run `/test-connector` |
-| "I'm getting an error..." | Run `/fix-connector` |
+| "I'm getting an error..." / "fix my connector" / "help me change X" | Invoke the `connector-fixer` subagent with the error details and user context. Do not handle code fixes in the main thread. |
 | "Deploy my connector" | Run `/deploy-connector` |
-| "I already have a connector, help me fix/revise/test it" | Use `/fix-connector` or `/test-connector` as appropriate |
+| "I already have a connector, help me test/modify it" | Use `/test-connector`, or invoke the `connector-fixer` subagent for code changes |
 
 ## Credential Security
 

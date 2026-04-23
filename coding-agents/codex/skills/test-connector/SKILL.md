@@ -1,7 +1,16 @@
 ---
 name: test-connector
 description: Test a Fivetran connector by running fivetran debug and checking the results. Use when the user wants to validate or run their connector locally.
+argument-hint: "Connector directory name (e.g., 'github_connector')"
 ---
+
+<!--
+  GENERATED FILE — DO NOT EDIT.
+  Canonical source: coding-agents/skills/test-connector/SKILL.md
+  Regenerate with: bash scripts/sync-plugins.sh
+-->
+
+> **Context**: This plugin is for the Fivetran Connector SDK (CSDK). "CSDK" is shorthand for "Connector SDK".
 
 # Test Connector
 
@@ -25,7 +34,7 @@ If any are missing, inform the user and stop.
 
 ## Step 2: Setup Environment (only if needed)
 
-**Skip this step if `.venv` directory already exists.**
+**Skip if `.venv` already exists.**
 
 ```bash
 uv venv .venv
@@ -41,10 +50,10 @@ Read `configuration.json`. Check if encrypted (starts with `ENCRYPTED:`) or has 
 Tell the user to enter credentials securely in a separate terminal:
 
 ```
-python <plugin_dir>/tools/enter_configuration.py configuration.json
+python <plugin>/tools/enter_configuration.py configuration.json
 ```
 
-This encrypts credentials so the AI cannot see them.
+This encrypts credentials so the AI cannot see them. Do NOT paste credentials directly into `configuration.json` or this chat.
 
 **STOP and WAIT** for the user to confirm before proceeding.
 
@@ -55,10 +64,10 @@ This encrypts credentials so the AI cannot see them.
 Use the secure runner:
 
 ```bash
-python <plugin_dir>/tools/run_connector.py <connector_directory>
+python <plugin>/tools/run_connector.py <connector_directory>
 ```
 
-This decrypts the config using `CSDKAI_MASTER_SECRET` and runs `fivetran debug` without ever writing plaintext credentials to disk.
+This decrypts the config using `FIVETRAN_CSDK_MASTER_SECRET` and runs `fivetran debug` without ever writing plaintext credentials to disk.
 
 **IMPORTANT**: If `run_connector.py` fails, report the error to the user. Do NOT read or modify plugin tools.
 
@@ -108,9 +117,9 @@ Report which tables were synced and how many rows each.
 - Wrong API endpoints or URLs in config
 - Missing permissions on the external service
 
-→ Explain that since this connector has never run successfully, it's likely a configuration issue. Ask the user to verify credentials and config values.
+→ Explain that since the connector has never run successfully, it's likely a configuration issue. Ask the user to verify credentials and config values.
 
-**CODE error** (connector has run successfully before, now failing):
+**CODE error** (connector has run successfully before, now failing, OR the error is clearly a code bug):
 - Syntax errors or import failures
 - Logic bugs or incorrect SDK API usage
 - Type annotation issues
@@ -118,4 +127,4 @@ Report which tables were synced and how many rows each.
 
 → Ask: "This looks like a code issue. Would you like me to fix it?"
 
-**If the user wants a fix:** invoke `$fix_connector` with the error details.
+**If the user wants a fix:** apply the fixer workflow (see `workflows/fixer.md` in the plugin, or — in plugins that support subagents — invoke the `connector-fixer` subagent). After fixing, re-run the test to verify.

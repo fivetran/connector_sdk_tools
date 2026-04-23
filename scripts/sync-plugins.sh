@@ -5,13 +5,20 @@
 #
 # Edit targets (canonical sources):
 #   coding-agents/sdk-reference.md
+#   coding-agents/native-connectors.md
 #   coding-agents/workflows/{validator,generator,fixer}.md
+#   coding-agents/skills/{build,test,deploy}-connector/SKILL.md
 #   coding-agents/claude-code/tools/*
 #
 # Generated files (DO NOT edit directly — edits will be overwritten):
 #   coding-agents/claude-code/sdk-reference.md
+#   coding-agents/claude-code/native-connectors.md
 #   coding-agents/claude-code/agents/connector-{validator,generator,fixer}.md
+#   coding-agents/claude-code/skills/{build,test,deploy}-connector/SKILL.md
 #   coding-agents/codex/sdk-reference.md
+#   coding-agents/codex/native-connectors.md
+#   coding-agents/codex/skills/{build,test,deploy}-connector/SKILL.md
+#   coding-agents/codex/workflows/{validator,generator,fixer}.md
 #   coding-agents/codex/tools/*
 
 set -euo pipefail
@@ -20,10 +27,13 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
 SDK_REF="coding-agents/sdk-reference.md"
+NATIVE_LIST="coding-agents/native-connectors.md"
 WORKFLOWS_DIR="coding-agents/workflows"
+SKILLS_DIR="coding-agents/skills"
 CLAUDE_DIR="coding-agents/claude-code"
 CODEX_DIR="coding-agents/codex"
 TOOLS_SRC="$CLAUDE_DIR/tools"
+SKILLS=(build-connector test-connector deploy-connector)
 
 # --- Helpers ---
 
@@ -109,16 +119,59 @@ assemble_claude_agent() {
   echo "  wrote $dest"
 }
 
+# Copy a canonical SKILL.md to a plugin dir, inserting a "GENERATED" banner
+# after the frontmatter block (so frontmatter parsers still see it at line 1).
+copy_skill_with_banner() {
+  local src="$1"
+  local dest="$2"
+  mkdir -p "$(dirname "$dest")"
+  awk -v src="$src" '
+    BEGIN { delim=0 }
+    /^---$/ {
+      print
+      delim++
+      if (delim == 2) {
+        print ""
+        print "<!--"
+        print "  GENERATED FILE — DO NOT EDIT."
+        print "  Canonical source: " src
+        print "  Regenerate with: bash scripts/sync-plugins.sh"
+        print "-->"
+      }
+      next
+    }
+    { print }
+  ' "$src" > "$dest"
+  echo "  wrote $dest"
+}
+
 # --- Sync actions ---
 
 echo "Syncing sdk-reference.md into plugins..."
 copy_with_banner "$SDK_REF" "$CLAUDE_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$CODEX_DIR/sdk-reference.md"
 
+echo "Syncing native-connectors.md into plugins..."
+copy_with_banner "$NATIVE_LIST" "$CLAUDE_DIR/native-connectors.md"
+copy_with_banner "$NATIVE_LIST" "$CODEX_DIR/native-connectors.md"
+
 echo "Assembling Claude subagent files..."
 assemble_claude_agent validator
 assemble_claude_agent generator
 assemble_claude_agent fixer
+
+echo "Copying workflow files into Codex plugin..."
+mkdir -p "$CODEX_DIR/workflows"
+for role in validator generator fixer; do
+  copy_with_banner "$WORKFLOWS_DIR/${role}.md" "$CODEX_DIR/workflows/${role}.md"
+done
+
+echo "Syncing canonical skills into plugins..."
+for skill in "${SKILLS[@]}"; do
+  src="$SKILLS_DIR/${skill}/SKILL.md"
+  copy_skill_with_banner "$src" "$CLAUDE_DIR/skills/${skill}/SKILL.md"
+  copy_skill_with_banner "$src" "$CODEX_DIR/skills/${skill}/SKILL.md"
+done
 
 echo "Copying tools into Codex plugin..."
 mkdir -p "$CODEX_DIR/tools"

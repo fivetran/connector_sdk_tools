@@ -4,9 +4,10 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 
 ## Prerequisites
 
-- [Codex CLI](https://github.com/openai/codex) installed
 - Python 3.10-3.14
-- [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/)
+- [Codex CLI](https://github.com/openai/codex) installed
+- [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
+- A Fivetran account (https://fivetran.com)
 
 ## Installation
 
@@ -68,20 +69,21 @@ Skills appear in the `$` mention popup:
 
 - `$build_connector` — Research an API and generate a complete connector
 - `$test_connector` — Run and validate your connector locally
-- `$fix_connector` — Diagnose and fix errors
 - `$deploy_connector` — Package and deploy to Fivetran
+
+To fix or modify an existing connector, describe the problem or change in natural language — the plugin guides the agent through the fixer workflow (classification → pattern research → targeted fix).
 
 ## What's Included
 
 | Component | Description |
 |-----------|-------------|
-| `skills/build-connector/` | Full generation workflow (research → generate → test → fix) |
+| `skills/build-connector/` | Full generation workflow (research → generate → test → auto-fix) |
 | `skills/test-connector/` | Run and validate connector tests |
-| `skills/fix-connector/` | Diagnose and fix connector errors |
 | `skills/deploy-connector/` | Package and deploy to Fivetran |
+| `workflows/fixer.md` | Canonical fix workflow (applied when user reports an error or asks for a change) |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
 | `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
-| `tools/deploy_connector.py` | Deploy connector with encrypted config |
+| `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
 
 ## Known Parity Gaps vs. Claude Code Plugin
 

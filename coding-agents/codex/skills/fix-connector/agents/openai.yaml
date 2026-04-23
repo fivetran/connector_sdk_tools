@@ -1,4 +1,0 @@
-interface:
-  display_name: "Fix Connector"
-  short_description: "Diagnose and fix errors in a Fivetran connector"
-  default_prompt: "Fix the error I'm seeing in my connector: $ERROR"

@@ -5,7 +5,7 @@ Enter and encrypt configuration values for a Fivetran connector.
 Run this script directly in your terminal to securely enter API credentials.
 Values are encrypted before being saved to configuration.json.
 
-Requires CSDKAI_MASTER_SECRET environment variable to be set.
+Requires FIVETRAN_CSDK_MASTER_SECRET environment variable to be set.
 """
 import base64
 import getpass
@@ -47,25 +47,25 @@ def get_shell_config_file() -> str:
 
 
 def get_encryption_key(username: str = "local-user") -> bytes:
-    """Derive encryption key from CSDKAI_MASTER_SECRET environment variable."""
+    """Derive encryption key from FIVETRAN_CSDK_MASTER_SECRET environment variable."""
     import secrets as secrets_module
     import platform
 
-    master_secret = os.getenv("CSDKAI_MASTER_SECRET")
+    master_secret = os.getenv("FIVETRAN_CSDK_MASTER_SECRET")
     if not master_secret:
         # Generate a new secret
         new_secret = secrets_module.token_urlsafe(32)
         config_file = get_shell_config_file()
         system = platform.system()
 
-        print("Error: CSDKAI_MASTER_SECRET environment variable is not set.")
+        print("Error: FIVETRAN_CSDK_MASTER_SECRET environment variable is not set.")
         print("\nAdd this line to your shell config file:")
         print(f"\n  # {config_file}")
 
         if system == "Windows":
-            print(f'  $env:CSDKAI_MASTER_SECRET = "{new_secret}"')
+            print(f'  $env:FIVETRAN_CSDK_MASTER_SECRET = "{new_secret}"')
         else:
-            print(f'  export CSDKAI_MASTER_SECRET="{new_secret}"')
+            print(f'  export FIVETRAN_CSDK_MASTER_SECRET="{new_secret}"')
 
         print(f"\nThen reload your shell or run:")
         if system == "Windows":

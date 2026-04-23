@@ -31,11 +31,11 @@ ENCRYPTED_PREFIX = "ENCRYPTED:"
 
 
 def get_encryption_key(username: str = "local-user") -> bytes:
-    """Derive encryption key from CSDKAI_MASTER_SECRET environment variable."""
+    """Derive encryption key from FIVETRAN_CSDK_MASTER_SECRET environment variable."""
     import secrets as secrets_module
     import platform
 
-    master_secret = os.getenv("CSDKAI_MASTER_SECRET")
+    master_secret = os.getenv("FIVETRAN_CSDK_MASTER_SECRET")
     if not master_secret:
         # Generate a new secret
         new_secret = secrets_module.token_urlsafe(32)
@@ -52,13 +52,13 @@ def get_encryption_key(username: str = "local-user") -> bytes:
         else:
             config_file = "~/.profile"
 
-        print("Error: CSDKAI_MASTER_SECRET environment variable is not set.")
+        print("Error: FIVETRAN_CSDK_MASTER_SECRET environment variable is not set.")
         print("\nAdd this line to your shell config file:")
         print(f"\n  # {config_file}")
         if system == "Windows":
-            print(f'  $env:CSDKAI_MASTER_SECRET = "{new_secret}"')
+            print(f'  $env:FIVETRAN_CSDK_MASTER_SECRET = "{new_secret}"')
         else:
-            print(f'  export CSDKAI_MASTER_SECRET="{new_secret}"')
+            print(f'  export FIVETRAN_CSDK_MASTER_SECRET="{new_secret}"')
         print(f"\nThen reload your shell or run:")
         if system == "Windows":
             print(f"  . $PROFILE")
@@ -160,7 +160,7 @@ def main():
             config = decrypt_config(content)
         except InvalidToken:
             print("Error: Failed to decrypt configuration.")
-            print("Make sure CSDKAI_MASTER_SECRET matches what was used to encrypt.")
+            print("Make sure FIVETRAN_CSDK_MASTER_SECRET matches what was used to encrypt.")
             sys.exit(1)
 
     # Activate venv if present

@@ -1,5 +1,7 @@
 # Cursor Setup
 
+See the [main README](../../README.md#prerequisites) for prerequisites (Python, Cursor, `fivetran-connector-sdk`, Fivetran account).
+
 ### Automatic (coming soon)
 
 ```bash

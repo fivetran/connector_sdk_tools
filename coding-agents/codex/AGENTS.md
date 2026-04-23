@@ -8,7 +8,6 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 |-------|-------------|
 | `$build_connector` | User wants to create a new connector |
 | `$test_connector` | User wants to test an existing connector |
-| `$fix_connector` | User reports errors or test failures |
 | `$deploy_connector` | User wants to deploy to Fivetran |
 
 ## Routing
@@ -18,7 +17,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "Build/create a connector for X" | Invoke `$build_connector` |
 | "Help me connect to [data source]" | Invoke `$build_connector` |
 | "Test my connector" | Invoke `$test_connector` |
-| "I'm getting an error..." | Invoke `$fix_connector` |
+| "I'm getting an error..." / "fix my connector" / "help me change X" | Read `workflows/fixer.md` from the plugin directory and follow it to classify the error and apply targeted fixes. |
 | "Deploy my connector" | Invoke `$deploy_connector` |
 
 ## Credential Security
