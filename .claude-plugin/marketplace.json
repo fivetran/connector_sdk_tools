@@ -4,7 +4,7 @@
   "plugins": [
     {
       "name": "fivetran-csdk",
-      "description": "Build, test, fix, and deploy Fivetran connectors with AI assistance",
+      "description": "Build, test, and deploy Fivetran connectors with AI assistance",
       "source": {
         "type": "local",
         "path": "coding-agents/claude-code"
