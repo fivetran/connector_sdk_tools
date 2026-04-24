@@ -20,7 +20,7 @@ fivetran ai setup --agent claude-code
 
 ```bash
 /plugin marketplace add fivetran/fivetran_csdk_tools
-/plugin install fivetran-csdk
+/plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
 ```
 
 ### Manual

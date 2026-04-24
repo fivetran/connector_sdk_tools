@@ -1,11 +1,11 @@
 {
-  "name": "fivetran-csdk-tools",
+  "name": "fivetran-connector-sdk-tools",
   "interface": {
-    "displayName": "Fivetran CSDK Tools"
+    "displayName": "Fivetran Connector SDK Tools"
   },
   "plugins": [
     {
-      "name": "fivetran-csdk",
+      "name": "fivetran-connector-sdk",
       "source": {
         "source": "local",
         "path": "./coding-agents/codex"

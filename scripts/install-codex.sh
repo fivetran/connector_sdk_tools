@@ -32,11 +32,11 @@ Steps to complete manually:
 
 3. Install the plugin:
 
-     codex plugin install fivetran-csdk@fivetran-csdk-tools
+     codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
 
 4. Enable the plugin in $CODEX_CONFIG:
 
-     [plugins."fivetran-csdk@fivetran-csdk-tools"]
+     [plugins."fivetran-connector-sdk@fivetran-connector-sdk-tools"]
      enabled = true
 
 5. Install the tool dependencies:

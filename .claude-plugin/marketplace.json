@@ -1,14 +1,17 @@
 {
-  "name": "Fivetran Connector SDK Tools",
+  "name": "fivetran-connector-sdk-tools",
   "description": "AI-powered tools for building, testing, and deploying Fivetran connectors",
+  "owner": {
+    "name": "Fivetran",
+    "email": "developers@fivetran.com"
+  },
   "plugins": [
     {
-      "name": "fivetran-csdk",
+      "name": "fivetran-connector-sdk",
       "description": "Build, test, and deploy Fivetran connectors with AI assistance",
-      "source": {
-        "type": "local",
-        "path": "coding-agents/claude-code"
-      }
+      "category": "development",
+      "source": "./coding-agents/claude-code",
+      "homepage": "https://github.com/fivetran/fivetran_csdk_tools"
     }
   ]
 }
