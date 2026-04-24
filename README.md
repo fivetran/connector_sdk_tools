@@ -38,14 +38,14 @@ In a Claude Code session, from GitHub:
 
 ```
 /plugin marketplace add fivetran/fivetran_csdk_tools
-/plugin install fivetran-csdk
+/plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
 ```
 
-Or from a local clone (the local marketplace registers as `fivetran-csdk-tools`, so the suffix is required):
+Or from a local clone:
 
 ```
 /plugin marketplace add /path/to/fivetran_csdk_tools
-/plugin install fivetran-csdk@fivetran-csdk-tools
+/plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
 ```
 
 Or run `bash scripts/install-claude-code.sh` to see the full commands.

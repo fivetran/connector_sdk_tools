@@ -1,5 +1,5 @@
 {
-  "name": "fivetran-csdk",
+  "name": "fivetran-connector-sdk",
   "description": "Build, test, and deploy Fivetran connectors with AI assistance",
   "version": "0.03.04.001",
   "author": {

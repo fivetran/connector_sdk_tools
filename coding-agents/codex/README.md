@@ -41,12 +41,12 @@ Prints step-by-step instructions for installing the plugin via Codex's native ma
 
 3. Install the plugin:
    ```bash
-   codex plugin install fivetran-csdk@fivetran-csdk-tools
+   codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
    ```
 
 4. Enable the plugin:
    ```toml
-   [plugins."fivetran-csdk@fivetran-csdk-tools"]
+   [plugins."fivetran-connector-sdk@fivetran-connector-sdk-tools"]
    enabled = true
    ```
 
