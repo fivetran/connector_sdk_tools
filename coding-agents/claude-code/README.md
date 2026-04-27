@@ -10,29 +10,32 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 
 ## Installation
 
-### Automatic (coming soon)
+### Automatic (Recommended)
+
+Requires Fivetran Connector SDK v2.9 or later:
 
 ```bash
-fivetran ai setup --agent claude-code
+fivetran ai --setup --agent claude-code
 ```
 
-### Via marketplace
+This installs the plugin via Claude Code's marketplace and sets up dependencies.
+
+### Via Claude Code Marketplace
+
+In a Claude Code session:
 
 ```bash
 /plugin marketplace add fivetran/fivetran_csdk_tools
-/plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
 ```
 
-### Manual
+The plugin is immediately available (no separate install step needed).
+
+### Manual (Advanced)
+
+For local development:
 
 ```bash
-claude install-plugin /path/to/coding-agents/claude-code
-```
-
-Or load for a single session:
-
-```bash
-claude --plugin-dir /path/to/coding-agents/claude-code
+/plugin marketplace add /path/to/fivetran_csdk_tools
 ```
 
 ### Post-installation

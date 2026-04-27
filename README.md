@@ -93,9 +93,30 @@ Generated content (do NOT edit; regenerate with `bash scripts/sync-plugins.sh`):
 
 Run `bash scripts/sync-plugins.sh` after editing canonical sources.
 
-## Coming Soon
+## fivetran ai Command
 
-`fivetran ai setup` — automatic installation and configuration for all supported coding agents, integrated into the Fivetran CLI.
+The `fivetran ai` command is now available in Fivetran Connector SDK v2.9+ for automatic installation and configuration of all supported coding agents.
+
+### Quick Install
+
+```bash
+# Install an agent
+fivetran ai --setup --agent <agent-name>
+
+# Examples
+fivetran ai --setup --agent claude-code
+fivetran ai --setup --agent cursor
+fivetran ai --setup --agent codex
+fivetran ai --setup --agent gemini-cli
+
+# Update agents
+fivetran ai --update
+
+# List available agents
+fivetran ai --list
+```
+
+For detailed usage, see individual agent setup instructions above.
 
 ## License
 

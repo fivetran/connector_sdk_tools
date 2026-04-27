@@ -11,13 +11,17 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 
 ## Installation
 
-### Automatic (coming soon)
+### Automatic (Recommended)
+
+Requires Fivetran Connector SDK v2.9 or later:
 
 ```bash
-fivetran ai setup --agent codex
+fivetran ai --setup --agent codex
 ```
 
-### Install script
+This clones the repository, sets up the Codex plugin, and installs dependencies.
+
+### Install Script
 
 ```bash
 bash scripts/install-codex.sh
