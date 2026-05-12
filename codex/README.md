@@ -1,0 +1,64 @@
+# Fivetran Connector Builder — Codex CLI Plugin
+
+Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in Codex CLI.
+
+## Prerequisites
+
+- Python 3.10-3.14
+- [Codex CLI](https://github.com/openai/codex) installed
+- [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
+- A Fivetran account (https://fivetran.com)
+
+## Installation
+
+See the [top-level README](../README.md#install) for the full install matrix. Quick path:
+
+1. Enable the plugins feature in `~/.codex/config.toml`:
+   ```toml
+   [features]
+   plugins = true
+   ```
+
+2. Add the marketplace and install:
+   ```bash
+   codex plugin marketplace add fivetran/fivetran_csdk_tools
+   codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
+   ```
+
+3. Enable the plugin in `~/.codex/config.toml`:
+   ```toml
+   [plugins."fivetran-connector-sdk@fivetran-connector-sdk-tools"]
+   enabled = true
+   ```
+
+4. Install tool dependencies:
+   ```bash
+   pip install -r /path/to/codex/tools/requirements.txt
+   ```
+
+## Usage
+
+Skills appear in the `$` mention popup:
+
+- `$build_connector` — Research an API and generate a complete connector
+- `$test_connector` — Run and validate your connector locally
+- `$deploy_connector` — Package and deploy to Fivetran
+
+To fix or modify an existing connector, describe the problem or change in natural language — the plugin guides the agent through the fixer workflow (classification → pattern research → targeted fix).
+
+## What's Included
+
+| Component | Description |
+|-----------|-------------|
+| `skills/build-connector/` | Full generation workflow (research → generate → test → auto-fix) |
+| `skills/test-connector/` | Run and validate connector tests |
+| `skills/deploy-connector/` | Package and deploy to Fivetran |
+| `workflows/fixer.md` | Canonical fix workflow (applied when user reports an error or asks for a change) |
+| `tools/enter_configuration.py` | Enter and encrypt API credentials |
+| `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
+| `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
+
+## Known Parity Gaps vs. Claude Code Plugin
+
+- **Subagents**: Codex has no subagent concept. The validator/generator/fixer workflows are inlined in the relevant SKILL.md files instead of running as isolated subagents.
+- **Hooks**: Codex has no hooks. Claude's post-edit reminder to run `/test-connector` has no Codex equivalent.

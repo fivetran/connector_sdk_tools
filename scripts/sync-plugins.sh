@@ -1,44 +1,51 @@
 #!/usr/bin/env bash
-# Propagates canonical content into plugin directories.
+# Propagates canonical content into per-agent plugin/extension trees.
 # Run from repo root: bash scripts/sync-plugins.sh
 # Idempotent — safe to re-run.
 #
-# Edit targets (canonical sources):
-#   coding-agents/sdk-reference.md
-#   coding-agents/native-connectors.md
-#   coding-agents/workflows/{validator,generator,fixer}.md
-#   coding-agents/skills/{build,test,deploy}-connector/SKILL.md
-#   coding-agents/claude-code/tools/*
+# Canonical sources (edit these):
+#   canonical/sdk-reference.md
+#   canonical/native-connectors.md
+#   canonical/workflows/{validator,generator,fixer}.md
+#   canonical/skills/{build,test,deploy}-connector/SKILL.md
+#   canonical/tools/*
 #
 # Generated files (DO NOT edit directly — edits will be overwritten):
-#   coding-agents/claude-code/sdk-reference.md
-#   coding-agents/claude-code/native-connectors.md
-#   coding-agents/claude-code/agents/connector-{validator,generator,fixer}.md
-#   coding-agents/claude-code/skills/{build,test,deploy}-connector/SKILL.md
-#   coding-agents/codex/sdk-reference.md
-#   coding-agents/codex/native-connectors.md
-#   coding-agents/codex/skills/{build,test,deploy}-connector/SKILL.md
-#   coding-agents/codex/workflows/{validator,generator,fixer}.md
-#   coding-agents/codex/tools/*
+#   claude-code/sdk-reference.md
+#   claude-code/native-connectors.md
+#   claude-code/agents/connector-{validator,generator,fixer}.md
+#   claude-code/skills/{build,test,deploy}-connector/SKILL.md
+#   claude-code/tools/*
+#   codex/sdk-reference.md
+#   codex/native-connectors.md
+#   codex/skills/{build,test,deploy}-connector/SKILL.md
+#   codex/workflows/{validator,generator,fixer}.md
+#   codex/tools/*
+#   sdk-reference.md                                         (Gemini)
+#   native-connectors.md                                     (Gemini)
+#   agents/connector-{validator,generator,fixer}.md          (Gemini)
+#   skills/{build,test,deploy}-connector/SKILL.md            (Gemini)
+#   tools/*                                                  (Gemini)
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-SDK_REF="coding-agents/sdk-reference.md"
-NATIVE_LIST="coding-agents/native-connectors.md"
-WORKFLOWS_DIR="coding-agents/workflows"
-SKILLS_DIR="coding-agents/skills"
-CLAUDE_DIR="coding-agents/claude-code"
-CODEX_DIR="coding-agents/codex"
-TOOLS_SRC="$CLAUDE_DIR/tools"
+CANONICAL="canonical"
+SDK_REF="$CANONICAL/sdk-reference.md"
+NATIVE_LIST="$CANONICAL/native-connectors.md"
+WORKFLOWS_DIR="$CANONICAL/workflows"
+SKILLS_DIR="$CANONICAL/skills"
+TOOLS_SRC="$CANONICAL/tools"
+CLAUDE_DIR="claude-code"
+CODEX_DIR="codex"
+GEMINI_DIR="."
 SKILLS=(build-connector test-connector deploy-connector)
 
 # --- Helpers ---
 
 banner() {
-  # $1 = canonical source path (relative to repo root)
   cat <<EOF
 <!--
   GENERATED FILE — DO NOT EDIT.
@@ -60,7 +67,6 @@ copy_with_banner() {
   echo "  wrote $dest"
 }
 
-# Claude subagent frontmatter — prepended to each canonical workflow body.
 claude_frontmatter() {
   case "$1" in
     validator)
@@ -105,13 +111,52 @@ EOF
   esac
 }
 
-assemble_claude_agent() {
-  local role="$1"         # validator | generator | fixer
+gemini_frontmatter() {
+  case "$1" in
+    validator)
+      cat <<'EOF'
+---
+name: connector-validator
+description: Research API documentation and gather complete requirements for building a Fivetran connector. Use when researching data sources before code generation.
+---
+EOF
+      ;;
+    generator)
+      cat <<'EOF'
+---
+name: connector-generator
+description: Generate Fivetran connector code from a validated specification. Use after requirements have been gathered.
+---
+EOF
+      ;;
+    fixer)
+      cat <<'EOF'
+---
+name: connector-fixer
+description: Debug and fix errors in a Fivetran connector. Use when tests fail or the user reports connector issues.
+---
+EOF
+      ;;
+    *)
+      echo "Unknown role: $1" >&2
+      exit 1
+      ;;
+  esac
+}
+
+assemble_agent() {
+  local role="$1"        # validator | generator | fixer
+  local target="$2"      # claude | gemini
   local src="$WORKFLOWS_DIR/${role}.md"
-  local dest="$CLAUDE_DIR/agents/connector-${role}.md"
+  local dest
+  case "$target" in
+    claude) dest="$CLAUDE_DIR/agents/connector-${role}.md" ;;
+    gemini) dest="$GEMINI_DIR/agents/connector-${role}.md" ;;
+    *) echo "Unknown target: $target" >&2; exit 1 ;;
+  esac
   mkdir -p "$(dirname "$dest")"
   {
-    claude_frontmatter "$role"
+    "${target}_frontmatter" "$role"
     echo ""
     banner "$src"
     cat "$src"
@@ -145,20 +190,36 @@ copy_skill_with_banner() {
   echo "  wrote $dest"
 }
 
+copy_tools() {
+  local dest_dir="$1"
+  mkdir -p "$dest_dir"
+  for f in "$TOOLS_SRC"/*; do
+    cp "$f" "$dest_dir/$(basename "$f")"
+    echo "  wrote $dest_dir/$(basename "$f")"
+  done
+}
+
 # --- Sync actions ---
 
-echo "Syncing sdk-reference.md into plugins..."
+echo "Syncing sdk-reference.md..."
 copy_with_banner "$SDK_REF" "$CLAUDE_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$CODEX_DIR/sdk-reference.md"
+copy_with_banner "$SDK_REF" "$GEMINI_DIR/sdk-reference.md"
 
-echo "Syncing native-connectors.md into plugins..."
+echo "Syncing native-connectors.md..."
 copy_with_banner "$NATIVE_LIST" "$CLAUDE_DIR/native-connectors.md"
 copy_with_banner "$NATIVE_LIST" "$CODEX_DIR/native-connectors.md"
+copy_with_banner "$NATIVE_LIST" "$GEMINI_DIR/native-connectors.md"
 
 echo "Assembling Claude subagent files..."
-assemble_claude_agent validator
-assemble_claude_agent generator
-assemble_claude_agent fixer
+for role in validator generator fixer; do
+  assemble_agent "$role" claude
+done
+
+echo "Assembling Gemini agent files..."
+for role in validator generator fixer; do
+  assemble_agent "$role" gemini
+done
 
 echo "Copying workflow files into Codex plugin..."
 mkdir -p "$CODEX_DIR/workflows"
@@ -166,19 +227,17 @@ for role in validator generator fixer; do
   copy_with_banner "$WORKFLOWS_DIR/${role}.md" "$CODEX_DIR/workflows/${role}.md"
 done
 
-echo "Syncing canonical skills into plugins..."
+echo "Syncing canonical skills..."
 for skill in "${SKILLS[@]}"; do
   src="$SKILLS_DIR/${skill}/SKILL.md"
   copy_skill_with_banner "$src" "$CLAUDE_DIR/skills/${skill}/SKILL.md"
   copy_skill_with_banner "$src" "$CODEX_DIR/skills/${skill}/SKILL.md"
+  copy_skill_with_banner "$src" "$GEMINI_DIR/skills/${skill}/SKILL.md"
 done
 
-echo "Copying tools into Codex plugin..."
-mkdir -p "$CODEX_DIR/tools"
-for f in "$TOOLS_SRC"/*; do
-  dest="$CODEX_DIR/tools/$(basename "$f")"
-  cp "$f" "$dest"
-  echo "  wrote $dest"
-done
+echo "Copying tools..."
+copy_tools "$CLAUDE_DIR/tools"
+copy_tools "$CODEX_DIR/tools"
+copy_tools "$GEMINI_DIR/tools"
 
 echo "Done."

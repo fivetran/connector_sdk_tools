@@ -1,0 +1,6 @@
+{
+  "name": "fivetran-connector-sdk",
+  "version": "0.03.04.001",
+  "description": "Build, test, and deploy Fivetran connectors with AI assistance",
+  "contextFileName": "GEMINI.md"
+}

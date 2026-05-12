@@ -1,0 +1,4 @@
+description = "Test an existing Fivetran connector locally"
+prompt = """
+Invoke the `test-connector` skill from this extension to test the user's connector locally and surface any errors or warnings.
+"""

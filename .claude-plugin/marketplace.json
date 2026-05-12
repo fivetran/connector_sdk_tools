@@ -10,7 +10,7 @@
       "name": "fivetran-connector-sdk",
       "description": "Build, test, and deploy Fivetran connectors with AI assistance",
       "category": "development",
-      "source": "./coding-agents/claude-code",
+      "source": "./claude-code",
       "homepage": "https://github.com/fivetran/fivetran_csdk_tools"
     }
   ]

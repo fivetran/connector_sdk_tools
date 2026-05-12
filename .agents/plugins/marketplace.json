@@ -8,7 +8,7 @@
       "name": "fivetran-connector-sdk",
       "source": {
         "source": "local",
-        "path": "./coding-agents/codex"
+        "path": "./codex"
       },
       "policy": {
         "installation": "AVAILABLE",

@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Pre-commit hook: ensures generated per-agent files are in sync with
+# canonical sources. Run sync-plugins.sh and fail the commit if it
+# produces any diff.
+#
+# Install once per clone:
+#   git config core.hooksPath .githooks
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+bash scripts/sync-plugins.sh >/dev/null
+
+if ! git diff --quiet; then
+  echo "ERROR: generated files are out of sync with canonical sources." >&2
+  echo "Files that would change:" >&2
+  git diff --name-only >&2
+  echo "" >&2
+  echo "Run 'bash scripts/sync-plugins.sh', stage the changes, and commit again." >&2
+  exit 1
+fi

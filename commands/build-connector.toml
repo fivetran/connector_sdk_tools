@@ -1,0 +1,4 @@
+description = "Build a new Fivetran connector from an API source"
+prompt = """
+Invoke the `build-connector` skill from this extension to guide the user through building a new Fivetran connector. The skill walks through requirements gathering, code generation, local testing, and deployment.
+"""
