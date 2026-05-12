@@ -1,0 +1,45 @@
+commands/deploy-connector.toml
+  a0dcf39ca86b1e8d 1-4
+codex/README.md
+  a0dcf39ca86b1e8d 14,22,24,28,34,36
+claude-code/README.md
+  a0dcf39ca86b1e8d 13,16-17,20,22,28,30,41,64,147
+GEMINI.md
+  a0dcf39ca86b1e8d 1-32
+gemini-extension.json
+  a0dcf39ca86b1e8d 1-6
+README.md
+  a0dcf39ca86b1e8d 1,6,9,11,15-17,20,23,27,32-33,36,38,40-42,44,47,50,52,54-63,65-95,98,100,102,104-113,115,117,119,121-137
+.agents/plugins/marketplace.json
+  a0dcf39ca86b1e8d 11
+commands/test-connector.toml
+  a0dcf39ca86b1e8d 1-4
+.githooks/pre-commit
+  a0dcf39ca86b1e8d 1-23
+commands/build-connector.toml
+  a0dcf39ca86b1e8d 1-4
+scripts/sync-plugins.sh
+  a0dcf39ca86b1e8d 2,6-11,14-28,35-43,114-147,149,152-156,159,193-201,204,207,209,212,215-222,230,235,238-241
+.claude-plugin/marketplace.json
+  a0dcf39ca86b1e8d 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "29e2aef74f422b8a1186bdc434165a72cd9de76d",
+  "prompts": {
+    "a0dcf39ca86b1e8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57be2914-3834-41b3-b062-33fbbc764b16",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Emrah Diril <emrah.diril@fivetran.com>",
+      "messages": [],
+      "total_additions": 294,
+      "total_deletions": 156,
+      "accepted_lines": 288,
+      "overriden_lines": 0
+    }
+  }
+}
