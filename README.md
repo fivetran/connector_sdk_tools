@@ -6,9 +6,20 @@ AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](
 - **A supported coding agent** (Claude Code, Codex CLI, or Gemini CLI — see install matrix below)
 - **Fivetran Connector SDK** — `pip install fivetran-connector-sdk`
 
-## Install
+## Quick Start
 
-Pick the agent you use. Each install uses the agent's own native install/update/uninstall — this repo does not own the lifecycle.
+The fastest path: install the SDK and let `fivetran init` set everything up.
+
+```bash
+pip install fivetran-connector-sdk
+fivetran init
+```
+
+`fivetran init` scaffolds a new connector project and offers to configure a coding agent for you — detecting which of Claude Code, Codex CLI, or Gemini CLI you have installed and running the relevant plugin install command on your behalf. You can also skip the agent setup if you'd rather install it yourself; see the matrix below.
+
+## Install the plugin manually
+
+If you skipped agent setup in `fivetran init`, or want to install the plugin into an existing project, pick your agent below. Each install uses the agent's own native install/update/uninstall — this repo does not own the lifecycle.
 
 ### Claude Code
 
