@@ -1,0 +1,35 @@
+codex/.codex-plugin/plugin.json
+  a0dcf39ca86b1e8d 3
+canonical/skills/build-connector/SKILL.md
+  a0dcf39ca86b1e8d 80,82-85,87,89-91,93,95
+gemini-extension.json
+  a0dcf39ca86b1e8d 3
+claude-code/.claude-plugin/plugin.json
+  a0dcf39ca86b1e8d 4
+codex/AGENTS.md
+  a0dcf39ca86b1e8d 25,27-32,38
+GEMINI.md
+  a0dcf39ca86b1e8d 26,28-33,39
+claude-code/CLAUDE.md
+  a0dcf39ca86b1e8d 26,28-33,39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "c7f13d7988a0b1d086565fd263045add147a772b",
+  "prompts": {
+    "a0dcf39ca86b1e8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57be2914-3834-41b3-b062-33fbbc764b16",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Emrah Diril <emrah.diril@fivetran.com>",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 16,
+      "accepted_lines": 42,
+      "overriden_lines": 0
+    }
+  }
+}
