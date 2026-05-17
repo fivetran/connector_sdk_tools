@@ -27,7 +27,7 @@ Verify the connector is ready:
    - `connector = Connector(update=update, schema=schema)` in global scope
    - `if __name__ == "__main__": connector.debug()` entry point
    - No forbidden patterns (`Dict[str, Any]`, `Generator[op.Operation, ...]`, `op.Operation` in type hints)
-3. **Configuration**: `configuration.json` is valid JSON with string-only values.
+3. **Configuration**: `configuration.json` starts with `ENCRYPTED:`. If it is plaintext JSON, stop and tell the user to enter credentials through `tools/enter_configuration.py` in a separate terminal. Do not read, print, copy, or deploy plaintext credential values.
 
 ## Step 2: Run Final Test
 
@@ -52,6 +52,14 @@ The tool:
 2. Calls `GET /v1/groups` and `GET /v1/groups/{id}/destinations` to discover the user's groups and destinations.
 3. Picks the single group/destination automatically, or prompts the user to choose if more than one exists.
 4. Invokes `fivetran deploy` with the chosen destination and the encrypted configuration (passed via named pipe, never written to disk).
+
+If `deploy_connector.py` exits with "configuration.json is not encrypted", do not continue deployment. Direct the user to run:
+
+```bash
+python <plugin>/tools/enter_configuration.py configuration.json
+```
+
+Then re-run deploy after the user confirms the file is encrypted.
 
 ### Prerequisite: `FIVETRAN_API_KEY`
 

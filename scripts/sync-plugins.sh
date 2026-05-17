@@ -194,6 +194,7 @@ copy_tools() {
   local dest_dir="$1"
   mkdir -p "$dest_dir"
   for f in "$TOOLS_SRC"/*; do
+    [[ -f "$f" ]] || continue
     cp "$f" "$dest_dir/$(basename "$f")"
     echo "  wrote $dest_dir/$(basename "$f")"
   done

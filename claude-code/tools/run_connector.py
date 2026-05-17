@@ -150,18 +150,24 @@ def main():
 
     content = config_path.read_text().strip()
 
-    # Check if encrypted
+    # Refuse to run with plaintext config — credentials must be encrypted at rest.
     if not content.startswith(ENCRYPTED_PREFIX):
-        print("Warning: configuration.json is not encrypted.")
-        print("Running with plaintext config...")
-        config = json.loads(content)
-    else:
-        try:
-            config = decrypt_config(content)
-        except InvalidToken:
-            print("Error: Failed to decrypt configuration.")
-            print("Make sure FIVETRAN_CSDK_MASTER_SECRET matches what was used to encrypt.")
-            sys.exit(1)
+        print("Error: configuration.json is not encrypted.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Credentials must be entered via the encryption script — never edited", file=sys.stderr)
+        print("by hand or pasted in chat. Run, in a separate terminal:", file=sys.stderr)
+        print("", file=sys.stderr)
+        print(f"  python {SCRIPT_DIR}/enter_configuration.py {config_path}", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Then re-run this command.", file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        config = decrypt_config(content)
+    except InvalidToken:
+        print("Error: Failed to decrypt configuration.", file=sys.stderr)
+        print("Make sure FIVETRAN_CSDK_MASTER_SECRET matches what was used to encrypt.", file=sys.stderr)
+        sys.exit(1)
 
     # Activate venv if present
     venv_activate = connector_dir / ".venv" / "bin" / "activate"

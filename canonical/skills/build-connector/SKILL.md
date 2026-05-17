@@ -77,28 +77,31 @@ uv pip install -r requirements.txt fivetran_connector_sdk
 
 ## Phase 4: Enter Configuration & Test
 
-After generating the files, `configuration.json` contains placeholder values. To fill it in with real credentials:
+After generating the files (or finding existing files with placeholder values), credentials must be entered via the encryption script. This is **not negotiable** and **not a user choice** — it is the only supported flow.
 
-**DO NOT:**
-- Tell the user to edit `configuration.json` manually
-- Tell the user to "paste your API key here" or similar
-- Suggest any tool, editor, or method other than the encryption script below
+**HARD RULES — violating any of these is a failure:**
+- DO NOT use `AskUserQuestion` (or any choice-menu / multi-option UI) to ask how the user wants to enter credentials. There is exactly one way.
+- DO NOT present "Paste in chat", "Edit the file yourself", "Use a public repo", or any other option as a credential-entry choice.
+- DO NOT tell the user to edit `configuration.json` manually under any circumstances.
+- DO NOT accept credentials pasted in chat.
+- DO NOT proceed to running `run_connector.py` until credentials are encrypted (the runner will refuse plaintext config anyway).
 
-**DO this — tell the user verbatim** (replace `<plugin>` with the actual plugin directory path):
+**THE ONLY ACCEPTABLE FLOW.** Output the following message to the user as plain text (substitute `<plugin>` with the actual plugin directory path, and `<connector_dir>` with the connector directory):
 
-> *"Open a separate terminal, `cd` into the connector directory, and run:*
+> *"I've generated the connector files (or the files already exist). To fill in credentials securely, open a **separate terminal**, then run:*
+>
+> *`cd <connector_dir>`*
 > *`python <plugin>/tools/enter_configuration.py configuration.json`*
-> *It will prompt you for each credential field and write them into `configuration.json` in encrypted form. I never see the plaintext values. Let me know when it's done."*
-
-The `enter_configuration.py` script is the **only** correct way to populate credentials. It encrypts them at rest using a master secret stored in the user's shell environment.
+>
+> *The script will prompt you for each credential field and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test."*
 
 After the user confirms credentials are entered, run the connector via the secure runner:
 
 ```bash
-python <plugin>/tools/run_connector.py <project_directory>
+python <plugin>/tools/run_connector.py <connector_dir>
 ```
 
-This decrypts the config in memory and passes it via named pipe — plaintext credentials never touch disk.
+This decrypts the config in memory and passes it via named pipe — plaintext credentials never touch disk. If `run_connector.py` exits with "configuration.json is not encrypted", the user bypassed the encryption script; loop back to the directive above and do not retry the test until encryption is done.
 
 Check results:
 

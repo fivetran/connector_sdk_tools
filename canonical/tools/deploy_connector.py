@@ -232,21 +232,27 @@ def main():
         print(f"Error: configuration.json not found in {connector_dir}")
         sys.exit(1)
 
-    api_key = load_api_key()
-    destination_id = discover_destination(api_key)
-
     content = config_path.read_text().strip()
     if not content.startswith(ENCRYPTED_PREFIX):
-        print("Warning: configuration.json is not encrypted.")
-        print("Deploying with plaintext config...")
-        config = json.loads(content)
-    else:
-        try:
-            config = decrypt_config(content)
-        except InvalidToken:
-            print("Error: Failed to decrypt configuration.")
-            print("Make sure FIVETRAN_CSDK_MASTER_SECRET matches what was used to encrypt.")
-            sys.exit(1)
+        print("Error: configuration.json is not encrypted.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Credentials must be entered via the encryption script — never edited", file=sys.stderr)
+        print("by hand or pasted in chat. Run, in a separate terminal:", file=sys.stderr)
+        print("", file=sys.stderr)
+        print(f"  python {SCRIPT_DIR}/enter_configuration.py {config_path}", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Then re-run this command.", file=sys.stderr)
+        sys.exit(2)
+
+    try:
+        config = decrypt_config(content)
+    except InvalidToken:
+        print("Error: Failed to decrypt configuration.", file=sys.stderr)
+        print("Make sure FIVETRAN_CSDK_MASTER_SECRET matches what was used to encrypt.", file=sys.stderr)
+        sys.exit(1)
+
+    api_key = load_api_key()
+    destination_id = discover_destination(api_key)
 
     venv_activate = connector_dir / ".venv" / "bin" / "activate"
 
