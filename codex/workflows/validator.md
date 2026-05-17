@@ -178,6 +178,8 @@ Stay focused on connector specs. Do NOT ask about how to obtain credentials or a
 
 **Be concise. No status updates on your research.**
 
+**Do NOT write the specification to a file** (e.g., `connector_spec.md`). It is transient context — return it inline so the generator can consume it in the same conversation. Persisted spec files go stale once the connector evolves.
+
 **Option 1 — Questions needed:** Output ONLY your questions as a numbered list.
 
 **Option 2 — Ready for generation (with discovery):**
