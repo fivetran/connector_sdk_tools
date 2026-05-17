@@ -83,17 +83,22 @@ uv pip install -r requirements.txt fivetran_connector_sdk
 
 ## Phase 4: Enter Configuration & Test
 
-**IMPORTANT: Never ask the user to paste credentials in chat or put them in `configuration.json` as plain text.**
+After generating the files, `configuration.json` contains placeholder values. To fill it in with real credentials:
 
-Direct the user to use the secure configuration tool in a **separate terminal**:
+**DO NOT:**
+- Tell the user to edit `configuration.json` manually
+- Tell the user to "paste your API key here" or similar
+- Suggest any tool, editor, or method other than the encryption script below
 
-```
-python <plugin>/tools/enter_configuration.py configuration.json
-```
+**DO this — tell the user verbatim** (replace `<plugin>` with the actual plugin directory path):
 
-This encrypts the credentials at rest so the AI cannot see them.
+> *"Open a separate terminal, `cd` into the connector directory, and run:*
+> *`python <plugin>/tools/enter_configuration.py configuration.json`*
+> *It will prompt you for each credential field and write them into `configuration.json` in encrypted form. I never see the plaintext values. Let me know when it's done."*
 
-After the user confirms credentials are entered, run the connector:
+The `enter_configuration.py` script is the **only** correct way to populate credentials. It encrypts them at rest using a master secret stored in the user's shell environment.
+
+After the user confirms credentials are entered, run the connector via the secure runner:
 
 ```bash
 python <plugin>/tools/run_connector.py <project_directory>
