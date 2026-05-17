@@ -17,15 +17,17 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
-try:
-    from cryptography.fernet import Fernet
-except ImportError:
-    print("Error: Missing required dependencies.")
-    print(f"\nInstall with:\n  pip install -r {SCRIPT_DIR}/requirements.txt")
-    sys.exit(1)
-
-
 ENCRYPTED_PREFIX = "ENCRYPTED:"
+
+
+def get_fernet():
+    try:
+        from cryptography.fernet import Fernet
+    except ImportError:
+        print("Error: Missing required dependencies.")
+        print(f"\nInstall with:\n  pip install -r {SCRIPT_DIR}/requirements.txt")
+        sys.exit(1)
+    return Fernet
 
 
 def get_shell_config_file() -> str:
@@ -87,6 +89,7 @@ def get_encryption_key(username: str = "local-user") -> bytes:
 
 def encrypt_config(config: dict) -> str:
     """Encrypt a configuration dictionary."""
+    Fernet = get_fernet()
     key = get_encryption_key()
     fernet = Fernet(key)
     json_bytes = json.dumps(config, indent=2).encode('utf-8')
@@ -95,6 +98,13 @@ def encrypt_config(config: dict) -> str:
 
 
 def main():
+    if not sys.stdin.isatty():
+        print("Error: enter_configuration.py must be run in a real terminal.")
+        print("")
+        print("Open a separate terminal and run this command there.")
+        print("Do not run this script from an AI chat tool or non-interactive shell.")
+        sys.exit(2)
+
     print("\n=== Fivetran Connector Configuration ===\n")
 
     # Determine config file path

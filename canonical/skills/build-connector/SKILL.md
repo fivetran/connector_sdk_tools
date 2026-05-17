@@ -84,16 +84,21 @@ After generating the files (or finding existing files with placeholder values), 
 - DO NOT present "Paste in chat", "Edit the file yourself", "Use a public repo", or any other option as a credential-entry choice.
 - DO NOT tell the user to edit `configuration.json` manually under any circumstances.
 - DO NOT accept credentials pasted in chat.
+- DO NOT run `enter_configuration.py` yourself. The user must run it in their own separate terminal.
 - DO NOT proceed to running `run_connector.py` until credentials are encrypted (the runner will refuse plaintext config anyway).
 
-**THE ONLY ACCEPTABLE FLOW.** Output the following message to the user as plain text (substitute `<plugin>` with the actual plugin directory path, and `<connector_dir>` with the connector directory):
+**THE ONLY ACCEPTABLE FLOW.** Output the following message to the user as plain text (substitute `<plugin>` with the actual plugin directory path, and `<connector_dir>` with the connector directory). Use one fenced `bash` block for the commands. Quote both paths. Do not insert a line break inside the `python` command.
 
-> *"I've generated the connector files (or the files already exist). To fill in credentials securely, open a **separate terminal**, then run:*
->
-> *`cd <connector_dir>`*
-> *`python <plugin>/tools/enter_configuration.py configuration.json`*
->
-> *The script will prompt you for each credential field and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test."*
+````text
+I've generated the connector files (or the files already exist). To fill in credentials securely, open a separate terminal, then run:
+
+```bash
+cd "<connector_dir>"
+python "<plugin>/tools/enter_configuration.py" "configuration.json"
+```
+
+The script will prompt you for each credential field and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
+````
 
 After the user confirms credentials are entered, run the connector via the secure runner:
 

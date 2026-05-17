@@ -51,8 +51,10 @@ Do not manually inspect `configuration.json`. Do not read it to determine whethe
 - DO NOT present "I'll update configuration.json myself", "Tell me the values to use", "Use values already in place", or any other credential-entry choice.
 - DO NOT ask the user to paste credentials in chat.
 - DO NOT tell the user to edit `configuration.json` manually.
+- DO NOT run `enter_configuration.py` yourself. The user must run it in their own separate terminal.
 - DO NOT print placeholder values, plaintext values, tokens, repository lists, usernames, passwords, or API keys from `configuration.json`.
 - DO NOT parse, quote, summarize, or expose any values from `configuration.json`.
+- DO NOT list field names from `configuration.json`.
 - DO NOT ask any credential-related question before running the secure runner.
 
 Run the secure runner immediately:
@@ -61,16 +63,18 @@ Run the secure runner immediately:
 python <plugin>/tools/run_connector.py <connector_directory>
 ```
 
-If the runner exits with "configuration.json is not encrypted", relay this exact secure flow as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths), then stop and wait:
+If the runner exits with "configuration.json is not encrypted", relay this exact secure flow as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths), then stop and wait. Use one fenced `bash` block for the commands. Quote both paths. Do not insert a line break inside the `python` command.
 
-```text
+````text
 I can't run the connector until configuration.json is encrypted. To enter credentials securely, open a separate terminal, then run:
 
-cd <connector_directory>
-python <plugin>/tools/enter_configuration.py configuration.json
+```bash
+cd "<connector_directory>"
+python "<plugin>/tools/enter_configuration.py" "configuration.json"
+```
 
 The script will prompt for the configuration fields and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
-```
+````
 
 Do not use a choice UI for this. There is no alternate credential-entry flow.
 
