@@ -1,0 +1,33 @@
+claude-code/commands/deploy-connector.md
+  a0dcf39ca86b1e8d 1-5
+claude-code/commands/build-connector.md
+  a0dcf39ca86b1e8d 1-8
+claude-code/CLAUDE.md
+  a0dcf39ca86b1e8d 9-11,17-19,21-22
+GEMINI.md
+  a0dcf39ca86b1e8d 9-11,17-19,21-22
+README.md
+  a0dcf39ca86b1e8d 65-69
+claude-code/commands/test-connector.md
+  a0dcf39ca86b1e8d 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "230cbcd12fc170b992a9e787f76b5e80b4b16ac4",
+  "prompts": {
+    "a0dcf39ca86b1e8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57be2914-3834-41b3-b062-33fbbc764b16",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Emrah Diril <emrah.diril@fivetran.com>",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 21,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    }
+  }
+}
