@@ -73,13 +73,13 @@ def schema(configuration: dict):
     return [{"table": "table_name", "primary_key": ["key"]}]
 ```
 
-### 2. Logging - CRITICAL: Use EXACT method names
-- **CORRECT:** `log.info()`, `log.warning()`, `log.severe()`, `log.fine()`
-- **WRONG:** `log.error()` (does NOT exist in Fivetran Connector SDK)
+### 2. Logging - Use EXACT method names
+- **Preferred (Python-style):** `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()`
+- **Deprecated (Java-style):** `log.fine()`, `log.severe()` — still work for backward compatibility, but new code should use Python-style
 
 ```python
-# FINE - Detailed debugging information
-log.fine(f'Processing record: {record_id}')
+# DEBUG - Detailed debugging information
+log.debug(f'Processing record: {record_id}')
 
 # INFO - Status updates, cursors, progress
 log.info(f'Current cursor: {current_cursor}')
@@ -87,8 +87,11 @@ log.info(f'Current cursor: {current_cursor}')
 # WARNING - Potential issues, rate limits
 log.warning(f'Rate limit approaching: {remaining_calls}')
 
-# SEVERE - Errors, failures, critical issues
-log.severe(f"Error details: {error_details}")
+# ERROR - Errors, failures
+log.error(f"Error details: {error_details}")
+
+# CRITICAL - Critical failures
+log.critical(f"Critical failure: {details}")
 ```
 
 ### 3. Type Hints - CRITICAL: Use simple built-in types only
@@ -102,7 +105,7 @@ log.severe(f"Error details: {error_details}")
 Use direct operation calls:
 
 ```python
-# Upsert without yield - direct operation
+# Upsert — direct operation
 op.upsert("table_name", processed_data)
 
 # Checkpoint with state for incremental syncs
@@ -259,7 +262,7 @@ Before completing:
 - [ ] Valid Python syntax (read back and verify)
 - [ ] Both `update()` and `schema()` present
 - [ ] `connector = Connector(...)` in global scope
-- [ ] No forbidden patterns (`log.error()`, `Dict[str, Any]`, `Generator`, yield with ops)
+- [ ] No forbidden patterns (`Dict[str, Any]`, `Generator[...]`, `op.Operation` in type hints, `yield` with operations)
 - [ ] configuration.json is valid flat JSON with string values only
 
 ## Handling Follow-Up Revisions

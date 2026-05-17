@@ -20,7 +20,7 @@ Verify the connector is ready:
    - Both `schema()` and `update()` functions present
    - `connector = Connector(update=update, schema=schema)` in global scope
    - `if __name__ == "__main__": connector.debug()` entry point
-   - No forbidden patterns (`log.error()`, `Dict[str, Any]`, `Generator`)
+   - No forbidden patterns (`Dict[str, Any]`, `Generator[op.Operation, ...]`, `op.Operation` in type hints)
 3. **Configuration**: `configuration.json` is valid JSON with string-only values.
 
 ## Step 2: Run Final Test
@@ -66,10 +66,11 @@ Reference: https://fivetran.com/docs/connector-sdk/working-with-connector-sdk#de
 
 ## Alternative: Manual Packaging
 
-If the user prefers manual deployment:
+If the user prefers manual deployment (e.g., wants to inspect the package before upload):
 
-1. Create a ZIP file:
+1. Build the deployable archive:
    ```bash
-   zip -r connector-package.zip connector.py configuration.json requirements.txt README.md
+   fivetran package
    ```
+   This produces a ZIP containing `connector.py`, `configuration.json`, `requirements.txt` (or `pyproject.toml`), `README.md`, and any additional source files, respecting `.gitignore`.
 2. Upload via the Fivetran dashboard.

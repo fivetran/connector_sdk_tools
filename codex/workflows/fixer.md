@@ -94,9 +94,9 @@ def schema(configuration: dict):
     return [{"table": "table_name", "primary_key": ["key"]}]
 ```
 
-### Logging - CRITICAL: Use EXACT method names
-- **CORRECT:** `log.info()`, `log.warning()`, `log.severe()`, `log.fine()`
-- **WRONG:** `log.error()` (does NOT exist)
+### Logging - Use EXACT method names
+- **Preferred (Python-style):** `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()`
+- **Deprecated (Java-style):** `log.fine()`, `log.severe()` — still work but should not be used in new code
 
 ### Type Hints - CRITICAL: Use simple built-in types only
 - **CORRECT:** `def update(configuration: dict, state: dict):`
@@ -119,11 +119,11 @@ op.delete(table, keys)
 
 | Pattern | Fix |
 |---------|-----|
-| `log.error()` | Replace with `log.severe()` |
+| `log.severe()`, `log.fine()` in new code | Prefer `log.error()` / `log.debug()` (Java-style still works but is deprecated) |
 | `Dict[str, Any]`, `Generator[...]` | Use simple `dict`, `list` |
 | `connector` not in global scope | Move to module level |
 | Data types in schema | Remove, keep only table names and primary keys |
-| `yield op.upsert(...)` | Remove yield, call directly |
+| `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
 
 ## EXAMPLE CATEGORIZATION GUIDE

@@ -17,8 +17,12 @@
 | `fivetran init` | Create new project from template |
 | `fivetran init --template connectors/<name>` | Start from community connector |
 | `fivetran debug` | Test locally, produces `warehouse.db` (DuckDB) |
-| `fivetran deploy` | Deploy to Fivetran |
+| `fivetran package` | Build a deployable ZIP without uploading |
+| `fivetran deploy` | Package and deploy to Fivetran |
+| `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.13) |
+| `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent |
 | `fivetran reset --force` | Reset local state (clear warehouse.db) |
+| `fivetran version` | Print the installed SDK version |
 
 **Complete CLI reference**: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-commands
 
@@ -28,8 +32,9 @@
 
 - **Memory:** 1 GB RAM
 - **CPU:** 0.5 vCPUs
-- **Python Versions:** 3.10.18, 3.11.13, 3.12.11, 3.13.7, 3.14.0
-  - Check https://fivetran.com/docs/connector-sdk/technical-reference#sdkruntimeenvironment for latest
+- **Python Versions:** 3.10.18, 3.11.13, 3.12.11, **3.13.7 (default)**, 3.14.0
+  - Specify a non-default version with `fivetran deploy --python <version>`
+  - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
 - **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`
 
 ## Standard Connector Pattern
@@ -57,15 +62,17 @@ if __name__ == "__main__":
 ## Critical Rules
 
 ### Logging — Use EXACT Method Names
-- **CORRECT:** `log.fine()`, `log.info()`, `log.warning()`, `log.severe()`
-- **WRONG:** `log.error()` — does NOT exist in the SDK
+
+- **Preferred (Python-style):** `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()`
+- **Deprecated (Java-style):** `log.fine()`, `log.severe()` — still work for backward compatibility, but new code should use the Python-style methods
 
 | Level | Use | Production behavior |
 |-------|-----|-------------------|
-| `log.fine()` | Debug detail | Not emitted |
+| `log.debug()` | Debug detail | Not emitted |
 | `log.info()` | Status updates, progress | Rate-limited to 1500/min |
 | `log.warning()` | Retries, non-critical issues | Always emitted |
-| `log.severe()` | Errors before raising | Always emitted |
+| `log.error()` | Errors before raising | Always emitted |
+| `log.critical()` | Critical failures | Always emitted |
 
 Never log per-record. Log at milestones (per table, every 250K records).
 
@@ -87,9 +94,9 @@ def schema(configuration: dict):
     ]
 ```
 
-### Operations — No Yield Required
+### Operations
 
-All operations are direct calls. Do NOT use `yield`.
+Call operations directly.
 
 | Operation | Description |
 |-----------|-------------|
@@ -98,13 +105,6 @@ All operations are direct calls. Do NOT use `yield`.
 | `op.delete(table="t", keys={"id": "123"})` | Delete a record |
 | `op.checkpoint(state=state)` | Save sync progress |
 
-**Deprecated (do NOT use):**
-```python
-# WRONG — old generator pattern
-def update(configuration: dict, state: dict) -> Generator:
-    yield op.upsert(table="t", data=record)
-```
-
 ### configuration.json Rules
 - **Flat key/value pairs only** — no nested objects or arrays
 - **All values must be strings**
@@ -112,9 +112,11 @@ def update(configuration: dict, state: dict) -> Generator:
 - **Do NOT include** code settings (pagination_type, page_size) — hardcode in connector.py
 - Multiple items (repos, accounts) = separate connector deployments, NOT array values
 
-### requirements.txt Rules
+### Dependency Declaration
+- Use `requirements.txt` (traditional) or `pyproject.toml` (added in SDK v2.8.1) — pick one
 - Explicit versions for all dependencies
 - Do NOT include `requests` or `fivetran_connector_sdk` (pre-installed)
+- Use `.gitignore` to exclude files from deployment (replaces the older `.ftignore`)
 
 ## Advanced Patterns
 
@@ -128,7 +130,7 @@ for attempt in range(1, 4):
         r = session.get(url, timeout=120)
         if r.status_code == 429:
             if attempt == 3:
-                log.severe(f"Rate limited after 3 attempts: {url}")
+                log.error(f"Rate limited after 3 attempts: {url}")
                 raise RuntimeError(f"HTTP 429: {url}")
             retry_after = int(r.headers.get("Retry-After", 60))
             log.warning(f"Rate limited, retrying in {retry_after}s")
@@ -136,20 +138,20 @@ for attempt in range(1, 4):
             continue
         if r.status_code >= 500:
             if attempt == 3:
-                log.severe(f"HTTP {r.status_code} after 3 attempts: {url}")
+                log.error(f"HTTP {r.status_code} after 3 attempts: {url}")
                 raise RuntimeError(f"HTTP {r.status_code}: {url}")
             log.warning(f"HTTP {r.status_code}, attempt {attempt}/3, retrying in 30s")
             time.sleep(30)
             continue
         if r.status_code >= 400:
-            log.severe(f"HTTP {r.status_code}: {url}")
+            log.error(f"HTTP {r.status_code}: {url}")
             raise RuntimeError(f"HTTP {r.status_code}: {url}")
         return r
     except (requests.exceptions.ConnectionError,
             requests.exceptions.Timeout,
             requests.exceptions.ChunkedEncodingError) as e:
         if attempt == 3:
-            log.severe(f"Failed after 3 attempts: {url}", e)
+            log.error(f"Failed after 3 attempts: {url}", e)
             raise
         log.warning(f"Attempt {attempt}/3, retrying in 30s")
         time.sleep(30)
