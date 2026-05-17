@@ -29,6 +29,8 @@ When the user needs to enter credentials, do NOT:
 - Tell them to edit `configuration.json` directly
 - Ask them to paste credentials in chat
 - Suggest any other entry method
+- Use `AskUserQuestion`, checkbox prompts, choice menus, or multi-option UIs for credential entry
+- Offer options such as "I'll update configuration.json myself", "Tell me the values to use", or "Use values already in place"
 
 ALWAYS direct them to run, in a separate terminal:
 
@@ -37,3 +39,5 @@ python <plugin_dir>/tools/enter_configuration.py configuration.json
 ```
 
 This script prompts for each credential field and writes the values to `configuration.json` in **encrypted** form. The AI never sees plaintext values. The `run_connector.py` tool decrypts them in memory via named pipe at runtime — plaintext credentials never touch disk.
+
+If `configuration.json` is not encrypted, stop and require `enter_configuration.py`. Do not print, quote, or summarize values from the file.

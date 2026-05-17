@@ -44,16 +44,27 @@ uv pip install -r requirements.txt fivetran_connector_sdk
 
 ## Step 3: Check Configuration
 
-Read `configuration.json`. Check if encrypted (starts with `ENCRYPTED:`) or has placeholder values.
+Check whether `configuration.json` starts with `ENCRYPTED:`. Do not print, quote, summarize, or expose any configuration values.
 
-**If NOT encrypted (plain JSON with placeholders):**
-Tell the user to enter credentials securely in a separate terminal:
+**HARD RULES — violating any of these is a failure:**
+- DO NOT use `AskUserQuestion` (or any checkbox / choice-menu / multi-option UI) to ask how the user wants to enter credentials. There is exactly one way.
+- DO NOT present "I'll update configuration.json myself", "Tell me the values to use", "Use values already in place", or any other credential-entry choice.
+- DO NOT ask the user to paste credentials in chat.
+- DO NOT tell the user to edit `configuration.json` manually.
+- DO NOT print placeholder values, plaintext values, tokens, repository lists, usernames, passwords, or API keys from `configuration.json`.
+- DO NOT run `run_connector.py` until `configuration.json` is encrypted.
+
+**If NOT encrypted:**
+Stop immediately. Output this message as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths):
 
 ```
+I can't run the connector until configuration.json is encrypted. To enter credentials securely, open a separate terminal, then run:
+
+cd <connector_directory>
 python <plugin>/tools/enter_configuration.py configuration.json
-```
 
-This encrypts credentials so the AI cannot see them. Do NOT paste credentials directly into `configuration.json` or this chat.
+The script will prompt for the configuration fields and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
+```
 
 **STOP and WAIT** for the user to confirm before proceeding.
 
