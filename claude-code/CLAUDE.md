@@ -41,3 +41,5 @@ python <plugin_dir>/tools/enter_configuration.py configuration.json
 This script prompts for each credential field and writes the values to `configuration.json` in **encrypted** form. The AI never sees plaintext values. The `run_connector.py` tool decrypts them in memory via named pipe at runtime — plaintext credentials never touch disk.
 
 If `configuration.json` is not encrypted, stop and require `enter_configuration.py`. Do not print, quote, or summarize values from the file.
+
+For testing, do not inspect `configuration.json` before running. Run `tools/run_connector.py` as the only credential gate. If it reports that the file is not encrypted, relay the `enter_configuration.py` command and stop. Do not ask how the user wants to provide test credentials.

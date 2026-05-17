@@ -27,7 +27,7 @@ Example: "Which connector would you like to test? I found: github_connector, str
 
 Check that required files exist in the connector directory:
 - `connector.py` — main implementation
-- `configuration.json` — credentials and settings
+- `configuration.json` — encrypted credentials and settings
 - `requirements.txt` — dependencies
 
 If any are missing, inform the user and stop.
@@ -42,9 +42,9 @@ source .venv/bin/activate
 uv pip install -r requirements.txt fivetran_connector_sdk
 ```
 
-## Step 3: Check Configuration
+## Step 3: Credential Gate
 
-Check whether `configuration.json` starts with `ENCRYPTED:`. Do not print, quote, summarize, or expose any configuration values.
+Do not manually inspect `configuration.json`. Do not read it to determine whether values are placeholders. The secure runner is the only configuration gate.
 
 **HARD RULES — violating any of these is a failure:**
 - DO NOT use `AskUserQuestion` (or any checkbox / choice-menu / multi-option UI) to ask how the user wants to enter credentials. There is exactly one way.
@@ -52,12 +52,18 @@ Check whether `configuration.json` starts with `ENCRYPTED:`. Do not print, quote
 - DO NOT ask the user to paste credentials in chat.
 - DO NOT tell the user to edit `configuration.json` manually.
 - DO NOT print placeholder values, plaintext values, tokens, repository lists, usernames, passwords, or API keys from `configuration.json`.
-- DO NOT run `run_connector.py` until `configuration.json` is encrypted.
+- DO NOT parse, quote, summarize, or expose any values from `configuration.json`.
+- DO NOT ask any credential-related question before running the secure runner.
 
-**If NOT encrypted:**
-Stop immediately. Output this message as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths):
+Run the secure runner immediately:
 
+```bash
+python <plugin>/tools/run_connector.py <connector_directory>
 ```
+
+If the runner exits with "configuration.json is not encrypted", relay this exact secure flow as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths), then stop and wait:
+
+```text
 I can't run the connector until configuration.json is encrypted. To enter credentials securely, open a separate terminal, then run:
 
 cd <connector_directory>
@@ -66,13 +72,11 @@ python <plugin>/tools/enter_configuration.py configuration.json
 The script will prompt for the configuration fields and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
 ```
 
-**STOP and WAIT** for the user to confirm before proceeding.
-
-**If encrypted:** proceed to Step 4.
+Do not use a choice UI for this. There is no alternate credential-entry flow.
 
 ## Step 4: Run the Connector
 
-Use the secure runner:
+If Step 3 already ran the secure runner and it succeeded, do not run it again. If the user returned after encrypting credentials, run the secure runner:
 
 ```bash
 python <plugin>/tools/run_connector.py <connector_directory>
