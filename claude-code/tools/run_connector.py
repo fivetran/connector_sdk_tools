@@ -19,15 +19,21 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
-try:
-    from cryptography.fernet import Fernet, InvalidToken
-except ImportError:
-    print("Error: Missing required dependencies.")
-    print(f"\nInstall with:\n  pip install -r {SCRIPT_DIR}/requirements.txt")
-    sys.exit(1)
-
-
 ENCRYPTED_PREFIX = "ENCRYPTED:"
+
+
+class DecryptionFailed(Exception):
+    """Raised when encrypted configuration cannot be decrypted."""
+
+
+def get_fernet():
+    try:
+        from cryptography.fernet import Fernet, InvalidToken
+    except ImportError:
+        print("Error: Missing required dependencies.")
+        print(f"\nInstall with:\n  pip install -r {SCRIPT_DIR}/requirements.txt")
+        sys.exit(1)
+    return Fernet, InvalidToken
 
 
 def get_encryption_key(username: str = "local-user") -> bytes:
@@ -78,13 +84,17 @@ def get_encryption_key(username: str = "local-user") -> bytes:
 
 def decrypt_config(encrypted_content: str) -> dict:
     """Decrypt an encrypted configuration string."""
+    Fernet, InvalidToken = get_fernet()
     key = get_encryption_key()
     fernet = Fernet(key)
 
     if encrypted_content.startswith(ENCRYPTED_PREFIX):
         encrypted_content = encrypted_content[len(ENCRYPTED_PREFIX):]
 
-    decrypted_bytes = fernet.decrypt(encrypted_content.encode('utf-8'))
+    try:
+        decrypted_bytes = fernet.decrypt(encrypted_content.encode('utf-8'))
+    except InvalidToken as exc:
+        raise DecryptionFailed from exc
     return json.loads(decrypted_bytes.decode('utf-8'))
 
 
@@ -164,7 +174,7 @@ def main():
 
     try:
         config = decrypt_config(content)
-    except InvalidToken:
+    except DecryptionFailed:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
         print("Make sure FIVETRAN_CSDK_MASTER_SECRET matches what was used to encrypt.", file=sys.stderr)
         sys.exit(1)
