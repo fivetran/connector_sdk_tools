@@ -1,0 +1,23 @@
+canonical/workflows/validator.md
+  a0dcf39ca86b1e8d 175-176
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "80684d6915e2a7ea114ef9c22da54f7bf959be16",
+  "prompts": {
+    "a0dcf39ca86b1e8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "57be2914-3834-41b3-b062-33fbbc764b16",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Emrah Diril <emrah.diril@fivetran.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
