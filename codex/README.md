@@ -22,12 +22,12 @@ See the [top-level README](../README.md#install) for the full install matrix. Qu
 2. Add the marketplace and install:
    ```bash
    codex plugin marketplace add fivetran/fivetran_csdk_tools
-   codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
+   codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
    ```
 
 3. Enable the plugin in `~/.codex/config.toml`:
    ```toml
-   [plugins."fivetran-connector-sdk@fivetran-connector-sdk-tools"]
+   [plugins."fivetran-connector-sdk@fivetran-connector-sdk-ai"]
    enabled = true
    ```
 

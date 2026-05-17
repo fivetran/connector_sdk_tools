@@ -1,5 +1,5 @@
 {
-  "name": "fivetran-connector-sdk-tools",
+  "name": "fivetran-connector-sdk-ai",
   "description": "AI-powered tools for building, testing, and deploying Fivetran connectors",
   "owner": {
     "name": "Fivetran",

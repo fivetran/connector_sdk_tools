@@ -25,14 +25,14 @@ If you skipped agent setup in `fivetran init`, or want to install the plugin int
 
 ```bash
 claude plugin marketplace add fivetran/fivetran_csdk_tools
-claude plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
+claude plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 Or from inside a Claude Code session:
 
 ```
 /plugin marketplace add fivetran/fivetran_csdk_tools
-/plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
+/plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 See [`claude-code/README.md`](claude-code/README.md) for the full tutorial.
@@ -41,7 +41,7 @@ See [`claude-code/README.md`](claude-code/README.md) for the full tutorial.
 
 ```bash
 codex plugin marketplace add fivetran/fivetran_csdk_tools
-codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
+codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 Plugins must also be enabled in `~/.codex/config.toml`. See [`codex/README.md`](codex/README.md) for the full setup.

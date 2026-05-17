@@ -14,14 +14,14 @@ See the [top-level README](../README.md#install) for the full install matrix. Qu
 
 ```bash
 claude plugin marketplace add fivetran/fivetran_csdk_tools
-claude plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
+claude plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 Or from inside a Claude Code session:
 
 ```
 /plugin marketplace add fivetran/fivetran_csdk_tools
-/plugin install fivetran-connector-sdk@fivetran-connector-sdk-tools
+/plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 ### Post-installation

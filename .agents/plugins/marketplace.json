@@ -1,5 +1,5 @@
 {
-  "name": "fivetran-connector-sdk-tools",
+  "name": "fivetran-connector-sdk-ai",
   "interface": {
     "displayName": "Fivetran Connector SDK Tools"
   },
