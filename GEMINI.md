@@ -6,20 +6,20 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 
 | Command | When to use |
 |---------|-------------|
-| `/build-connector` | User wants to create a new connector |
-| `/test-connector` | User wants to test an existing connector |
-| `/deploy-connector` | User wants to deploy to Fivetran |
+| `/fivetran-connector-sdk:build-connector` | User wants to create a new connector |
+| `/fivetran-connector-sdk:test-connector` | User wants to test an existing connector |
+| `/fivetran-connector-sdk:deploy-connector` | User wants to deploy to Fivetran |
 
 ## Routing
 
 | User says | Action |
 |-----------|--------|
-| "Build/create a connector for X" | Run `/build-connector` |
-| "Help me connect to [data source]" | Run `/build-connector` |
-| "Test my connector" | Run `/test-connector` |
+| "Build/create a connector for X" | Run `/fivetran-connector-sdk:build-connector` |
+| "Help me connect to [data source]" | Run `/fivetran-connector-sdk:build-connector` |
+| "Test my connector" | Run `/fivetran-connector-sdk:test-connector` |
 | "I'm getting an error..." / "fix my connector" / "help me change X" | Invoke the `connector-fixer` agent with the error details and user context. Do not handle code fixes in the main thread. |
-| "Deploy my connector" | Run `/deploy-connector` |
-| "I already have a connector, help me test/modify it" | Use `/test-connector`, or invoke the `connector-fixer` agent for code changes |
+| "Deploy my connector" | Run `/fivetran-connector-sdk:deploy-connector` |
+| "I already have a connector, help me test/modify it" | Use `/fivetran-connector-sdk:test-connector`, or invoke the `connector-fixer` agent for code changes |
 
 ## Credential Security
 

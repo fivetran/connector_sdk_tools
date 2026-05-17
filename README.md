@@ -62,11 +62,11 @@ gemini extensions install https://github.com/fivetran/fivetran_csdk_tools --cons
 
 Once installed, in your connector project directory:
 
-| Command | Purpose |
-|---------|---------|
-| `/build-connector` | Research an API and generate a new connector |
-| `/test-connector` | Run and validate an existing connector locally |
-| `/deploy-connector` | Deploy a connector to your Fivetran account |
+| Command (Claude Code / Gemini CLI) | Codex CLI | Purpose |
+|---|---|---|
+| `/fivetran-connector-sdk:build-connector` | `$build_connector` | Research an API and generate a new connector |
+| `/fivetran-connector-sdk:test-connector` | `$test_connector` | Run and validate an existing connector locally |
+| `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | Deploy a connector to your Fivetran account |
 
 For code fixes or modifications, describe the problem in natural language — the agent routes to the `connector-fixer` subagent automatically.
 
