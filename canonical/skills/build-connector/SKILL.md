@@ -68,11 +68,20 @@ Create the project directory before calling the workflow; name it after the conn
 
 ## Phase 3: Setup Environment
 
+Set up the connector environment with commands appropriate for the user's OS:
+
+macOS/Linux:
 ```bash
-cd <project_directory>
+cd "<project_directory>"
 uv venv .venv
-source .venv/bin/activate
-uv pip install -r requirements.txt fivetran_connector_sdk
+uv pip install --python .venv/bin/python -r requirements.txt fivetran_connector_sdk
+```
+
+Windows PowerShell:
+```powershell
+cd "<project_directory>"
+uv venv .venv
+uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_connector_sdk
 ```
 
 ## Phase 4: Enter Configuration & Test
@@ -87,7 +96,7 @@ After generating the files (or finding existing files with placeholder values), 
 - DO NOT run `enter_configuration.py` yourself. The user must run it in their own separate terminal.
 - DO NOT proceed to running `run_connector.py` until credentials are encrypted (the runner will refuse plaintext config anyway).
 
-**THE ONLY ACCEPTABLE FLOW.** Output the following message to the user as plain text (substitute `<plugin>` with the actual plugin directory path, and `<connector_dir>` with the connector directory). Use one fenced `bash` block for the commands. Quote both paths. Do not insert a line break inside the `python` command.
+**THE ONLY ACCEPTABLE FLOW.** Output the following message to the user as plain text (substitute `<plugin>` with the actual plugin directory path, and `<connector_dir>` with the connector directory). Use one fenced command block: `bash` on macOS/Linux, `powershell` on Windows. Quote both paths. Do not insert a line break inside the `python` command.
 
 ````text
 I've generated the connector files (or the files already exist). To fill in credentials securely, open a separate terminal, then run:
@@ -110,9 +119,9 @@ This decrypts the config in memory and passes it via named pipe — plaintext cr
 
 Check results:
 
+macOS/Linux:
 ```bash
-source .venv/bin/activate
-python -c "
+.venv/bin/python -c "
 import duckdb
 conn = duckdb.connect('files/warehouse.db')
 tables = conn.execute(\"SELECT table_name FROM information_schema.tables WHERE table_schema = 'tester'\").fetchall()
@@ -120,6 +129,11 @@ print(f'Tables synced: {len(tables)}')
 for (t,) in tables:
     count = conn.execute(f'SELECT COUNT(*) FROM tester.{t}').fetchone()[0]
     print(f'  tester.{t}: {count} rows')"
+```
+
+Windows PowerShell:
+```powershell
+.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = ''tester''").fetchall(); print("Tables synced:", len(tables)); [print("  tester." + t + ": " + str(conn.execute("SELECT COUNT(*) FROM tester." + t).fetchone()[0]) + " rows") for (t,) in tables]; conn.close()'
 ```
 
 Report: tables synced, row counts, any errors.

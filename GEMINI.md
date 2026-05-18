@@ -32,10 +32,16 @@ When the user needs to enter credentials, do NOT:
 - Use choice menus or multi-option UIs for credential entry
 - Offer options such as "I'll update configuration.json myself", "Tell me the values to use", or "Use values already in place"
 
-ALWAYS direct them to run, in a separate terminal:
+ALWAYS direct them to run, in a separate terminal from the connector directory. Use a command block appropriate to the user's OS.
 
+macOS/Linux:
+```bash
+python "<extension_dir>/tools/enter_configuration.py" "configuration.json"
 ```
-python <extension_dir>/tools/enter_configuration.py configuration.json
+
+Windows PowerShell:
+```powershell
+python "<extension_dir>\tools\enter_configuration.py" "configuration.json"
 ```
 
 This script prompts for each credential field and writes the values to `configuration.json` in **encrypted** form. The AI never sees plaintext values. The `run_connector.py` tool decrypts them in memory via named pipe at runtime — plaintext credentials never touch disk.

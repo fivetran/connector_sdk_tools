@@ -30,10 +30,16 @@ If any are missing, inform the user and stop.
 
 **Skip if `.venv` already exists.**
 
+macOS/Linux:
 ```bash
 uv venv .venv
-source .venv/bin/activate
-uv pip install -r requirements.txt fivetran_connector_sdk
+uv pip install --python .venv/bin/python -r requirements.txt fivetran_connector_sdk
+```
+
+Windows PowerShell:
+```powershell
+uv venv .venv
+uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_connector_sdk
 ```
 
 ## Step 3: Credential Gate
@@ -57,7 +63,7 @@ Run the secure runner immediately:
 python <plugin>/tools/run_connector.py <connector_directory>
 ```
 
-If the runner exits with "configuration.json is not encrypted", relay this exact secure flow as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths), then stop and wait. Use one fenced `bash` block for the commands. Quote both paths. Do not insert a line break inside the `python` command.
+If the runner exits with "configuration.json is not encrypted", relay this exact secure flow as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths), then stop and wait. Use one fenced command block: `bash` on macOS/Linux, `powershell` on Windows. Quote both paths. Do not insert a line break inside the `python` command.
 
 ````text
 I can't run the connector until configuration.json is encrypted. To enter credentials securely, open a separate terminal, then run:
@@ -80,7 +86,7 @@ If Step 3 already ran the secure runner and it succeeded, do not run it again. I
 python <plugin>/tools/run_connector.py <connector_directory>
 ```
 
-This decrypts the config using `FIVETRAN_CSDK_MASTER_SECRET` and runs `fivetran debug` without ever writing plaintext credentials to disk.
+This decrypts the config using the local encryption secret or `FIVETRAN_CSDK_MASTER_SECRET` and runs `fivetran debug` without ever writing plaintext credentials to disk.
 
 **IMPORTANT**: If `run_connector.py` fails, report the error to the user. Do NOT read or modify plugin tools.
 
@@ -88,9 +94,9 @@ This decrypts the config using `FIVETRAN_CSDK_MASTER_SECRET` and runs `fivetran 
 
 If the test succeeded (exit code 0), query the DuckDB warehouse:
 
+macOS/Linux:
 ```bash
-source .venv/bin/activate
-python -c "
+.venv/bin/python -c "
 import duckdb
 conn = duckdb.connect('files/warehouse.db')
 tables = conn.execute(\"\"\"
@@ -108,6 +114,11 @@ for (table,) in tables:
     print()
 conn.close()
 "
+```
+
+Windows PowerShell:
+```powershell
+.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = ''tester''").fetchall(); print("Tables synced:", len(tables)); [print("  tester." + table + ": " + str(conn.execute("SELECT COUNT(*) FROM tester." + table).fetchone()[0]) + " rows") for (table,) in tables]; conn.close()'
 ```
 
 ## Step 6: Report Results

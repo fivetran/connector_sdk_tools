@@ -70,6 +70,33 @@ Once installed, in your connector project directory:
 
 For code fixes or modifications, describe the problem in natural language — the agent routes to the `connector-fixer` subagent automatically.
 
+## Temporary Configuration Tool Dependency
+
+Until secure configuration entry is available directly in the Fivetran Connector SDK CLI, the plugin uses `tools/enter_configuration.py` to encrypt `configuration.json`. Before running that script, install the plugin tool dependencies in the same terminal:
+
+```bash
+python -m pip install -r "/path/to/plugin/tools/requirements.txt"
+```
+
+For Claude Code installed from the marketplace, the path will look like:
+
+macOS/Linux:
+```bash
+python -m pip install -r "$HOME/.claude/plugins/cache/fivetran-connector-sdk-ai/fivetran-connector-sdk/<version>/tools/requirements.txt"
+```
+
+Windows PowerShell:
+```powershell
+python -m pip install -r "$env:USERPROFILE\.claude\plugins\cache\fivetran-connector-sdk-ai\fivetran-connector-sdk\<version>\tools\requirements.txt"
+```
+
+On first run, `enter_configuration.py` creates a local encryption secret under your user profile:
+
+- macOS/Linux: `~/.fivetran/csdk_master_secret`
+- Windows: `%USERPROFILE%\.fivetran\csdk_master_secret`
+
+It uses that secret to encrypt `configuration.json`; the AI does not see the secret or plaintext credentials. You can override this by setting `FIVETRAN_CSDK_MASTER_SECRET`, but that is optional.
+
 ## Repository Layout
 
 ```

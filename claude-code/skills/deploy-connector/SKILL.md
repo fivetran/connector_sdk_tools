@@ -55,8 +55,16 @@ The tool:
 
 If `deploy_connector.py` exits with "configuration.json is not encrypted", do not continue deployment. Direct the user to run:
 
+macOS/Linux:
 ```bash
-python <plugin>/tools/enter_configuration.py configuration.json
+cd "<connector_directory>"
+python "<plugin>/tools/enter_configuration.py" "configuration.json"
+```
+
+Windows PowerShell:
+```powershell
+cd "<connector_directory>"
+python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
 Then re-run deploy after the user confirms the file is encrypted.
@@ -66,9 +74,16 @@ Then re-run deploy after the user confirms the file is encrypted.
 If the user hasn't set the env var, the tool exits with a clear message. Direct the user to:
 
 1. Create a Fivetran API key at https://fivetran.com/dashboard/user/api-config with `CONNECTOR:READ` permission (and `DESTINATION:READ` so destination lookup works).
-2. Add it to their shell config:
+2. Add it to their shell config.
+
+   macOS/Linux:
    ```bash
    export FIVETRAN_API_KEY=...
+   ```
+
+   Windows PowerShell:
+   ```powershell
+   setx FIVETRAN_API_KEY "..."
    ```
 3. Reload their shell and re-run the deploy command.
 

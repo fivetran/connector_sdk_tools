@@ -32,9 +32,20 @@ See the [top-level README](../README.md#install) for the full install matrix. Qu
    ```
 
 4. Install tool dependencies:
+
+   macOS/Linux:
    ```bash
-   pip install -r /path/to/codex/tools/requirements.txt
+   python -m pip install -r /path/to/codex/tools/requirements.txt
    ```
+
+   Windows PowerShell:
+   ```powershell
+   python -m pip install -r "C:\path\to\codex\tools\requirements.txt"
+   ```
+
+This dependency install is temporary. Until secure configuration entry is available directly in the Fivetran Connector SDK CLI, the plugin uses `tools/enter_configuration.py` to encrypt `configuration.json`.
+
+On first run, `enter_configuration.py` creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows). It uses that secret to encrypt `configuration.json`; the AI does not see the secret or plaintext credentials. You can override this by setting `FIVETRAN_CSDK_MASTER_SECRET`, but that is optional.
 
 ## Usage
 

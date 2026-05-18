@@ -12,14 +12,17 @@ import base64
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import threading
+import uuid
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
 ENCRYPTED_PREFIX = "ENCRYPTED:"
+SECRET_FILE = Path.home() / ".fivetran" / "csdk_master_secret"
 
 
 class DecryptionFailed(Exception):
@@ -36,41 +39,27 @@ def get_fernet():
     return Fernet, InvalidToken
 
 
-def get_encryption_key(username: str = "local-user") -> bytes:
-    """Derive encryption key from FIVETRAN_CSDK_MASTER_SECRET environment variable."""
-    import secrets as secrets_module
-    import platform
-
+def load_master_secret() -> str:
+    """Load master secret from env or local secret file."""
     master_secret = os.getenv("FIVETRAN_CSDK_MASTER_SECRET")
-    if not master_secret:
-        # Generate a new secret
-        new_secret = secrets_module.token_urlsafe(32)
+    if master_secret:
+        return master_secret
 
-        # Detect shell config file
-        shell = os.environ.get("SHELL", "")
-        system = platform.system()
-        if system == "Windows":
-            config_file = "$PROFILE"
-        elif "zsh" in shell:
-            config_file = "~/.zshrc"
-        elif "bash" in shell:
-            config_file = "~/.bash_profile" if system == "Darwin" else "~/.bashrc"
-        else:
-            config_file = "~/.profile"
+    if SECRET_FILE.exists():
+        master_secret = SECRET_FILE.read_text().strip()
+        if master_secret:
+            return master_secret
 
-        print("Error: FIVETRAN_CSDK_MASTER_SECRET environment variable is not set.")
-        print("\nAdd this line to your shell config file:")
-        print(f"\n  # {config_file}")
-        if system == "Windows":
-            print(f'  $env:FIVETRAN_CSDK_MASTER_SECRET = "{new_secret}"')
-        else:
-            print(f'  export FIVETRAN_CSDK_MASTER_SECRET="{new_secret}"')
-        print(f"\nThen reload your shell or run:")
-        if system == "Windows":
-            print(f"  . $PROFILE")
-        else:
-            print(f"  source {config_file}")
-        sys.exit(1)
+    print("No local encryption secret found.", file=sys.stderr)
+    print("", file=sys.stderr)
+    print("Run enter_configuration.py in a separate terminal first. It will", file=sys.stderr)
+    print(f"create {SECRET_FILE} and encrypt configuration.json.", file=sys.stderr)
+    sys.exit(1)
+
+
+def get_encryption_key(username: str = "local-user") -> bytes:
+    """Derive encryption key from env or generated local master secret."""
+    master_secret = load_master_secret()
 
     key = hashlib.pbkdf2_hmac(
         'sha256',
@@ -100,30 +89,37 @@ def decrypt_config(encrypted_content: str) -> dict:
 
 class ConfigPipe:
     """
-    Named pipe (FIFO) for securely passing config to the SDK.
-    Data never touches disk - stays in kernel buffer.
+    Named pipe for securely passing config to the SDK.
+    Data never touches disk - stays in kernel/OS pipe buffers.
     """
     def __init__(self, project_dir: Path, config: dict):
         self.config = config
-        self.pipe_path = project_dir / ".config_pipe"
+        self.project_dir = project_dir
+        self.pipe_path = None
         self.writer_thread = None
         self.write_complete = None
+        self.writer_error = None
+        self._windows_handle = None
 
     def __enter__(self):
-        # Remove any stale pipe
+        if os.name == "nt":
+            return self._enter_windows()
+        return self._enter_posix()
+
+    def _enter_posix(self):
+        self.pipe_path = self.project_dir / ".config_pipe"
         if self.pipe_path.exists():
             self.pipe_path.unlink()
 
-        # Create named pipe with restrictive permissions
         os.mkfifo(self.pipe_path, 0o600)
-
-        # Event to signal when write is complete
         self.write_complete = threading.Event()
 
         def write_config():
             try:
                 with open(self.pipe_path, 'w') as f:
                     json.dump(self.config, f)
+            except Exception as exc:
+                self.writer_error = exc
             finally:
                 self.write_complete.set()
 
@@ -132,14 +128,127 @@ class ConfigPipe:
 
         return self.pipe_path
 
+    def _enter_windows(self):
+        import ctypes
+        from ctypes import wintypes
+
+        pipe_name = rf"\\.\pipe\fivetran_config_{uuid.uuid4().hex}"
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+        kernel32.CreateNamedPipeW.argtypes = [
+            wintypes.LPCWSTR,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.DWORD,
+            wintypes.LPVOID,
+        ]
+        kernel32.CreateNamedPipeW.restype = wintypes.HANDLE
+        kernel32.ConnectNamedPipe.argtypes = [wintypes.HANDLE, wintypes.LPVOID]
+        kernel32.ConnectNamedPipe.restype = wintypes.BOOL
+        kernel32.WriteFile.argtypes = [
+            wintypes.HANDLE,
+            ctypes.c_void_p,
+            wintypes.DWORD,
+            ctypes.POINTER(wintypes.DWORD),
+            wintypes.LPVOID,
+        ]
+        kernel32.WriteFile.restype = wintypes.BOOL
+        kernel32.FlushFileBuffers.argtypes = [wintypes.HANDLE]
+        kernel32.DisconnectNamedPipe.argtypes = [wintypes.HANDLE]
+        kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+
+        pipe_access_outbound = 0x00000002
+        pipe_type_byte = 0x00000000
+        pipe_wait = 0x00000000
+        error_pipe_connected = 535
+        invalid_handle_value = wintypes.HANDLE(-1).value
+
+        handle = kernel32.CreateNamedPipeW(
+            pipe_name,
+            pipe_access_outbound,
+            pipe_type_byte | pipe_wait,
+            1,
+            65536,
+            65536,
+            0,
+            None,
+        )
+        if handle == invalid_handle_value:
+            raise OSError(ctypes.get_last_error(), "CreateNamedPipeW failed")
+
+        self._windows_handle = handle
+        self.write_complete = threading.Event()
+
+        def write_config():
+            try:
+                connected = kernel32.ConnectNamedPipe(handle, None)
+                if not connected:
+                    err = ctypes.get_last_error()
+                    if err != error_pipe_connected:
+                        raise OSError(err, "ConnectNamedPipe failed")
+
+                data = json.dumps(self.config).encode("utf-8")
+                buffer = ctypes.create_string_buffer(data)
+                written = wintypes.DWORD(0)
+                ok = kernel32.WriteFile(
+                    handle,
+                    buffer,
+                    len(data),
+                    ctypes.byref(written),
+                    None,
+                )
+                if not ok or written.value != len(data):
+                    raise OSError(ctypes.get_last_error(), "WriteFile failed")
+                kernel32.FlushFileBuffers(handle)
+                kernel32.DisconnectNamedPipe(handle)
+            except Exception as exc:
+                self.writer_error = exc
+            finally:
+                kernel32.CloseHandle(handle)
+                self._windows_handle = None
+                self.write_complete.set()
+
+        self.writer_thread = threading.Thread(target=write_config, daemon=True)
+        self.writer_thread.start()
+        return pipe_name
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.write_complete:
             self.write_complete.wait(timeout=30)
-        try:
-            if self.pipe_path.exists():
-                self.pipe_path.unlink()
-        except Exception:
-            pass
+        if self._windows_handle is not None:
+            try:
+                import ctypes
+                ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle(self._windows_handle)
+            except Exception:
+                pass
+            self._windows_handle = None
+        if self.pipe_path is not None:
+            try:
+                if self.pipe_path.exists():
+                    self.pipe_path.unlink()
+            except Exception:
+                pass
+
+
+def find_fivetran_executable(connector_dir: Path) -> str:
+    """Prefer the connector venv's fivetran executable, otherwise use PATH."""
+    if os.name == "nt":
+        candidates = [
+            connector_dir / ".venv" / "Scripts" / "fivetran.exe",
+            connector_dir / ".venv" / "Scripts" / "fivetran.cmd",
+            connector_dir / ".venv" / "Scripts" / "fivetran",
+        ]
+    else:
+        candidates = [connector_dir / ".venv" / "bin" / "fivetran"]
+
+    for candidate in candidates:
+        if candidate.exists():
+            return str(candidate)
+
+    return shutil.which("fivetran") or "fivetran"
 
 
 def main():
@@ -177,24 +286,22 @@ def main():
         config = decrypt_config(content)
     except DecryptionFailed:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
-        print("Make sure FIVETRAN_CSDK_MASTER_SECRET matches what was used to encrypt.", file=sys.stderr)
+        print("Make sure the local encryption secret matches what was used to encrypt.", file=sys.stderr)
+        print(f"Expected local secret file: {SECRET_FILE}", file=sys.stderr)
+        print("If you set FIVETRAN_CSDK_MASTER_SECRET manually, make sure it is unchanged.", file=sys.stderr)
         sys.exit(1)
 
-    # Activate venv if present
-    venv_activate = connector_dir / ".venv" / "bin" / "activate"
+    config_pipe = ConfigPipe(connector_dir, config)
+    with config_pipe as pipe_path:
+        cmd = [
+            find_fivetran_executable(connector_dir),
+            "debug",
+            "--configuration",
+            str(pipe_path),
+        ]
 
-    # Run fivetran debug with config via named pipe
-    with ConfigPipe(connector_dir, config) as pipe_path:
-        cmd = f"cd {connector_dir} && "
-        if venv_activate.exists():
-            cmd += f"source {venv_activate} && "
-        cmd += f"fivetran debug --configuration {pipe_path}"
-
-        # Stream output in real-time
         process = subprocess.Popen(
             cmd,
-            shell=True,
-            executable="/bin/bash",
             cwd=connector_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -202,23 +309,30 @@ def main():
             universal_newlines=True
         )
 
-        # Print output as it arrives, with timeout handled in Python
-        import signal
+        timed_out = False
 
-        def timeout_handler(signum, frame):
+        def timeout_handler():
+            nonlocal timed_out
+            timed_out = True
             process.kill()
-            print("\nError: Command timed out after 60 seconds")
-            sys.exit(124)
 
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(60)
+        timer = threading.Timer(60, timeout_handler)
+        timer.start()
 
         try:
             for line in process.stdout:
                 print(line, end='', flush=True)
             process.wait()
         finally:
-            signal.alarm(0)  # Cancel the alarm
+            timer.cancel()
+
+        if timed_out:
+            print("\nError: Command timed out after 60 seconds")
+            sys.exit(124)
+
+        if config_pipe.writer_error:
+            print(f"Error: Failed to write configuration pipe: {config_pipe.writer_error}", file=sys.stderr)
+            sys.exit(1)
 
         sys.exit(process.returncode)
 

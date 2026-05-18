@@ -73,9 +73,16 @@ Credential entry is outside the generator's job. The generator creates placehold
 
 When documenting setup, use this exact flow:
 
+macOS/Linux:
 ```bash
-cd <connector_dir>
-python <plugin>/tools/enter_configuration.py configuration.json
+cd "<connector_dir>"
+python "<plugin>/tools/enter_configuration.py" "configuration.json"
+```
+
+Windows PowerShell:
+```powershell
+cd "<connector_dir>"
+python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
 The script prompts for credential values and encrypts `configuration.json` in place. The AI must not see plaintext values.

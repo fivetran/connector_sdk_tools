@@ -1,6 +1,6 @@
 {
   "name": "fivetran-connector-sdk",
-  "version": "0.5.17.6",
+  "version": "0.5.17.8",
   "description": "Build, test, and deploy Fivetran connectors with AI assistance",
   "author": {
     "name": "Fivetran"

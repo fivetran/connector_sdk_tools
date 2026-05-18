@@ -5,7 +5,7 @@ Enter and encrypt configuration values for a Fivetran connector.
 Run this script directly in your terminal to securely enter API credentials.
 Values are encrypted before being saved to configuration.json.
 
-Requires FIVETRAN_CSDK_MASTER_SECRET environment variable to be set.
+Uses FIVETRAN_CSDK_MASTER_SECRET if set, otherwise creates a local secret.
 """
 import base64
 import getpass
@@ -18,6 +18,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
 ENCRYPTED_PREFIX = "ENCRYPTED:"
+SECRET_FILE = Path.home() / ".fivetran" / "csdk_master_secret"
 
 
 def get_fernet():
@@ -30,52 +31,42 @@ def get_fernet():
     return Fernet
 
 
-def get_shell_config_file() -> str:
-    """Detect the user's shell and return the appropriate config file."""
-    import platform
-    shell = os.environ.get("SHELL", "")
-    system = platform.system()
+def load_or_create_master_secret() -> str:
+    """Load a master secret from env/local file, creating one on first use."""
+    import secrets as secrets_module
 
-    if system == "Windows":
-        return "$PROFILE"  # PowerShell profile
-    elif "zsh" in shell:
-        return "~/.zshrc"
-    elif "bash" in shell:
-        if system == "Darwin":
-            return "~/.bash_profile"
-        return "~/.bashrc"
-    else:
-        return "~/.profile"
+    master_secret = os.getenv("FIVETRAN_CSDK_MASTER_SECRET")
+    if master_secret:
+        return master_secret
+
+    if SECRET_FILE.exists():
+        master_secret = SECRET_FILE.read_text().strip()
+        if master_secret:
+            return master_secret
+
+    master_secret = secrets_module.token_urlsafe(32)
+    SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        SECRET_FILE.parent.chmod(0o700)
+    except OSError:
+        pass
+
+    fd = os.open(str(SECRET_FILE), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    with os.fdopen(fd, "w") as f:
+        f.write(master_secret + "\n")
+
+    print("Created a local encryption secret.")
+    print(f"Saved it to: {SECRET_FILE}")
+    print("This script will use it now, and the test/deploy tools will use it later.")
+    print("")
+    print("Optional: You can override this by setting FIVETRAN_CSDK_MASTER_SECRET in your shell.")
+    print("")
+    return master_secret
 
 
 def get_encryption_key(username: str = "local-user") -> bytes:
-    """Derive encryption key from FIVETRAN_CSDK_MASTER_SECRET environment variable."""
-    import secrets as secrets_module
-    import platform
-
-    master_secret = os.getenv("FIVETRAN_CSDK_MASTER_SECRET")
-    if not master_secret:
-        # Generate a new secret
-        new_secret = secrets_module.token_urlsafe(32)
-        config_file = get_shell_config_file()
-        system = platform.system()
-
-        print("Error: FIVETRAN_CSDK_MASTER_SECRET environment variable is not set.")
-        print("\nAdd this line to your shell config file:")
-        print(f"\n  # {config_file}")
-
-        if system == "Windows":
-            print(f'  $env:FIVETRAN_CSDK_MASTER_SECRET = "{new_secret}"')
-        else:
-            print(f'  export FIVETRAN_CSDK_MASTER_SECRET="{new_secret}"')
-
-        print(f"\nThen reload your shell or run:")
-        if system == "Windows":
-            print(f"  . $PROFILE")
-        else:
-            print(f"  source {config_file}")
-
-        sys.exit(1)
+    """Derive encryption key from env or generated local master secret."""
+    master_secret = load_or_create_master_secret()
 
     key = hashlib.pbkdf2_hmac(
         'sha256',

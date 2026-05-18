@@ -28,8 +28,14 @@ Or from inside a Claude Code session:
 
 Install the tool dependencies:
 
+macOS/Linux:
 ```bash
 pip install -r /path/to/claude-code/tools/requirements.txt
+```
+
+Windows PowerShell:
+```powershell
+python -m pip install -r "C:\path\to\claude-code\tools\requirements.txt"
 ```
 
 ## Quick Start Tutorial
@@ -59,14 +65,25 @@ Claude will:
 ### Step 3: Enter Your API Credentials
 When prompted, open a **separate terminal** and run:
 
+macOS/Linux:
 ```bash
-cd ~/my-connectors/<your_connector>
+cd ~/my-connectors/your_connector
+python -m pip install -r /path/to/claude-code/tools/requirements.txt
 python /path/to/claude-code/tools/enter_configuration.py configuration.json
+```
+
+Windows PowerShell:
+```powershell
+cd "C:\path\to\my-connectors\your_connector"
+python -m pip install -r "C:\path\to\claude-code\tools\requirements.txt"
+python "C:\path\to\claude-code\tools\enter_configuration.py" "configuration.json"
 ```
 
 Enter your API credentials when prompted. They are encrypted immediately — Claude never sees them.
 
-**First time only:** If `FIVETRAN_CSDK_MASTER_SECRET` is not set, the tool will generate one for you and show instructions to add it to your shell config (e.g., `~/.zshrc`). Add the line, reload your shell, and run the tool again.
+The dependency install is temporary. Once secure configuration entry is available in the Fivetran Connector SDK CLI, this helper script flow will be replaced.
+
+**First time only:** The tool creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows) and uses it immediately. Claude never sees the secret or plaintext credentials. You can override this by setting `FIVETRAN_CSDK_MASTER_SECRET`, but that is optional.
 
 Go back to Claude Code and tell it you've entered your credentials.
 
@@ -144,10 +161,11 @@ This will:
 After the connector is generated, you'll need to enter your API credentials. Run this in a **separate terminal**:
 
 ```bash
+python -m pip install -r /path/to/claude-code/tools/requirements.txt
 python /path/to/claude-code/tools/enter_configuration.py configuration.json
 ```
 
-On first run, it will generate an encryption secret and show you the command to add to your shell config. This encrypts your credentials so the AI cannot see them.
+On first run, it creates a local encryption secret under your user profile. This encrypts your credentials so the AI cannot see them.
 
 ### Test a Connector
 ```
