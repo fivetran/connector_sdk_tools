@@ -95,7 +95,9 @@ On first run, `enter_configuration.py` creates a local encryption secret under y
 - macOS/Linux: `~/.fivetran/csdk_master_secret`
 - Windows: `%USERPROFILE%\.fivetran\csdk_master_secret`
 
-It uses that secret to encrypt `configuration.json`; the AI does not see the secret or plaintext credentials. You can override this by setting `FIVETRAN_CSDK_MASTER_SECRET`, but that is optional.
+It uses that secret to encrypt `configuration.json`; the AI does not see the secret or plaintext credentials.
+
+Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret so they can decrypt an already-encrypted `configuration.json`.
 
 ## Repository Layout
 

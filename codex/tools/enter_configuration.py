@@ -5,7 +5,7 @@ Enter and encrypt configuration values for a Fivetran connector.
 Run this script directly in your terminal to securely enter API credentials.
 Values are encrypted before being saved to configuration.json.
 
-Uses FIVETRAN_CSDK_MASTER_SECRET if set, otherwise creates a local secret.
+Uses a local master secret file, creating it on first use.
 """
 import base64
 import getpass
@@ -32,12 +32,8 @@ def get_fernet():
 
 
 def load_or_create_master_secret() -> str:
-    """Load a master secret from env/local file, creating one on first use."""
+    """Load the local master secret file, creating it on first use."""
     import secrets as secrets_module
-
-    master_secret = os.getenv("FIVETRAN_CSDK_MASTER_SECRET")
-    if master_secret:
-        return master_secret
 
     if SECRET_FILE.exists():
         master_secret = SECRET_FILE.read_text().strip()
@@ -59,13 +55,11 @@ def load_or_create_master_secret() -> str:
     print(f"Saved it to: {SECRET_FILE}")
     print("This script will use it now, and the test/deploy tools will use it later.")
     print("")
-    print("Optional: You can override this by setting FIVETRAN_CSDK_MASTER_SECRET in your shell.")
-    print("")
     return master_secret
 
 
 def get_encryption_key(username: str = "local-user") -> bytes:
-    """Derive encryption key from env or generated local master secret."""
+    """Derive encryption key from the local master secret."""
     master_secret = load_or_create_master_secret()
 
     key = hashlib.pbkdf2_hmac(

@@ -63,6 +63,8 @@ python "<plugin>/tools/enter_configuration.py" "configuration.json"
 
 Then re-run deploy after the user confirms the file is encrypted.
 
+If the local encryption secret file does not exist yet, `enter_configuration.py` creates it before encrypting `configuration.json`.
+
 ### Prerequisite: `FIVETRAN_API_KEY`
 
 If the user hasn't set the env var, the tool exits with a clear message. Direct the user to:

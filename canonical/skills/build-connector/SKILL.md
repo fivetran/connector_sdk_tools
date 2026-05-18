@@ -107,6 +107,7 @@ python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
 The script will prompt you for each credential field and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
+If the local encryption secret file does not exist yet, the script creates it first.
 ````
 
 After the user confirms credentials are entered, run the connector via the secure runner:

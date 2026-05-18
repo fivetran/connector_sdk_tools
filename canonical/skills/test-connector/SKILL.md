@@ -74,6 +74,7 @@ python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
 The script will prompt for the configuration fields and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
+If the local encryption secret file does not exist yet, the script creates it first.
 ````
 
 Do not use a choice UI for this. There is no alternate credential-entry flow.
@@ -86,7 +87,7 @@ If Step 3 already ran the secure runner and it succeeded, do not run it again. I
 python <plugin>/tools/run_connector.py <connector_directory>
 ```
 
-This decrypts the config using the local encryption secret or `FIVETRAN_CSDK_MASTER_SECRET` and runs `fivetran debug` without ever writing plaintext credentials to disk.
+This decrypts the config using the local encryption secret file and runs `fivetran debug` without ever writing plaintext credentials to disk.
 
 **IMPORTANT**: If `run_connector.py` fails, report the error to the user. Do NOT read or modify plugin tools.
 

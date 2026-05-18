@@ -40,11 +40,7 @@ def get_fernet():
 
 
 def load_master_secret() -> str:
-    """Load master secret from env or local secret file."""
-    master_secret = os.getenv("FIVETRAN_CSDK_MASTER_SECRET")
-    if master_secret:
-        return master_secret
-
+    """Load the local master secret file."""
     if SECRET_FILE.exists():
         master_secret = SECRET_FILE.read_text().strip()
         if master_secret:
@@ -58,7 +54,7 @@ def load_master_secret() -> str:
 
 
 def get_encryption_key(username: str = "local-user") -> bytes:
-    """Derive encryption key from env or generated local master secret."""
+    """Derive encryption key from the local master secret."""
     master_secret = load_master_secret()
 
     key = hashlib.pbkdf2_hmac(
@@ -288,7 +284,6 @@ def main():
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
         print("Make sure the local encryption secret matches what was used to encrypt.", file=sys.stderr)
         print(f"Expected local secret file: {SECRET_FILE}", file=sys.stderr)
-        print("If you set FIVETRAN_CSDK_MASTER_SECRET manually, make sure it is unchanged.", file=sys.stderr)
         sys.exit(1)
 
     config_pipe = ConfigPipe(connector_dir, config)

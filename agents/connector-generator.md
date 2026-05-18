@@ -81,7 +81,7 @@ cd "<connector_dir>"
 python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
-The script prompts for credential values and encrypts `configuration.json` in place. The AI must not see plaintext values.
+The script prompts for credential values and encrypts `configuration.json` in place. If the local encryption secret file does not exist yet, the script creates it first. The AI must not see plaintext values.
 
 **Hard failures:**
 - Do NOT ask the user how they want to enter credentials.

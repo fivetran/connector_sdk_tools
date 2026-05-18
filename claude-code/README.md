@@ -83,7 +83,9 @@ Enter your API credentials when prompted. They are encrypted immediately — Cla
 
 The dependency install is temporary. Once secure configuration entry is available in the Fivetran Connector SDK CLI, this helper script flow will be replaced.
 
-**First time only:** The tool creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows) and uses it immediately. Claude never sees the secret or plaintext credentials. You can override this by setting `FIVETRAN_CSDK_MASTER_SECRET`, but that is optional.
+**First time only:** The tool creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows) and uses it immediately. Claude never sees the secret or plaintext credentials.
+
+Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret so they can decrypt an already-encrypted `configuration.json`.
 
 Go back to Claude Code and tell it you've entered your credentials.
 
