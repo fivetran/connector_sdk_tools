@@ -44,7 +44,7 @@ Windows PowerShell:
 python "<plugin_dir>\tools\enter_configuration.py" "configuration.json"
 ```
 
-This script prompts for each credential field and writes the values to `configuration.json` in **encrypted** form. The AI never sees plaintext values. The `run_connector.py` tool decrypts them in memory via named pipe at runtime — plaintext credentials never touch disk.
+This script prompts for each credential field and writes encrypted values to the top-level `encrypted` field in `configuration.json`, preserving the baseline placeholder fields. The AI never sees plaintext values. The `run_connector.py` tool decrypts the `encrypted` field in memory via named pipe at runtime — plaintext credentials never touch disk.
 
 If `configuration.json` is not encrypted, stop and require `enter_configuration.py`. Do not print, quote, or summarize values from the file.
 

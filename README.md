@@ -95,7 +95,7 @@ On first run, `enter_configuration.py` creates a local encryption secret under y
 - macOS/Linux: `~/.fivetran/csdk_master_secret`
 - Windows: `%USERPROFILE%\.fivetran\csdk_master_secret`
 
-It uses that secret to encrypt `configuration.json`; the AI does not see the secret or plaintext credentials.
+It uses that secret to add encrypted credential values to the top-level `encrypted` field in `configuration.json`; the AI does not see the secret or plaintext credentials. The original placeholder fields remain in the file as the recoverable baseline. To start credential entry over, delete the `encrypted` field and run `enter_configuration.py` again.
 
 Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret so they can decrypt an already-encrypted `configuration.json`.
 

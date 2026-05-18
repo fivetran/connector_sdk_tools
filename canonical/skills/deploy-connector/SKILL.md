@@ -21,7 +21,7 @@ Verify the connector is ready:
    - `connector = Connector(update=update, schema=schema)` in global scope
    - `if __name__ == "__main__": connector.debug()` entry point
    - No forbidden patterns (`Dict[str, Any]`, `Generator[op.Operation, ...]`, `op.Operation` in type hints)
-3. **Configuration**: `configuration.json` starts with `ENCRYPTED:`. If it is plaintext JSON, stop and tell the user to enter credentials through `tools/enter_configuration.py` in a separate terminal. Do not read, print, copy, or deploy plaintext credential values.
+3. **Configuration**: `configuration.json` is JSON with a top-level `encrypted` field containing encrypted credential values. Legacy files that start with `ENCRYPTED:` are also acceptable. If credentials are not encrypted, stop and tell the user to enter credentials through `tools/enter_configuration.py` in a separate terminal. Do not read, print, copy, or deploy plaintext credential values.
 
 ## Step 2: Run Final Test
 

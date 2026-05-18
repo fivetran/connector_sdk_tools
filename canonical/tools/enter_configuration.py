@@ -18,7 +18,16 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
 ENCRYPTED_PREFIX = "ENCRYPTED:"
+ENCRYPTED_FIELD = "encrypted"
 SECRET_FILE = Path.home() / ".fivetran" / "csdk_master_secret"
+
+
+class MissingMasterSecret(Exception):
+    """Raised when encrypted values exist but the local secret is missing."""
+
+
+class DecryptionFailed(Exception):
+    """Raised when encrypted values cannot be decrypted."""
 
 
 def get_fernet():
@@ -41,10 +50,7 @@ def load_master_secret(create: bool) -> str:
             return master_secret
 
     if not create:
-        print("Error: configuration.json is encrypted, but the local encryption secret is missing.")
-        print(f"Expected local secret file: {SECRET_FILE}")
-        print("Restore the matching local secret file, then run this script again.")
-        sys.exit(1)
+        raise MissingMasterSecret
 
     master_secret = secrets_module.token_urlsafe(32)
     SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -100,12 +106,64 @@ def decrypt_config(encrypted_content: str) -> dict:
     try:
         decrypted_bytes = fernet.decrypt(encrypted_content.encode('utf-8'))
     except InvalidToken:
-        print("Error: configuration.json is encrypted, but this local secret cannot decrypt it.")
-        print(f"Expected local secret file: {SECRET_FILE}")
-        print("Run this script on the same machine/user profile that encrypted the file, or restore the matching local secret file.")
-        sys.exit(1)
+        raise DecryptionFailed
 
     return json.loads(decrypted_bytes.decode('utf-8'))
+
+
+def load_configuration(config_path: Path) -> tuple[dict, dict, bool, bool]:
+    """
+    Return baseline config, current values for prompting, whether encrypted
+    values exist, and whether existing encrypted values can be kept.
+    """
+    content = config_path.read_text().strip()
+
+    if content.startswith(ENCRYPTED_PREFIX):
+        try:
+            config = decrypt_config(content)
+        except MissingMasterSecret:
+            print("Error: configuration.json uses the old whole-file encrypted format, but the local encryption secret is missing.")
+            print(f"Expected local secret file: {SECRET_FILE}")
+            print("Because the old format does not preserve baseline field names, this script cannot recover it automatically.")
+            sys.exit(1)
+        except DecryptionFailed:
+            print("Error: configuration.json uses the old whole-file encrypted format, but this local secret cannot decrypt it.")
+            print(f"Expected local secret file: {SECRET_FILE}")
+            print("Because the old format does not preserve baseline field names, this script cannot recover it automatically.")
+            sys.exit(1)
+        baseline = {field: "" for field in config}
+        return baseline, config, True, True
+
+    try:
+        baseline = json.loads(content)
+    except json.JSONDecodeError as e:
+        print(f"Error: Invalid JSON in {config_path}: {e}")
+        sys.exit(1)
+
+    if not isinstance(baseline, dict):
+        print(f"Error: {config_path} must contain a JSON object.")
+        sys.exit(1)
+
+    encrypted_content = baseline.get(ENCRYPTED_FIELD)
+    baseline = {k: v for k, v in baseline.items() if k != ENCRYPTED_FIELD}
+
+    if encrypted_content:
+        if not isinstance(encrypted_content, str):
+            print(f"Error: {ENCRYPTED_FIELD!r} must contain an encrypted string.")
+            sys.exit(1)
+        try:
+            config = decrypt_config(encrypted_content)
+            return baseline, config, True, True
+        except (MissingMasterSecret, DecryptionFailed):
+            if baseline:
+                print("")
+                print("Could not decrypt existing encrypted values.")
+                print("Keeping the baseline field names and prompting for replacement values.")
+                print("")
+                return baseline, {field: "" for field in baseline}, True, False
+            raise
+
+    return baseline, baseline, False, False
 
 
 def main():
@@ -129,18 +187,11 @@ def main():
         print("Make sure you're in a connector directory with a configuration.json file.")
         sys.exit(1)
 
-    content = config_path.read_text().strip()
-    was_encrypted = content.startswith(ENCRYPTED_PREFIX)
-    if was_encrypted:
-        config = decrypt_config(content)
-        print(f"{config_path} is already encrypted. Enter replacement values below.")
-        print("Press Enter to keep an existing value.")
-    else:
-        try:
-            config = json.loads(content)
-        except json.JSONDecodeError as e:
-            print(f"Error: Invalid JSON in {config_path}: {e}")
-            sys.exit(1)
+    baseline_config, config, had_encrypted_values, can_keep_existing = load_configuration(config_path)
+    if had_encrypted_values:
+        print(f"{config_path} already has encrypted values. Enter replacement values below.")
+        if can_keep_existing:
+            print("Press Enter to keep an existing value.")
 
     if not config:
         print("Error: No configuration fields found.")
@@ -156,9 +207,9 @@ def main():
         is_sensitive = any(kw in field.lower() for kw in sensitive_keywords)
 
         if is_sensitive:
-            keep_hint = " [press Enter to keep existing]" if was_encrypted and current_value else ""
+            keep_hint = " [press Enter to keep existing]" if can_keep_existing and current_value else ""
             value = getpass.getpass(f"  {field}{keep_hint}: ")
-            if was_encrypted and not value and current_value:
+            if can_keep_existing and not value and current_value:
                 value = current_value
         else:
             default_hint = f" [{current_value}]" if current_value else ""
@@ -171,7 +222,9 @@ def main():
     # Encrypt and save
     try:
         encrypted = encrypt_config(new_config)
-        config_path.write_text(encrypted)
+        output_config = dict(baseline_config)
+        output_config[ENCRYPTED_FIELD] = encrypted
+        config_path.write_text(json.dumps(output_config, indent=2) + "\n")
         print(f"\nConfiguration encrypted and saved to {config_path}")
     except Exception as e:
         print(f"\nError: Failed to encrypt: {e}")

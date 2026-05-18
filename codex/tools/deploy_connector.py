@@ -27,6 +27,7 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 API_BASE = "https://api.fivetran.com/v1"
 
 ENCRYPTED_PREFIX = "ENCRYPTED:"
+ENCRYPTED_FIELD = "encrypted"
 SECRET_FILE = Path.home() / ".fivetran" / "csdk_master_secret"
 
 
@@ -83,6 +84,26 @@ def decrypt_config(encrypted_content: str) -> dict:
     except InvalidToken as exc:
         raise DecryptionFailed from exc
     return json.loads(decrypted_bytes.decode('utf-8'))
+
+
+def load_encrypted_config_content(config_path: Path) -> str | None:
+    content = config_path.read_text().strip()
+    if content.startswith(ENCRYPTED_PREFIX):
+        return content
+
+    try:
+        config = json.loads(content)
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(config, dict):
+        return None
+
+    encrypted_content = config.get(ENCRYPTED_FIELD)
+    if isinstance(encrypted_content, str) and encrypted_content.startswith(ENCRYPTED_PREFIX):
+        return encrypted_content
+
+    return None
 
 
 def load_api_key() -> str:
@@ -354,8 +375,8 @@ def main():
         print(f"Error: configuration.json not found in {connector_dir}")
         sys.exit(1)
 
-    content = config_path.read_text().strip()
-    if not content.startswith(ENCRYPTED_PREFIX):
+    encrypted_content = load_encrypted_config_content(config_path)
+    if not encrypted_content:
         print("Error: configuration.json is not encrypted.", file=sys.stderr)
         print("", file=sys.stderr)
         print("Credentials must be entered via the encryption script — never edited", file=sys.stderr)
@@ -368,7 +389,7 @@ def main():
         sys.exit(2)
 
     try:
-        config = decrypt_config(content)
+        config = decrypt_config(encrypted_content)
     except DecryptionFailed:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
         print("Make sure the local encryption secret matches what was used to encrypt.", file=sys.stderr)
