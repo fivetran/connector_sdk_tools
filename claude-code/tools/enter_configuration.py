@@ -23,22 +23,28 @@ SECRET_FILE = Path.home() / ".fivetran" / "csdk_master_secret"
 
 def get_fernet():
     try:
-        from cryptography.fernet import Fernet
+        from cryptography.fernet import Fernet, InvalidToken
     except ImportError:
         print("Error: Missing required dependencies.")
         print(f"\nInstall with:\n  pip install -r {SCRIPT_DIR}/requirements.txt")
         sys.exit(1)
-    return Fernet
+    return Fernet, InvalidToken
 
 
-def load_or_create_master_secret() -> str:
-    """Load the local master secret file, creating it on first use."""
+def load_master_secret(create: bool) -> str:
+    """Load the local master secret file, optionally creating it."""
     import secrets as secrets_module
 
     if SECRET_FILE.exists():
         master_secret = SECRET_FILE.read_text().strip()
         if master_secret:
             return master_secret
+
+    if not create:
+        print("Error: configuration.json is encrypted, but the local encryption secret is missing.")
+        print(f"Expected local secret file: {SECRET_FILE}")
+        print("Restore the matching local secret file, then run this script again.")
+        sys.exit(1)
 
     master_secret = secrets_module.token_urlsafe(32)
     SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -58,9 +64,9 @@ def load_or_create_master_secret() -> str:
     return master_secret
 
 
-def get_encryption_key(username: str = "local-user") -> bytes:
+def get_encryption_key(username: str = "local-user", create_secret: bool = True) -> bytes:
     """Derive encryption key from the local master secret."""
-    master_secret = load_or_create_master_secret()
+    master_secret = load_master_secret(create=create_secret)
 
     key = hashlib.pbkdf2_hmac(
         'sha256',
@@ -74,12 +80,32 @@ def get_encryption_key(username: str = "local-user") -> bytes:
 
 def encrypt_config(config: dict) -> str:
     """Encrypt a configuration dictionary."""
-    Fernet = get_fernet()
+    Fernet, _ = get_fernet()
     key = get_encryption_key()
     fernet = Fernet(key)
     json_bytes = json.dumps(config, indent=2).encode('utf-8')
     encrypted = fernet.encrypt(json_bytes)
     return ENCRYPTED_PREFIX + encrypted.decode('utf-8')
+
+
+def decrypt_config(encrypted_content: str) -> dict:
+    """Decrypt an encrypted configuration string."""
+    Fernet, InvalidToken = get_fernet()
+    key = get_encryption_key(create_secret=False)
+    fernet = Fernet(key)
+
+    if encrypted_content.startswith(ENCRYPTED_PREFIX):
+        encrypted_content = encrypted_content[len(ENCRYPTED_PREFIX):]
+
+    try:
+        decrypted_bytes = fernet.decrypt(encrypted_content.encode('utf-8'))
+    except InvalidToken:
+        print("Error: configuration.json is encrypted, but this local secret cannot decrypt it.")
+        print(f"Expected local secret file: {SECRET_FILE}")
+        print("Run this script on the same machine/user profile that encrypted the file, or restore the matching local secret file.")
+        sys.exit(1)
+
+    return json.loads(decrypted_bytes.decode('utf-8'))
 
 
 def main():
@@ -103,20 +129,12 @@ def main():
         print("Make sure you're in a connector directory with a configuration.json file.")
         sys.exit(1)
 
-    # Check if already encrypted
     content = config_path.read_text().strip()
-    if content.startswith(ENCRYPTED_PREFIX):
-        print(f"{config_path} is already encrypted.")
-        response = input("Re-encrypt with new values? [y/N]: ").strip().lower()
-        if response != 'y':
-            print("Cancelled.")
-            sys.exit(0)
-
-        fields_str = input("Enter field names (comma-separated) [access_token]: ").strip()
-        if not fields_str:
-            fields_str = "access_token"
-        fields = [f.strip() for f in fields_str.split(',') if f.strip()]
-        config = {field: "" for field in fields}
+    was_encrypted = content.startswith(ENCRYPTED_PREFIX)
+    if was_encrypted:
+        config = decrypt_config(content)
+        print(f"{config_path} is already encrypted. Enter replacement values below.")
+        print("Press Enter to keep an existing value.")
     else:
         try:
             config = json.loads(content)
@@ -138,7 +156,10 @@ def main():
         is_sensitive = any(kw in field.lower() for kw in sensitive_keywords)
 
         if is_sensitive:
-            value = getpass.getpass(f"  {field}: ")
+            keep_hint = " [press Enter to keep existing]" if was_encrypted and current_value else ""
+            value = getpass.getpass(f"  {field}{keep_hint}: ")
+            if was_encrypted and not value and current_value:
+                value = current_value
         else:
             default_hint = f" [{current_value}]" if current_value else ""
             value = input(f"  {field}{default_hint}: ").strip()
