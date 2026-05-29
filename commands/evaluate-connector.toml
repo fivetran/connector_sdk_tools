@@ -1,0 +1,4 @@
+description = "Evaluate a Fivetran connector for correctness, SDK compliance, security, and reliability"
+prompt = """
+Invoke the `evaluate-connector` skill from this extension to perform a static code review of the connector. The skill checks for SDK compliance violations, security issues, data reliability problems, and code quality, then produces a scored report.
+"""

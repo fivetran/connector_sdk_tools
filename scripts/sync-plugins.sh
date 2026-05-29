@@ -41,7 +41,7 @@ TOOLS_SRC="$CANONICAL/tools"
 CLAUDE_DIR="claude-code"
 CODEX_DIR="codex"
 GEMINI_DIR="."
-SKILLS=(build-connector test-connector deploy-connector)
+SKILLS=(build-connector test-connector deploy-connector evaluate-connector)
 
 # --- Helpers ---
 
