@@ -26,6 +26,7 @@ Ask which connector to evaluate. List any directories in the workspace that cont
 Read all source files in the connector directory:
 - `connector.py` — required; main implementation
 - Any other `.py` files present
+- `requirements.txt` — if present, check for incorrectly declared pre-installed packages
 
 Do NOT read or log any values from `configuration.json`.
 
@@ -34,6 +35,17 @@ If `connector.py` is missing, tell the user and stop.
 ## Step 2: Evaluate
 
 Analyze the code against the criteria below. Be deterministic and conservative — only flag issues with concrete code evidence. Do NOT flag theoretical or hypothetical problems.
+
+---
+
+> **CRITICAL SDK RULE — read before evaluating anything:**
+> SDK operations (`op.upsert`, `op.update`, `op.delete`, `op.checkpoint`) must be called **directly**. They are NOT generators and must NEVER be used with `yield` or `yield from`.
+> - WRONG: `yield op.upsert(table="x", data=d)`
+> - CORRECT: `op.upsert(table="x", data=d)`
+>
+> `update()` is a plain function, not a generator. `yield from` is only valid inside helper pagination functions that stream raw API records — it is never valid with SDK operations.
+>
+> If you find code that calls SDK operations without `yield`, that is **correct**. Do not flag it.
 
 ---
 
@@ -55,8 +67,11 @@ Flag as `required` only when the code clearly demonstrates the problem.
   - CORRECT: `op.upsert(table="x", data=d)`
 - `update()` must not return anything — SDK operations return `None`
 - Schema: only `table`, `primary_key`, `columns` keys are valid — any other key is an error
-- Schema data types: only `BOOLEAN`, `SHORT`, `INT`, `LONG`, `FLOAT`, `DOUBLE`, `DECIMAL`, `STRING`, `BINARY`, `JSON`, `XML`, `NAIVE_DATE`, `NAIVE_DATETIME`, `UTC_DATETIME` are valid
-- Logging: only `log.fine()`, `log.info()`, `log.warning()`, `log.severe()` are valid — flag `print()`, `logging.*`, `logger.*`
+- Schema data types: if `columns` are specified, only `BOOLEAN`, `SHORT`, `INT`, `LONG`, `FLOAT`, `DOUBLE`, `DECIMAL`, `STRING`, `BINARY`, `JSON`, `XML`, `NAIVE_DATE`, `NAIVE_DATETIME`, `UTC_DATETIME` are valid — any other type name is an error
+- Logging: preferred methods are `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()` — flag `print()`, `logging.*`, `logger.*` as required issues
+- Type hints: `Generator[op.Operation, None, None]` or any use of `op.Operation` in type hints is invalid — use plain `dict` and `list` only; never import from `typing` for SDK function signatures
+- `exit()` must never be used — use `raise RuntimeError(...)` instead
+- `connector = Connector(...)` must be at module (global) scope, not inside `if __name__ == "__main__"` or any function
 
 **3. Security**
 - Credentials, tokens, or secrets stored in the `state` dict (state is persisted to disk unencrypted)
@@ -87,6 +102,9 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Functions over 50 lines without clear decomposition
 - Missing input validation for required configuration keys
 - Dead or duplicate code
+- `requirements.txt` lists `requests` or `fivetran_connector_sdk` — these are pre-installed in the runtime and must not be declared
+- `columns` specified in schema with data types — preferred pattern is to omit `columns` entirely and let the SDK auto-detect types
+- `log.fine()` or `log.severe()` used — these are deprecated Java-style aliases; prefer `log.debug()` and `log.error()` respectively
 
 **3. Reliability**
 - Retries without exponential backoff
@@ -103,6 +121,9 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Reading credentials from the `configuration` dict — Fivetran encrypts configuration
 - Any JSON-serializable value stored in state — all are valid
 - Datetime string vs datetime object in `op.upsert()` data — SDK accepts both
+- `yield from` inside a helper pagination generator that streams raw API records — this is correct and unrelated to SDK operations
+- `log.fine()` or `log.severe()` as a required issue — they are deprecated but still work; flag as good_to_have only
+- A top-level `encrypted` field in `configuration.json` — this is normal; the plugin encrypts credentials there at runtime
 
 ---
 
