@@ -41,10 +41,12 @@ See [`claude-code/README.md`](claude-code/README.md) for the full tutorial.
 
 ```bash
 codex plugin marketplace add fivetran/fivetran_csdk_tools
-codex plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
+codex plugin add fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 Plugins must also be enabled in `~/.codex/config.toml`. See [`codex/README.md`](codex/README.md) for the full setup.
+
+Note: If your current version of Codex CLI does not support the `add` command, please upgrade to the latest version of Codex CLI.
 
 ### Gemini CLI
 
