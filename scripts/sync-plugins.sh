@@ -26,6 +26,11 @@
 #   agents/connector-{validator,generator,fixer}.md          (Gemini)
 #   skills/{build,test,deploy}-connector/SKILL.md            (Gemini)
 #   tools/*                                                  (Gemini)
+#   copilot/sdk-reference.md                                 (Copilot CLI)
+#   copilot/native-connectors.md                             (Copilot CLI)
+#   copilot/agents/connector-{validator,generator,fixer}.md  (Copilot CLI)
+#   copilot/skills/{build,test,deploy}-connector/SKILL.md    (Copilot CLI)
+#   copilot/tools/*                                          (Copilot CLI)
 
 set -euo pipefail
 
@@ -41,6 +46,7 @@ TOOLS_SRC="$CANONICAL/tools"
 CLAUDE_DIR="claude-code"
 CODEX_DIR="codex"
 GEMINI_DIR="."
+COPILOT_DIR="copilot"
 SKILLS=(build-connector test-connector deploy-connector evaluate-connector)
 
 # --- Helpers ---
@@ -144,14 +150,48 @@ EOF
   esac
 }
 
+copilot_frontmatter() {
+  case "$1" in
+    validator)
+      cat <<'EOF'
+---
+name: connector-validator
+description: Research API documentation and gather complete requirements for building a Fivetran connector. Use when researching data sources before code generation.
+---
+EOF
+      ;;
+    generator)
+      cat <<'EOF'
+---
+name: connector-generator
+description: Generate Fivetran connector code from a validated specification. Use after requirements have been gathered.
+---
+EOF
+      ;;
+    fixer)
+      cat <<'EOF'
+---
+name: connector-fixer
+description: Debug and fix errors in a Fivetran connector. Use when tests fail or the user reports connector issues.
+---
+EOF
+      ;;
+    *)
+      echo "Unknown role: $1" >&2
+      exit 1
+      ;;
+  esac
+}
+
 assemble_agent() {
   local role="$1"        # validator | generator | fixer
-  local target="$2"      # claude | gemini
+  local target="$2"      # claude | gemini | copilot
   local src="$WORKFLOWS_DIR/${role}.md"
   local dest
   case "$target" in
-    claude) dest="$CLAUDE_DIR/agents/connector-${role}.md" ;;
-    gemini) dest="$GEMINI_DIR/agents/connector-${role}.md" ;;
+    claude)  dest="$CLAUDE_DIR/agents/connector-${role}.md" ;;
+    gemini)  dest="$GEMINI_DIR/agents/connector-${role}.md" ;;
+    copilot) dest="$COPILOT_DIR/agents/connector-${role}.md" ;;
     *) echo "Unknown target: $target" >&2; exit 1 ;;
   esac
   mkdir -p "$(dirname "$dest")"
@@ -206,11 +246,13 @@ echo "Syncing sdk-reference.md..."
 copy_with_banner "$SDK_REF" "$CLAUDE_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$CODEX_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$GEMINI_DIR/sdk-reference.md"
+copy_with_banner "$SDK_REF" "$COPILOT_DIR/sdk-reference.md"
 
 echo "Syncing native-connectors.md..."
 copy_with_banner "$NATIVE_LIST" "$CLAUDE_DIR/native-connectors.md"
 copy_with_banner "$NATIVE_LIST" "$CODEX_DIR/native-connectors.md"
 copy_with_banner "$NATIVE_LIST" "$GEMINI_DIR/native-connectors.md"
+copy_with_banner "$NATIVE_LIST" "$COPILOT_DIR/native-connectors.md"
 
 echo "Assembling Claude subagent files..."
 for role in validator generator fixer; do
@@ -220,6 +262,11 @@ done
 echo "Assembling Gemini agent files..."
 for role in validator generator fixer; do
   assemble_agent "$role" gemini
+done
+
+echo "Assembling Copilot agent files..."
+for role in validator generator fixer; do
+  assemble_agent "$role" copilot
 done
 
 echo "Copying workflow files into Codex plugin..."
@@ -234,11 +281,13 @@ for skill in "${SKILLS[@]}"; do
   copy_skill_with_banner "$src" "$CLAUDE_DIR/skills/${skill}/SKILL.md"
   copy_skill_with_banner "$src" "$CODEX_DIR/skills/${skill}/SKILL.md"
   copy_skill_with_banner "$src" "$GEMINI_DIR/skills/${skill}/SKILL.md"
+  copy_skill_with_banner "$src" "$COPILOT_DIR/skills/${skill}/SKILL.md"
 done
 
 echo "Copying tools..."
 copy_tools "$CLAUDE_DIR/tools"
 copy_tools "$CODEX_DIR/tools"
 copy_tools "$GEMINI_DIR/tools"
+copy_tools "$COPILOT_DIR/tools"
 
 echo "Done."

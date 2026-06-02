@@ -3,7 +3,7 @@ AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](
 ## Prerequisites
 
 - **Python 3.10–3.14**
-- **A supported coding agent** (Claude Code, Codex CLI, or Gemini CLI — see install matrix below)
+- **A supported coding agent** (Claude Code, Codex CLI, Gemini CLI, or GitHub Copilot CLI — see install matrix below)
 - **Fivetran Connector SDK** — `pip install fivetran-connector-sdk`
 
 ## Quick Start
@@ -58,11 +58,20 @@ For non-interactive use (e.g., scripts):
 gemini extensions install https://github.com/fivetran/fivetran_csdk_tools --consent --skip-settings
 ```
 
+### GitHub Copilot CLI
+
+```bash
+copilot plugin marketplace add fivetran/fivetran_csdk_tools
+copilot plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
+```
+
+See [`copilot/README.md`](copilot/README.md) for the full tutorial.
+
 ## Usage
 
 Once installed, in your connector project directory:
 
-| Command (Claude Code / Gemini CLI) | Codex CLI | Purpose |
+| Command (Claude Code / Gemini CLI / Copilot CLI) | Codex CLI | Purpose |
 |---|---|---|
 | `/fivetran-connector-sdk:build-connector` | `$build_connector` | Research an API and generate a new connector |
 | `/fivetran-connector-sdk:test-connector` | `$test_connector` | Run and validate an existing connector locally |
@@ -124,6 +133,14 @@ codex/                              Codex CLI plugin (mostly generated)
   workflows/{validator,generator,fixer}.md
   tools/, sdk-reference.md, native-connectors.md
 
+copilot/                            GitHub Copilot CLI plugin (mostly generated)
+  AGENTS.md
+  agents/connector-{validator,generator,fixer}.md
+  skills/{build,test,deploy,evaluate}-connector/SKILL.md
+  hooks/hooks.json
+  commands/{build,test,deploy,evaluate}-connector.md
+  tools/, sdk-reference.md, native-connectors.md
+
 gemini-extension.json               Gemini CLI extension manifest (root-only requirement)
 GEMINI.md                           Gemini context file
 commands/{build,test,deploy}-connector.toml   Gemini slash commands
@@ -133,6 +150,8 @@ tools/                              Gemini tools (generated copy of canonical/to
 
 .claude-plugin/marketplace.json     Claude Code marketplace pointing to ./claude-code
 .agents/plugins/marketplace.json    Codex marketplace pointing to ./codex
+.github/plugin/marketplace.json     Copilot CLI marketplace pointing to ./copilot
+
 ```
 
 ## Development
@@ -143,14 +162,15 @@ Only edit files under **`canonical/`** and the static Gemini files at the root (
 
 | Editing... | Run after | Affects |
 |---|---|---|
-| `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all three agents |
-| `canonical/native-connectors.md` | `bash scripts/sync-plugins.sh` | all three agents |
-| `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents |
-| `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all three agents |
-| `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all three agents |
+| `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all four agents |
+| `canonical/native-connectors.md` | `bash scripts/sync-plugins.sh` | all four agents |
+| `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents |
+| `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
+| `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml` | (no sync needed) | Gemini only |
 | `claude-code/CLAUDE.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
 | `codex/AGENTS.md`, `codex/.codex-plugin/plugin.json` | (no sync needed) | Codex only |
+| `copilot/AGENTS.md`, `copilot/hooks/hooks.json`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
 
 Generated files have a `<!-- GENERATED FILE — DO NOT EDIT -->` banner at the top. Edits to them will be overwritten on the next sync.
 
