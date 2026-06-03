@@ -87,6 +87,20 @@ Do not use a choice UI for this. There is no alternate credential-entry flow.
 
 ## Step 4: Run the Connector
 
+**If the connector's schema or primary keys changed since the last local test**, reset the local
+state first so the run simulates a clean initial sync (clears `warehouse.db` and `state.json`; it
+does not touch credentials):
+
+macOS/Linux:
+```bash
+cd "<connector_directory>" && .venv/bin/fivetran reset --force
+```
+
+Windows PowerShell:
+```powershell
+cd "<connector_directory>"; .\.venv\Scripts\fivetran.exe reset --force
+```
+
 If Step 3 already ran the secure runner and it succeeded, do not run it again. If the user returned after encrypting credentials, run the secure runner:
 
 ```bash

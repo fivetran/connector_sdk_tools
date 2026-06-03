@@ -43,9 +43,10 @@ python <plugin>/tools/deploy_connector.py <connector_directory>
 
 The tool:
 1. Reads `FIVETRAN_API_KEY` from the environment.
-2. Calls `GET /v1/groups` and `GET /v1/groups/{id}/destinations` to discover the user's groups and destinations.
-3. Picks the single group/destination automatically, or prompts the user to choose if more than one exists.
-4. Invokes `fivetran deploy` with the chosen destination and the encrypted configuration (passed via named pipe, never written to disk).
+2. Calls `GET /v1/groups` to discover the destination (group) name, picking the single one automatically or prompting if more than one exists.
+3. Derives the connection name from the connector directory name (sanitized to Fivetran rules). To set it explicitly, pass `--connection <name>` (must begin with `_` or a lowercase letter; only `_`, lowercase, digits).
+4. Invokes `fivetran deploy --destination <name> --connection <name> --force` with the encrypted configuration (passed via named pipe, never written to disk). `--force` auto-answers the overwrite prompts so redeploys don't hang.
+5. Captures and prints the Connection ID from the deploy log.
 
 If `deploy_connector.py` exits with "configuration.json is not encrypted", do not continue deployment. Direct the user to run:
 
@@ -69,7 +70,7 @@ If the local encryption secret file does not exist yet, `enter_configuration.py`
 
 If the user hasn't set the env var, the tool exits with a clear message. Direct the user to:
 
-1. Create a Fivetran API key at https://fivetran.com/dashboard/user/api-config with `CONNECTOR:READ` permission (and `DESTINATION:READ` so destination lookup works).
+1. Create a Fivetran API key at https://fivetran.com/dashboard/user/api-config. It must be the base64-encoded `{key}:{secret}` string, with permission to manage connections and read destinations (so destination lookup, deploy, and unpause all work).
 2. Add it to their shell config.
 
    macOS/Linux:
@@ -88,6 +89,24 @@ If the user hasn't set the env var, the tool exits with a clear message. Direct 
 If the user has zero destinations, the tool exits with a link to the destinations page. Direct the user to create one in the dashboard (requires warehouse credentials) and re-run deploy.
 
 Reference: https://fivetran.com/docs/connector-sdk/working-with-connector-sdk#deploytheconnector
+
+## Step 4: Offer to Start the Initial Sync
+
+A newly deployed connection is created **paused**. Deploying does not start a sync.
+
+After a successful deploy, surface the Connection ID and dashboard link the tool printed, then **ask the user** whether to start the initial sync now. State plainly that starting the sync begins consuming [MAR](https://fivetran.com/docs/core-concepts/usage-based-pricing#monthlyactiverows). Do not start it automatically.
+
+Only if the user explicitly confirms, unpause the connection:
+
+```bash
+python <plugin>/tools/deploy_connector.py <connector_directory> --start-sync --connection-id <id>
+```
+
+This calls `PATCH /v1/connections/{id}` with `{"paused": false}`; Fivetran then begins the initial sync. If the user declines, tell them they can start it anytime from the dashboard link or by re-running the command above.
+
+## Redeploying (updating an existing connection)
+
+To update a deployed connection, redeploy with the **same connection name and destination** (the tool derives the same name from the directory, or pass `--connection <name>`). The tool's `--force` flag auto-answers the "update connection code / overwrite configuration.json" prompts. Redeploying replaces the connection's code; the encrypted `configuration.json` is sent again, replacing the stored configuration values. A redeploy does not pause an already-running connection — the in-progress sync finishes on the old code, and the next sync uses the new code.
 
 ## Alternative: Manual Packaging
 
