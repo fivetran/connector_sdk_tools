@@ -1,4 +1,4 @@
-AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors. Distributed as a native plugin/extension for Claude Code, Codex CLI, and Gemini CLI.
+AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors. Distributed as a native plugin/extension for Claude Code, Codex CLI, Gemini CLI and GitHub Copilot CLI.
 
 ## Prerequisites
 
