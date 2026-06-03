@@ -1,0 +1,39 @@
+copilot/AGENTS.md
+  bdaeda212b01392b 1-53
+README.md
+  bdaeda212b01392b 6,61-69,74,136-142,153,165-169,173
+copilot/hooks/hooks.json
+  bdaeda212b01392b 1-15
+copilot/commands/build-connector.md
+  bdaeda212b01392b 1-8
+scripts/sync-plugins.sh
+  bdaeda212b01392b 29-33,49,153-185,188,194,249,255,267-269,284,291
+copilot/commands/evaluate-connector.md
+  bdaeda212b01392b 1-8
+copilot/commands/deploy-connector.md
+  bdaeda212b01392b 1-5
+copilot/README.md
+  bdaeda212b01392b 1-64
+copilot/commands/test-connector.md
+  bdaeda212b01392b 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "da9bf67a292da71d3f1114fd3d41b7945f6f49d5",
+  "prompts": {
+    "bdaeda212b01392b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e903f634-a609-4631-9dbd-a2557e4d06f0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Sahil Khirwal <sahil.khirwal@fivetran.com>",
+      "messages": [],
+      "total_additions": 243,
+      "total_deletions": 10,
+      "accepted_lines": 235,
+      "overriden_lines": 0
+    }
+  }
+}
