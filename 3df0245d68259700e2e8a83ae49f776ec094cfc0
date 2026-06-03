@@ -1,0 +1,23 @@
+README.md
+  bdaeda212b01392b 6,61-69,74,136-142,153,165-169,173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "3df0245d68259700e2e8a83ae49f776ec094cfc0",
+  "prompts": {
+    "bdaeda212b01392b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e903f634-a609-4631-9dbd-a2557e4d06f0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Sahil Khirwal <sahil.khirwal@fivetran.com>",
+      "messages": [],
+      "total_additions": 243,
+      "total_deletions": 10,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    }
+  }
+}
