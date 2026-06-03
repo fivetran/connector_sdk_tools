@@ -56,19 +56,36 @@ If neither Check 1 nor Check 2 produced a better option, or the user explicitly 
 
 ## Phase 1: Research & Validate Requirements
 
-Apply the validator workflow — read `workflows/validator.md` in the plugin directory (or, in plugins that support subagents, invoke the `connector-validator` subagent) to research the API and produce a complete specification.
+Apply the validator workflow — read `workflows/validator.md` in the plugin directory (or, in plugins that support subagents, invoke the `connector-validator` subagent) to research the API and produce a complete specification **and a discovery result**: `EXACT MATCH`, `FUZZY MATCH`, or `BUILD ON TEMPLATE`.
 
 **Stop and wait** for the user to answer any clarifying questions the validator surfaces before proceeding to Phase 2.
 
-## Phase 2: Generate Connector Files
+## Phase 2: Scaffold the Project with `fivetran init`
 
-Apply the generator workflow — read `workflows/generator.md` (or invoke the `connector-generator` subagent) to study 2–4 relevant SDK examples and produce `connector.py`, `configuration.json`, and `README.md`.
+`fivetran init` is the canonical scaffolding path — it produces a complete, runnable connector with the correct structure (`validate_configuration()`, docstrings, the `__main__` block). **Always scaffold with `fivetran init`; never hand-write the project from scratch.** Pick the command from the Phase 1 discovery result. The project directory is the connector name (lowercase, underscores).
 
-Create the project directory before calling the workflow; name it after the connector (lowercase, underscores).
+- **EXACT MATCH / FUZZY MATCH** — start from the community connector:
+  ```bash
+  printf '\n' | fivetran init "<connector_dir>" --template connectors/<name> --force
+  ```
+- **BUILD ON TEMPLATE** — start from the default template:
+  ```bash
+  printf '\n' | fivetran init "<connector_dir>" --force
+  ```
 
-## Phase 3: Setup Environment
+Windows PowerShell: replace `printf '\n' |` with `"" |`.
 
-Set up the connector environment with commands appropriate for the user's OS:
+**Why the piped newline and `--force`:** `fivetran init` always runs an interactive "which coding agent shall we install the plugin for?" prompt, and there is no flag to skip it. `--force` auto-confirms project creation and file overwrites; the piped empty line answers the agent prompt with an invalid choice, so it logs `invalid choice; skipping agent setup` (this is **expected and benign** — the plugin is already installed) and continues.
+
+**Verify success by checking that `<connector_dir>/connector.py` exists**, not by the exit code — an exhausted input pipe can make `init` exit non-zero even after the files download correctly. `connectors/<name>` resolves to the `fivetran_csdk_connectors` repo; `examples/<path>` resolves to `fivetran_connector_sdk`.
+
+## Phase 3: Customize the Scaffolded Files
+
+Apply the generator workflow — read `workflows/generator.md` (or invoke the `connector-generator` subagent) to adapt the **already-scaffolded** files to the Phase 1 specification using `Edit` (do not rewrite from scratch). For an EXACT MATCH, the connector may need little or no change beyond configuration; for FUZZY/BUILD ON TEMPLATE, study 2–4 relevant SDK examples and adapt `connector.py`, `configuration.json`, and `README.md` to the spec. Preserve the template structure (`validate_configuration()`, docstrings, global `connector = Connector(...)`, the `__main__` block).
+
+## Phase 4: Setup Environment
+
+`fivetran init` already created `requirements.txt` (or `pyproject.toml`). Set up the virtual environment and install dependencies with commands appropriate for the user's OS:
 
 macOS/Linux:
 ```bash
@@ -84,9 +101,9 @@ uv venv .venv
 uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_connector_sdk
 ```
 
-## Phase 4: Enter Configuration & Test
+## Phase 5: Enter Configuration & Test
 
-After generating the files (or finding existing files with placeholder values), credentials must be entered via the encryption script. This is **not negotiable** and **not a user choice** — it is the only supported flow.
+After scaffolding and customizing the files (or finding existing files with placeholder values), credentials must be entered via the encryption script. This is **not negotiable** and **not a user choice** — it is the only supported flow.
 
 **HARD RULES — violating any of these is a failure:**
 - DO NOT use `AskUserQuestion` (or any choice-menu / multi-option UI) to ask how the user wants to enter credentials. There is exactly one way.
@@ -139,7 +156,7 @@ Windows PowerShell:
 
 Report: tables synced, row counts, any errors.
 
-## Phase 5: Auto-Fix on Failure
+## Phase 6: Auto-Fix on Failure
 
 If the test fails:
 

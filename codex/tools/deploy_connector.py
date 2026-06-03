@@ -14,6 +14,7 @@ import base64
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -111,7 +112,8 @@ def load_api_key() -> str:
     if not key:
         print("Error: FIVETRAN_API_KEY environment variable is not set.")
         print("")
-        print("To deploy, you need a Fivetran API key with CONNECTOR:READ permission.")
+        print("To deploy, you need a base64-encoded Fivetran API key ('{key}:{secret}')")
+        print("with permission to manage connections and read destinations.")
         print("Create one at: https://fivetran.com/dashboard/user/api-config")
         print("")
         print("Then add it to your shell config (e.g. ~/.zshrc):")
@@ -122,28 +124,45 @@ def load_api_key() -> str:
     return key
 
 
-def fivetran_get(path: str, api_key: str) -> dict:
-    """GET a Fivetran REST API path and return the parsed JSON body."""
+def fivetran_request(method: str, path: str, api_key: str, body: dict | None = None) -> dict:
+    """Call a Fivetran REST API path and return the parsed JSON body.
+
+    The Fivetran REST API uses HTTP Basic auth. FIVETRAN_API_KEY is the
+    base64-encoded "{key}:{secret}" string — exactly the Basic-auth credential —
+    so it is sent as `Authorization: Basic <key>` (the same value passed to
+    `fivetran deploy --api-key`).
+    """
     url = f"{API_BASE}{path}"
-    req = urllib.request.Request(url, headers={
-        "Authorization": f"Bearer {api_key}",
+    headers = {
+        "Authorization": f"Basic {api_key}",
         "Accept": "application/json",
-    })
+    }
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, headers=headers, data=data, method=method)
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read().decode("utf-8"))
+            raw = resp.read().decode("utf-8")
+            return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else ""
-        print(f"Error: Fivetran API {path} returned {e.code}.")
+        err_body = e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else ""
+        print(f"Error: Fivetran API {method} {path} returned {e.code}.")
         if e.code in (401, 403):
             print("Your FIVETRAN_API_KEY is missing or lacks required permissions.")
-            print("Required: CONNECTOR:READ (and DESTINATION:READ for destination lookup).")
-        if body:
-            print(f"Response: {body[:500]}")
+            print("It must be the base64-encoded '{key}:{secret}' string.")
+        if err_body:
+            print(f"Response: {err_body[:500]}")
         sys.exit(1)
     except urllib.error.URLError as e:
         print(f"Error: Could not reach Fivetran API ({e.reason}).")
         sys.exit(1)
+
+
+def fivetran_get(path: str, api_key: str) -> dict:
+    """GET a Fivetran REST API path and return the parsed JSON body."""
+    return fivetran_request("GET", path, api_key)
 
 
 def pick_one(items: list, label_fn, prompt: str, singular: str):
@@ -168,37 +187,53 @@ def pick_one(items: list, label_fn, prompt: str, singular: str):
         print("Invalid selection. Try again.")
 
 
-def discover_destination(api_key: str) -> str:
-    """Return a destination ID via Fivetran REST API, prompting if ambiguous."""
+def discover_destination_name(api_key: str) -> str:
+    """Return the destination (group) NAME for `fivetran deploy --destination`.
+
+    In Fivetran, a group and its destination share an identity; the value
+    `fivetran deploy --destination` expects is the destination name shown on the
+    dashboard, which is the group name (the CLI documents it as "aka 'group name'").
+    """
     groups_resp = fivetran_get("/groups?limit=1000", api_key)
     groups = groups_resp.get("data", {}).get("items", [])
     if not groups:
-        print("Error: No groups found in your Fivetran account.")
-        print("Create one at https://fivetran.com/dashboard and re-run.")
+        print("Error: No destinations found in your Fivetran account.")
+        print("Create one at https://fivetran.com/dashboard/destinations and re-run.")
         sys.exit(1)
 
     group = pick_one(
         groups,
         label_fn=lambda g: f"{g.get('name')} ({g.get('id')})",
-        prompt="Multiple groups found. Pick one:",
-        singular="group",
-    )
-
-    dest_resp = fivetran_get(f"/groups/{group['id']}/destinations?limit=1000", api_key)
-    destinations = dest_resp.get("data", {}).get("items", [])
-    if not destinations:
-        print(f"Error: No destinations in group '{group.get('name')}'.")
-        print("Create one at: https://fivetran.com/dashboard/destinations")
-        print("Then re-run this command.")
-        sys.exit(1)
-
-    destination = pick_one(
-        destinations,
-        label_fn=lambda d: f"{d.get('id')} ({d.get('service', '?')}, region {d.get('region', '?')})",
         prompt="Multiple destinations found. Pick one:",
         singular="destination",
     )
-    return destination["id"]
+    return group["name"]
+
+
+def sanitize_connection_name(raw: str) -> str:
+    """Coerce a string into a valid Fivetran connection name.
+
+    Rules: begins with `_` or a lowercase letter; only `_`, lowercase letters,
+    or digits afterward.
+    """
+    name = "".join(ch if (ch.islower() or ch.isdigit() or ch == "_") else "_"
+                    for ch in raw.lower())
+    name = name.strip("_") or "connector"
+    if not (name[0].islower() or name[0] == "_"):
+        name = f"_{name}"
+    return name
+
+
+def unpause_connection(api_key: str, connection_id: str):
+    """Unpause a connection so Fivetran begins syncing (consumes MAR)."""
+    fivetran_request(
+        "PATCH",
+        f"/connections/{connection_id}",
+        api_key,
+        body={"paused": False},
+    )
+    print(f"Connection {connection_id} unpaused — the initial sync will begin.")
+    print(f"Dashboard: https://fivetran.com/dashboard/connections/{connection_id}/status")
 
 
 class ConfigPipe:
@@ -363,7 +398,20 @@ def find_fivetran_executable(connector_dir: Path) -> str:
 def main():
     parser = argparse.ArgumentParser(description="Deploy a connector to Fivetran")
     parser.add_argument("connector_directory", help="Path to the connector directory")
+    parser.add_argument("--connection", help="Connection name (default: derived from the directory name)")
+    parser.add_argument("--start-sync", action="store_true",
+                        help="Unpause an already-deployed connection to start syncing (use with --connection-id)")
+    parser.add_argument("--connection-id", help="Connection ID to unpause (required with --start-sync)")
     args = parser.parse_args()
+
+    # Opt-in unpause path: start the initial sync of an already-deployed connection.
+    # The build/deploy skill calls this only after the user explicitly confirms.
+    if args.start_sync:
+        if not args.connection_id:
+            print("Error: --start-sync requires --connection-id <id>.", file=sys.stderr)
+            sys.exit(1)
+        unpause_connection(load_api_key(), args.connection_id)
+        sys.exit(0)
 
     connector_dir = Path(args.connector_directory).resolve()
     if not connector_dir.exists():
@@ -397,7 +445,9 @@ def main():
         sys.exit(1)
 
     api_key = load_api_key()
-    destination_id = discover_destination(api_key)
+    destination_name = discover_destination_name(api_key)
+    connection_name = args.connection or sanitize_connection_name(connector_dir.name)
+    print(f"Deploying as connection: {connection_name}")
 
     config_pipe = ConfigPipe(connector_dir, config)
     with config_pipe as pipe_path:
@@ -407,11 +457,17 @@ def main():
             "--api-key",
             api_key,
             "--destination",
-            destination_id,
+            destination_name,
+            "--connection",
+            connection_name,
             "--configuration",
             str(pipe_path),
+            # Auto-answer the "update connection / overwrite configuration?" prompts so
+            # redeploys don't block waiting on stdin.
+            "--force",
         ]
 
+        connection_id = None
         process = subprocess.Popen(
             cmd,
             cwd=connector_dir,
@@ -422,11 +478,26 @@ def main():
         )
         for line in process.stdout:
             print(line, end='', flush=True)
+            match = re.search(r"Connection ID:\s*(\S+)", line)
+            if match:
+                connection_id = match.group(1)
         process.wait()
 
         if config_pipe.writer_error:
             print(f"Error: Failed to write configuration pipe: {config_pipe.writer_error}", file=sys.stderr)
             sys.exit(1)
+
+        if process.returncode == 0:
+            print("")
+            if connection_id:
+                print(f"Deployed. Connection ID: {connection_id}")
+                print(f"Dashboard: https://fivetran.com/dashboard/connections/{connection_id}/status")
+                print("The connection is created PAUSED. To start the initial sync (this begins")
+                print("consuming MAR), run after confirming with the user:")
+                print(f'  python "{SCRIPT_DIR}/deploy_connector.py" "{connector_dir}" --start-sync --connection-id {connection_id}')
+            else:
+                print("Deployed. The connection is created PAUSED; start the initial sync from the")
+                print("Fivetran dashboard or via the REST API (the Connection ID is in the log above).")
 
         sys.exit(process.returncode)
 

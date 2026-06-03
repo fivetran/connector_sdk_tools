@@ -13,11 +13,24 @@ description: Generate Fivetran connector code from a validated specification. Us
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
 
-**YOUR ROLE: CODE WRITER**
+**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `fivetran_csdk_connectors`.
 
-You receive a COMPLETE specification from the validation phase. The validator has already researched the API, identified auth/endpoints/pagination, and asked clarifying questions.
+**YOUR ROLE: ADAPT THE SCAFFOLDED CONNECTOR**
 
-**Your job is to write correct code based on this specification. Do NOT re-research the API.**
+The project has already been scaffolded by `fivetran init` — `connector.py`, `configuration.json`,
+and a dependency file already exist on disk. For a community-connector template, `connector.py`
+already contains a real, working implementation; for the default template, it contains a complete
+runnable starter (`validate_configuration()`, `schema()`, `update()`, docstrings, the `__main__`
+block).
+
+You also receive a COMPLETE specification from the validation phase. The validator has already
+researched the API and identified auth/endpoints/pagination.
+
+**Your job is to ADAPT the existing scaffolded files to that specification using `Edit` — not to
+rewrite them from scratch.** Do NOT re-research the API. Read the scaffolded files first, then make
+targeted edits. Preserve the template's structure: `validate_configuration()` called at the top of
+`update()`, function docstrings, the global `connector = Connector(...)`, and the `__main__` block.
+Use `Write` only for a file the scaffold did not create.
 
 ## Mandatory Example Analysis
 
@@ -35,17 +48,20 @@ Before writing code, use WebFetch to study 2-4 relevant SDK examples (see exampl
    - Pagination: [type] based on [example]
    ```
 
-## File Generation
+## File Adaptation
 
-Create a project directory, then generate:
+The project directory and files already exist (scaffolded by `fivetran init`). Read each file, then
+`Edit` it to match the spec. Ensure the result has:
 
 ### connector.py
-- Follow the standard connector pattern from sdk-reference.md exactly
-- Implement `schema()` and `update()` functions
-- Use `op.upsert()`, `op.checkpoint()` directly — no yield
-- Include `connector = Connector(update=update, schema=schema)` in global scope (NOT under `if __name__`)
-- Include `if __name__ == "__main__": connector.debug()`
-- Implement both full and incremental sync where the API supports it
+- The standard connector pattern from sdk-reference.md
+- `validate_configuration()` called at the top of `update()` (already present in the template — keep it and fill in the required keys)
+- `schema()` and `update()` functions (adapt the scaffolded ones; see Schema Definition below)
+- `op.upsert()`, `op.checkpoint()` (and `op.update`/`op.delete`/`op.truncate` as needed) called directly — no yield
+- `connector = Connector(update=update, schema=schema)` in global scope (NOT under `if __name__`)
+- The `if __name__ == "__main__":` block (keep the scaffolded one)
+- Both full and incremental sync where the API supports it
+- Docstrings on functions you add or change
 
 ### configuration.json
 - Flat string key/value pairs only
@@ -61,7 +77,7 @@ Create a project directory, then generate:
 - Do NOT tell users to edit `configuration.json` manually
 - Do NOT present credential-entry options; the encryption script is the only supported flow
 
-**CRITICAL**: Use the Write tool to create actual files. Do NOT just return text.
+**CRITICAL**: Use `Edit` to modify the scaffolded files in place. Use `Write` only for a file the scaffold did not create. Do NOT just return text, and do NOT replace a working community-connector template with a from-scratch rewrite.
 
 ## Credential Handling Policy
 
@@ -92,13 +108,25 @@ The script prompts for credential values and encrypts `configuration.json` in pl
 ## BEST PRACTICES
 
 ### 1. Schema Definition
-Only define table names and primary keys. **Do not specify data types!**
+**Always declare `table` and `primary_key` for each table.** Declaring a `primary_key` is strongly
+recommended — without one, Fivetran generates a surrogate `_fivetran_id` from all column values,
+which can fragment rows when the column set changes.
 
-Data types are auto-detected by the SDK. See [Supported Datatypes](https://fivetran.com/docs/connector-sdk/technical-reference#supporteddatatypes).
+`columns` is **optional**. Declare a column's type **only** when you need to force a specific type.
+Do NOT declare every column — leaving columns out lets the SDK infer types and lets the schema
+evolve as the source changes. See [Supported Datatypes](https://fivetran.com/docs/connector-sdk/technical-reference#supporteddatatypes).
 
 ```python
 def schema(configuration: dict):
-    return [{"table": "table_name", "primary_key": ["key"]}]
+    return [
+        {
+            "table": "table_name",
+            "primary_key": ["id"],
+            # Optional — declare a type only where you must force one; omit the rest
+            # so the SDK can infer types and the schema can evolve.
+            "columns": {"id": "STRING"},
+        }
+    ]
 ```
 
 ### 2. Logging - Use EXACT method names
@@ -208,8 +236,8 @@ op.checkpoint(state=state)
   - WebFetch: `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
 
 ### Community Connectors (Source-specific examples):
-- Databases/APIs: Browse https://github.com/fivetran/fivetran_connector_sdk/tree/main/connectors/ and use WebFetch for real-world connector examples
-- Raw file: `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/connectors/<name>/connector.py`
+- Databases/APIs: Browse https://github.com/fivetran/fivetran_csdk_connectors/tree/main/ and use WebFetch for real-world connector examples
+- Raw file: `https://raw.githubusercontent.com/fivetran/fivetran_csdk_connectors/main/<name>/connector.py`
 
 ### Foundation Examples (ALWAYS study these):
 - **Basic Structure**:
@@ -249,7 +277,7 @@ op.checkpoint(state=state)
    - Error handling: [approach] from [example name]
    ```
 
-5. **Generate Code**: Create files that closely follow the studied example patterns, ensuring type annotations match exactly
+5. **Adapt Code**: Edit the scaffolded files to follow the studied example patterns, ensuring type annotations match exactly
 
 ## CODE VALIDATION REQUIREMENTS
 
@@ -267,16 +295,16 @@ op.checkpoint(state=state)
 Before completing the task, the subagent MUST validate its work:
 
 ### Generation-Specific Validation:
-1. **File Completeness**: All 3 files (connector.py, configuration.json, README.md) must be created using Write tool
+1. **File Completeness**: All 3 files (connector.py, configuration.json, README.md) are present (scaffolded by `fivetran init`; create any missing one with Write)
 2. **Required Functions**: connector.py must contain both `update()` and `schema()` functions
-3. **CRITICAL - Data Type Validation**: Scan schema() function and verify only table names and primary keys (no data types!)
+3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` keys are used; any declared column types are valid type names and used selectively (not every column)
 4. **Configuration Flatness**: Validate that configuration.json is flat (no nested objects/arrays) with string values only
 5. **Credential Safety**: Validate that configuration.json contains placeholders only and README points only to `enter_configuration.py` for credential entry
 6. **Documentation Completeness**: README must include setup instructions, testing procedures, and API documentation
 7. **Example Pattern Conformance**: Verify generated code follows the studied example patterns
 
 ### Success Criteria:
-- All files created with Write tool and returned in structured format
+- All 3 files present and adapted (community templates kept, not rewritten from scratch)
 - Code follows BEST PRACTICES (schema, logging, type hints, operations)
 - Configuration is flat with placeholder string values only (sensitive fields only)
 - README does not ask users to paste credentials in chat or edit `configuration.json` manually
@@ -292,6 +320,7 @@ Before completing:
 - [ ] All 3 files created
 - [ ] Valid Python syntax (read back and verify)
 - [ ] Both `update()` and `schema()` present
+- [ ] Every table declares a `primary_key`; column types (if any) are valid and selective, not exhaustive
 - [ ] `connector = Connector(...)` in global scope
 - [ ] No forbidden patterns (`Dict[str, Any]`, `Generator[...]`, `op.Operation` in type hints, `yield` with operations)
 - [ ] configuration.json is valid flat JSON with placeholder string values only

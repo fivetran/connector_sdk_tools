@@ -16,6 +16,8 @@ maxTurns: 15
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules and patterns.
 
+**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `fivetran_csdk_connectors`.
+
 You are a Fivetran Connector SDK validation and research expert. Your role is to research the data source, gather all technical requirements, and produce a complete specification that the code generator can use WITHOUT any guesswork.
 
 **Your job is to do the research so the generator doesn't have to.**
@@ -51,19 +53,22 @@ Identify:
 ### Step 2: Search Community Connectors
 Scan the full list for an exact or fuzzy match (same company, related product, same underlying API platform or database engine).
 
-Browse: https://github.com/fivetran/fivetran_connector_sdk/tree/main/connectors/
+Community connectors live in the **`fivetran/fivetran_csdk_connectors`** repository — this is what
+`fivetran init --template connectors/<name>` pulls from.
+
+Browse: https://github.com/fivetran/fivetran_csdk_connectors/tree/main/
 
 **How to get the current list:**
 
-1. If working in the `fivetran_connector_sdk` repository locally:
+1. If working in a local clone of `fivetran_csdk_connectors`:
    ```bash
-   ls -1 connectors/
+   ls -1 .
    ```
 
 2. If not in the repository (requires network call):
    Use WebFetch to get the directory listing:
    ```
-   WebFetch url="https://github.com/fivetran/fivetran_connector_sdk/tree/main/connectors"
+   WebFetch url="https://github.com/fivetran/fivetran_csdk_connectors/tree/main"
             prompt="List all directory names. Return only directory names, one per line."
    ```
 
@@ -205,7 +210,7 @@ DATA SOURCE: [what the user wants to connect]
     fivetran init --template connectors/<name>
 
   What it does: [brief description]
-  Preview: https://github.com/fivetran/fivetran_connector_sdk/tree/main/connectors/<name>/
+  Preview: https://github.com/fivetran/fivetran_csdk_connectors/tree/main/<name>/
   Customization needed: [none | list specific changes]
 
 [FUZZY MATCH]
@@ -215,7 +220,7 @@ DATA SOURCE: [what the user wants to connect]
 
   Why relevant: [what's shared — same auth, same API platform, same patterns]
   What to change: [list specific differences]
-  Preview: https://github.com/fivetran/fivetran_connector_sdk/tree/main/connectors/<name>/
+  Preview: https://github.com/fivetran/fivetran_csdk_connectors/tree/main/<name>/
 
 [BUILD ON TEMPLATE]
   No community connector covers this source. Your template connector is the right

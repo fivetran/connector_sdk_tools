@@ -14,11 +14,11 @@
 
 | Command | Description |
 |---------|-------------|
-| `fivetran init` | Create new project from template |
-| `fivetran init --template connectors/<name>` | Start from community connector |
+| `fivetran init` | Create new project from the default template |
+| `fivetran init --template connectors/<name>` | Start from a community connector |
 | `fivetran debug` | Test locally, produces `warehouse.db` (DuckDB) |
 | `fivetran package` | Build a deployable ZIP without uploading |
-| `fivetran deploy` | Package and deploy to Fivetran |
+| `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
 | `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.13) |
 | `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent |
 | `fivetran reset --force` | Reset local state (clear warehouse.db) |
@@ -27,6 +27,8 @@
 **Complete CLI reference**: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-commands
 
 **Note**: `fivetran init` without `--template` creates a complete, working connector — not empty boilerplate.
+
+**`fivetran deploy` arguments**: `--api-key` and `--connection` are required; `--destination` is optional only if your account has a single destination. The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `fivetran_csdk_connectors`, `examples/<path>` from `fivetran_connector_sdk`, and no flag uses the default `_template_connector`.
 
 ## Runtime Environment
 
@@ -82,15 +84,28 @@ Never log per-record. Log at milestones (per table, every 250K records).
 - **NEVER** use `op.Operation` in type hints — it doesn't exist
 - **ALWAYS** use `dict` and `list`, not typing module imports
 
-### Schema Definition — No Data Types
-- Only table names and primary keys
-- Data types are auto-detected by the SDK
+### Schema Definition
+
+- **Always declare `table` and `primary_key`** for each table. Without a primary key, Fivetran
+  creates a surrogate `_fivetran_id` column hashed from all values, which can fragment rows.
+- `columns` is **optional**. Declare a column's type **only** when you need to force a specific
+  type — do **not** declare every column. Leaving columns out lets the SDK infer types and allows
+  the schema to evolve as the source changes.
+- Valid schema keys: `table`, `primary_key`, `columns` (any other key is invalid).
+- Valid data types: `BOOLEAN`, `SHORT`, `INT`, `LONG`, `DECIMAL`, `FLOAT`, `DOUBLE`, `NAIVE_DATE`,
+  `NAIVE_DATETIME`, `UTC_DATETIME`, `BINARY`, `XML`, `STRING`, `JSON`.
 - See [Supported Datatypes](https://fivetran.com/docs/connector-sdk/technical-reference#supporteddatatypes)
 
 ```python
 def schema(configuration: dict):
     return [
-        {"table": "table_name", "primary_key": ["key"]}
+        {
+            "table": "table_name",
+            "primary_key": ["id"],
+            # Optional: declare a type only where you need to force one.
+            # Omit columns you want the SDK to infer (allows schema evolution).
+            "columns": {"id": "STRING"},
+        }
     ]
 ```
 
@@ -100,10 +115,11 @@ Call operations directly.
 
 | Operation | Description |
 |-----------|-------------|
-| `op.upsert(table="t", data=record)` | Insert or update a record |
-| `op.update(table="t", modified=record)` | Update existing record only |
-| `op.delete(table="t", keys={"id": "123"})` | Delete a record |
-| `op.checkpoint(state=state)` | Save sync progress |
+| `op.upsert(table="t", data=record)` | Insert or update a record by primary key |
+| `op.update(table="t", modified=record)` | Update an existing record only (no new rows) |
+| `op.delete(table="t", keys={"id": "123"})` | Soft-delete a record (`_fivetran_deleted = TRUE`) |
+| `op.truncate(table="t")` | Soft-delete all rows synced before this call; flushed at the next checkpoint |
+| `op.checkpoint(state=state)` | Save sync progress (and flush buffered data to the destination) |
 
 ### configuration.json Rules
 - **Flat key/value pairs only** — no nested objects or arrays
@@ -216,12 +232,25 @@ def update(configuration, state):
 
 ## Connector Discovery
 
-Before building a new connector, check for existing starting points:
-1. [Community connectors](https://github.com/fivetran/fivetran_connector_sdk/tree/main/connectors/)
-2. [Common patterns](https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/)
-3. Start with the best match using `fivetran init --template`
+**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `fivetran_csdk_connectors`.
+
+There are **two source repositories** — always consider both before building from scratch:
+
+| Repository | Use for | `--template` prefix |
+|------------|---------|---------------------|
+| **Examples** — https://github.com/fivetran/fivetran_connector_sdk/tree/main/ | Quickstart examples (`examples/quickstart_examples/`) and reusable building blocks (`examples/common_patterns_for_connectors/`) — auth, pagination, sync strategy, error handling | `examples/<path>` |
+| **Community connectors** — https://github.com/fivetran/fivetran_csdk_connectors/ | Source-specific, ready-to-use connectors for real APIs and databases | `connectors/<name>` |
+
+Before building a new connector:
+1. Check the **community connectors** repo for an exact/fuzzy match for the source.
+2. Identify which **examples** (common patterns) apply based on auth, pagination, and sync style — these apply to every connector regardless of source.
+3. Start from the best match with `fivetran init --template <prefix>` (`connectors/<name>` resolves to `fivetran_csdk_connectors`; `examples/<path>` resolves to `fivetran_connector_sdk`; no flag uses the default `_template_connector`).
 
 ## SDK Example URLs
+
+All example URLs below live in the **examples** repo (`fivetran/fivetran_connector_sdk`).
+Community connectors live in `fivetran/fivetran_csdk_connectors`
+(raw: `https://raw.githubusercontent.com/fivetran/fivetran_csdk_connectors/main/<name>/connector.py`).
 
 ### Authentication
 - API Key: `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`

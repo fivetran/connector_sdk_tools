@@ -17,6 +17,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 |-----------|--------|
 | "Build/create a connector for X" | Run `/fivetran-connector-sdk:build-connector` |
 | "Help me connect to [data source]" | Run `/fivetran-connector-sdk:build-connector` |
+| "Start from / use the community connector for X" | Run `/fivetran-connector-sdk:build-connector` (Phase 1 discovery finds the match and scaffolds it with `fivetran init --template`) |
 | "Test my connector" | Run `/fivetran-connector-sdk:test-connector` |
 | "I'm getting an error..." / "fix my connector" / "help me change X" | Invoke the `connector-fixer` agent with the error details and user context. Do not handle code fixes in the main thread. |
 | "Deploy my connector" | Run `/fivetran-connector-sdk:deploy-connector` |

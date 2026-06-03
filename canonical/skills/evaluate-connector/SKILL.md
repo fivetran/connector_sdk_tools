@@ -54,14 +54,15 @@ Flag as `required` only when the code clearly demonstrates the problem.
 
 **2. SDK Compliance**
 - `update(configuration, state)` function must exist and be passed to `Connector()` instantiation
-- At least one of `op.upsert()`, `op.update()`, or `op.delete()` must be called
+- At least one of `op.upsert()`, `op.update()`, `op.delete()`, or `op.truncate()` must be called
 - `op.checkpoint()` must be called
-- SDK operations must be called directly — never with `yield` or `yield from`:
+- SDK operations (`op.upsert`, `op.update`, `op.delete`, `op.truncate`, `op.checkpoint`) must be called directly — never with `yield` or `yield from`:
   - WRONG: `yield op.upsert(table="x", data=d)`
   - CORRECT: `op.upsert(table="x", data=d)`
 - `update()` must not return anything — SDK operations return `None`
 - Schema: only `table`, `primary_key`, `columns` keys are valid — any other key is an error
 - Schema data types: if `columns` are specified, only `BOOLEAN`, `SHORT`, `INT`, `LONG`, `FLOAT`, `DOUBLE`, `DECIMAL`, `STRING`, `BINARY`, `JSON`, `XML`, `NAIVE_DATE`, `NAIVE_DATETIME`, `UTC_DATETIME` are valid — any other type name is an error
+- Declaring `columns` with valid types is **correct and supported** — do NOT flag it as an issue. Declaring a `primary_key` for each table is recommended.
 - Logging: preferred methods are `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()` — flag `print()`, `logging.*`, `logger.*` as required issues
 - Type hints: `Generator[op.Operation, None, None]` or any use of `op.Operation` in type hints is invalid — use plain `dict` and `list` only; never import from `typing` for SDK function signatures
 - `exit()` must never be used — use `raise RuntimeError(...)` instead
@@ -97,7 +98,8 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Missing input validation for required configuration keys
 - Dead or duplicate code
 - `requirements.txt` lists `requests` or `fivetran_connector_sdk` — these are pre-installed in the runtime and must not be declared
-- `columns` specified in schema with data types — preferred pattern is to omit `columns` entirely and let the SDK auto-detect types
+- Schema declares a type for **every** column — declaring all columns forfeits the SDK's type inference and schema evolution. Prefer declaring types only where a specific type must be forced. (Declaring types for *some* columns is fine — do not flag that.)
+- No `primary_key` declared for a table — Fivetran will create a surrogate `_fivetran_id` key; declaring an explicit primary key is recommended
 - `log.fine()` or `log.severe()` used — these are deprecated Java-style aliases; prefer `log.debug()` and `log.error()` respectively
 
 **3. Reliability**
@@ -112,6 +114,7 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Theoretical edge cases not reachable in the actual execution path
 - Issues already handled elsewhere in the code
 - Cursor checkpoint placed after the loop when an empty page breaks before the cursor update — this is correct behavior
+- `columns` declared with valid data types — declaring types is explicitly supported by the SDK and useful for forcing a specific type. Only flag declaring a type for *every* column (good_to_have).
 - Reading credentials from the `configuration` dict — Fivetran encrypts configuration
 - Any JSON-serializable value stored in state — all are valid
 - Datetime string vs datetime object in `op.upsert()` data — SDK accepts both
