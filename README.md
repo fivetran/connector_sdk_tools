@@ -24,14 +24,14 @@ If you skipped agent setup in `fivetran init`, or want to install the plugin int
 ### Claude Code
 
 ```bash
-claude plugin marketplace add fivetran/fivetran_csdk_tools
+claude plugin marketplace add fivetran/connector_sdk_tools
 claude plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 Or from inside a Claude Code session:
 
 ```
-/plugin marketplace add fivetran/fivetran_csdk_tools
+/plugin marketplace add fivetran/connector_sdk_tools
 /plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
@@ -40,7 +40,7 @@ See [`claude-code/README.md`](claude-code/README.md) for the full tutorial.
 ### Codex CLI
 
 ```bash
-codex plugin marketplace add fivetran/fivetran_csdk_tools
+codex plugin marketplace add fivetran/connector_sdk_tools
 codex plugin add fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
@@ -51,19 +51,19 @@ Note: If your current version of Codex CLI does not support the `add` command, p
 ### Gemini CLI
 
 ```bash
-gemini extensions install https://github.com/fivetran/fivetran_csdk_tools
+gemini extensions install https://github.com/fivetran/connector_sdk_tools
 ```
 
 For non-interactive use (e.g., scripts):
 
 ```bash
-gemini extensions install https://github.com/fivetran/fivetran_csdk_tools --consent --skip-settings
+gemini extensions install https://github.com/fivetran/connector_sdk_tools --consent --skip-settings
 ```
 
 ### GitHub Copilot CLI
 
 ```bash
-copilot plugin marketplace add fivetran/fivetran_csdk_tools
+copilot plugin marketplace add fivetran/connector_sdk_tools
 copilot plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 

@@ -14,7 +14,7 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 See the [top-level README](../README.md#install) for the full install matrix. Quick path:
 
 ```bash
-copilot plugin marketplace add fivetran/fivetran_csdk_tools
+copilot plugin marketplace add fivetran/connector_sdk_tools
 copilot plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
