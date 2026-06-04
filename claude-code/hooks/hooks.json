@@ -5,8 +5,8 @@
       "matcher": "Edit|Write",
       "hooks": [
         {
-          "type": "prompt",
-          "prompt": "A file was just modified. If it was a connector file (connector.py, configuration.json, or requirements.txt), briefly remind the user they can run /test-connector to verify their changes. Keep the reminder to one sentence. If the file is unrelated to a connector, say nothing."
+          "type": "command",
+          "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/check-connector-file.py\""
         }
       ]
     }

@@ -49,16 +49,16 @@ To fix or modify an existing connector, describe the problem or change in natura
 
 ## What's Included
 
-| Component | Description |
-|-----------|-------------|
+| Component | Description                                                      |
+|-----------|------------------------------------------------------------------|
 | `commands/build-connector.md` | Full generation workflow (research → generate → test → auto-fix) |
-| `commands/test-connector.md` | Run and validate connector tests |
-| `commands/deploy-connector.md` | Package and deploy to Fivetran |
-| `commands/evaluate-connector.md` | Static code review and scored report |
-| `agents/connector-validator.md` | Agent for API research and requirements gathering |
-| `agents/connector-generator.md` | Agent for generating connector code |
-| `agents/connector-fixer.md` | Agent for diagnosing and fixing errors |
-| `hooks/hooks.json` | Post-edit reminder to run test-connector after code changes |
-| `tools/enter_configuration.py` | Enter and encrypt API credentials |
-| `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
-| `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
+| `commands/test-connector.md` | Run and validate connector tests                                 |
+| `commands/deploy-connector.md` | Package and deploy to Fivetran                                   |
+| `commands/evaluate-connector.md` | Static code review and scored report                             |
+| `agents/connector-validator.md` | Agent for API research and requirements gathering                |
+| `agents/connector-generator.md` | Agent for generating connector code                              |
+| `agents/connector-fixer.md` | Agent for diagnosing and fixing errors                           |
+| `hooks/hooks.json` | Post-edit `postToolUse` hook: inline Python script checks `toolName` and `toolArgs.file_path`; outputs `additionalContext` reminder only for `connector.py`, `configuration.json`, or `requirements.txt` — silent for all other files |
+| `tools/enter_configuration.py` | Enter and encrypt API credentials                                |
+| `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe)    |
+| `tools/deploy_connector.py` | Deploy connector with auto-discovered destination                |

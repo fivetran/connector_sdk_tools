@@ -126,6 +126,7 @@ claude-code/                        Claude Code plugin (mostly generated)
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
   hooks/hooks.json
+  hooks/check-connector-file.py
   tools/, sdk-reference.md, native-connectors.md
 
 codex/                              Codex CLI plugin (mostly generated)
@@ -170,7 +171,7 @@ Only edit files under **`canonical/`** and the static Gemini files at the root (
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml` | (no sync needed) | Gemini only |
-| `claude-code/CLAUDE.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
+| `claude-code/CLAUDE.md`, `claude-code/hooks/hooks.json`, `claude-code/hooks/check-connector-file.py` | (no sync needed) | Claude Code only |
 | `codex/AGENTS.md`, `codex/.codex-plugin/plugin.json` | (no sync needed) | Codex only |
 | `copilot/AGENTS.md`, `copilot/hooks/hooks.json`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
 
