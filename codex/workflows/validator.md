@@ -8,7 +8,7 @@
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules and patterns.
 
-**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `community_connectors`.
+**Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 You are a Fivetran Connector SDK validation and research expert. Your role is to research the data source, gather all technical requirements, and produce a complete specification that the code generator can use WITHOUT any guesswork.
 
@@ -73,7 +73,7 @@ Browse: https://github.com/fivetran/community_connectors/tree/main/
 ### Step 3: Identify Relevant Common Patterns
 Always perform this step, even if a community connector was found. Identify which auth method, pagination style, sync strategy, and data characteristics apply.
 
-Browse: https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/
+Browse: https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/
 
 **Authentication:**
 | Pattern | Use when |

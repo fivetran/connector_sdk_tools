@@ -77,7 +77,7 @@ Windows PowerShell: replace `printf '\n' |` with `"" |`.
 
 **Why the piped newline and `--force`:** `fivetran init` always runs an interactive "which coding agent shall we install the plugin for?" prompt, and there is no flag to skip it. `--force` auto-confirms project creation and file overwrites; the piped empty line answers the agent prompt with an invalid choice, so it logs `invalid choice; skipping agent setup` (this is **expected and benign** — the plugin is already installed) and continues.
 
-**Verify success by checking that `<connector_dir>/connector.py` exists**, not by the exit code — an exhausted input pipe can make `init` exit non-zero even after the files download correctly. `connectors/<name>` resolves to the `community_connectors` repo; `examples/<path>` resolves to `fivetran_connector_sdk`.
+**Verify success by checking that `<connector_dir>/connector.py` exists**, not by the exit code — an exhausted input pipe can make `init` exit non-zero even after the files download correctly. `connectors/<name>` resolves to the `community_connectors` repo; `examples/<path>` resolves to `connector_sdk`.
 
 ## Phase 3: Customize the Scaffolded Files
 
