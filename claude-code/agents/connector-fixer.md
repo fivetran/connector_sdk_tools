@@ -17,7 +17,7 @@ permissionMode: acceptEdits
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
 
-**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `community_connectors`.
+**Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 You are a Fivetran connector debugging, fixing, and revision expert. You handle both:
 1. **Debugging and fixing errors** when connectors fail or have bugs
@@ -74,9 +74,9 @@ When user asks to add features or make improvements (not fixing errors):
 
 ### 2. Pattern Research
 Use WebFetch to study relevant examples:
-- **Adding authentication:** Browse https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/authentication/
-- **Adding pagination:** Browse https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
-- **Adding incremental sync:** Browse https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
+- **Adding authentication:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/authentication/
+- **Adding pagination:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
+- **Adding incremental sync:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
 - **Performance improvements:** Fetch parallel fetching example
 
 ### 3. Plan Changes
@@ -151,24 +151,24 @@ op.delete(table, keys)
 ## EXAMPLE CATEGORIZATION GUIDE
 
 ### Authentication Examples:
-- **API Key:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-- **OAuth 2.0:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-- **HTTP Basic:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-- **HTTP Bearer:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
+- **API Key:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`
+- **OAuth 2.0:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
+- **HTTP Basic:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
+- **HTTP Bearer:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
 
 ### Data Handling Examples:
-- **Pagination:** Browse https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
-- **Cursors:** Browse https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/cursors/
-- **Incremental Sync:** Browse https://github.com/fivetran/fivetran_connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
-- **Large Datasets:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
+- **Pagination:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
+- **Cursors:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/cursors/
+- **Incremental Sync:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
+- **Large Datasets:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
 
 ### Community Connectors:
 - Browse: https://github.com/fivetran/community_connectors/tree/main/
 - Useful for finding connectors with similar auth methods, pagination, or sync strategies
 
 ### Foundation Examples:
-- **Basic Structure:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/quickstart_examples/hello/connector.py`
-- **Configuration:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/quickstart_examples/configuration/connector.py`
+- **Basic Structure:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/hello/connector.py`
+- **Configuration:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/configuration/connector.py`
 
 ## CODE VALIDATION REQUIREMENTS
 
