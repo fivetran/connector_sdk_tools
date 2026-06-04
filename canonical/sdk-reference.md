@@ -28,7 +28,7 @@
 
 **Note**: `fivetran init` without `--template` creates a complete, working connector — not empty boilerplate.
 
-**`fivetran deploy` arguments**: `--api-key` and `--connection` are required; `--destination` is optional only if your account has a single destination. The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `fivetran_csdk_connectors`, `examples/<path>` from `fivetran_connector_sdk`, and no flag uses the default `_template_connector`.
+**`fivetran deploy` arguments**: `--api-key` and `--connection` are required; `--destination` is optional only if your account has a single destination. The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `community_connectors`, `examples/<path>` from `fivetran_connector_sdk`, and no flag uses the default `_template_connector`.
 
 ## Runtime Environment
 
@@ -232,25 +232,25 @@ def update(configuration, state):
 
 ## Connector Discovery
 
-**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `fivetran_csdk_connectors`.
+**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 There are **two source repositories** — always consider both before building from scratch:
 
 | Repository | Use for | `--template` prefix |
 |------------|---------|---------------------|
 | **Examples** — https://github.com/fivetran/fivetran_connector_sdk/tree/main/ | Quickstart examples (`examples/quickstart_examples/`) and reusable building blocks (`examples/common_patterns_for_connectors/`) — auth, pagination, sync strategy, error handling | `examples/<path>` |
-| **Community connectors** — https://github.com/fivetran/fivetran_csdk_connectors/ | Source-specific, ready-to-use connectors for real APIs and databases | `connectors/<name>` |
+| **Community connectors** — https://github.com/fivetran/community_connectors/ | Source-specific, ready-to-use connectors for real APIs and databases | `connectors/<name>` |
 
 Before building a new connector:
 1. Check the **community connectors** repo for an exact/fuzzy match for the source.
 2. Identify which **examples** (common patterns) apply based on auth, pagination, and sync style — these apply to every connector regardless of source.
-3. Start from the best match with `fivetran init --template <prefix>` (`connectors/<name>` resolves to `fivetran_csdk_connectors`; `examples/<path>` resolves to `fivetran_connector_sdk`; no flag uses the default `_template_connector`).
+3. Start from the best match with `fivetran init --template <prefix>` (`connectors/<name>` resolves to `community_connectors`; `examples/<path>` resolves to `fivetran_connector_sdk`; no flag uses the default `_template_connector`).
 
 ## SDK Example URLs
 
 All example URLs below live in the **examples** repo (`fivetran/fivetran_connector_sdk`).
-Community connectors live in `fivetran/fivetran_csdk_connectors`
-(raw: `https://raw.githubusercontent.com/fivetran/fivetran_csdk_connectors/main/<name>/connector.py`).
+Community connectors live in `fivetran/community_connectors`
+(raw: `https://raw.githubusercontent.com/fivetran/community_connectors/main/<name>/connector.py`).
 
 ### Authentication
 - API Key: `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`

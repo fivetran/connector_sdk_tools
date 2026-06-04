@@ -17,7 +17,7 @@ permissionMode: acceptEdits
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
 
-**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `fivetran_csdk_connectors`.
+**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 You are a Fivetran connector debugging, fixing, and revision expert. You handle both:
 1. **Debugging and fixing errors** when connectors fail or have bugs
@@ -163,7 +163,7 @@ op.delete(table, keys)
 - **Large Datasets:** `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
 
 ### Community Connectors:
-- Browse: https://github.com/fivetran/fivetran_csdk_connectors/tree/main/
+- Browse: https://github.com/fivetran/community_connectors/tree/main/
 - Useful for finding connectors with similar auth methods, pagination, or sync strategies
 
 ### Foundation Examples:
