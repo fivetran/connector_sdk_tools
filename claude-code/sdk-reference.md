@@ -43,7 +43,7 @@
 - **Python Versions:** 3.10.18, 3.11.13, 3.12.11, **3.13.7 (default)**, 3.14.0
   - Specify a non-default version with `fivetran deploy --python <version>`
   - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
-- **Pre-installed Packages:** `requests`, `connector_sdk`
+- **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`
 
 ## Standard Connector Pattern
 
