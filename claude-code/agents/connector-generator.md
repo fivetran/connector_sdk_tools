@@ -17,7 +17,7 @@ permissionMode: acceptEdits
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
 
-**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `fivetran_csdk_connectors`.
+**Where to look:** patterns & examples → `fivetran_connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 **YOUR ROLE: ADAPT THE SCAFFOLDED CONNECTOR**
 
@@ -240,8 +240,8 @@ op.checkpoint(state=state)
   - WebFetch: `https://raw.githubusercontent.com/fivetran/fivetran_connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
 
 ### Community Connectors (Source-specific examples):
-- Databases/APIs: Browse https://github.com/fivetran/fivetran_csdk_connectors/tree/main/ and use WebFetch for real-world connector examples
-- Raw file: `https://raw.githubusercontent.com/fivetran/fivetran_csdk_connectors/main/<name>/connector.py`
+- Databases/APIs: Browse https://github.com/fivetran/community_connectors/tree/main/ and use WebFetch for real-world connector examples
+- Raw file: `https://raw.githubusercontent.com/fivetran/community_connectors/main/<name>/connector.py`
 
 ### Foundation Examples (ALWAYS study these):
 - **Basic Structure**:
