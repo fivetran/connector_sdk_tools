@@ -1,0 +1,33 @@
+claude-code/hooks/hooks.json
+  ad9827c58dc28f80 8-9
+README.md
+  ad9827c58dc28f80 129,174
+claude-code/hooks/check-connector-file.py
+  ad9827c58dc28f80 1-33
+claude-code/README.md
+  ad9827c58dc28f80 212
+copilot/README.md
+  ad9827c58dc28f80 53,61
+copilot/hooks/hooks.json
+  ad9827c58dc28f80 2,4-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "ed412908a1c1585a0b3ec25f072df8a057a3cd71",
+  "prompts": {
+    "ad9827c58dc28f80": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "485ad43b-3107-4d8f-a435-46c75c9d5e71",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Sahil Khirwal <sahil.khirwal@fivetran.com>",
+      "messages": [],
+      "total_additions": 106,
+      "total_deletions": 41,
+      "accepted_lines": 81,
+      "overriden_lines": 0
+    }
+  }
+}
