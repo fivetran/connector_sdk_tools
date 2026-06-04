@@ -11,7 +11,7 @@
       "description": "Build, test, and deploy Fivetran connectors with AI assistance",
       "category": "development",
       "source": "./claude-code",
-      "homepage": "https://github.com/fivetran/fivetran_csdk_tools"
+      "homepage": "https://github.com/fivetran/connector_sdk_tools"
     }
   ]
 }

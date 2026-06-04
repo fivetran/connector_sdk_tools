@@ -13,14 +13,14 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 See the [top-level README](../README.md#install) for the full install matrix. Quick path:
 
 ```bash
-claude plugin marketplace add fivetran/fivetran_csdk_tools
+claude plugin marketplace add fivetran/connector_sdk_tools
 claude plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 Or from inside a Claude Code session:
 
 ```
-/plugin marketplace add fivetran/fivetran_csdk_tools
+/plugin marketplace add fivetran/connector_sdk_tools
 /plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
