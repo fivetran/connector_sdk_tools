@@ -58,7 +58,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `agents/connector-validator.md` | Agent for API research and requirements gathering                |
 | `agents/connector-generator.md` | Agent for generating connector code                              |
 | `agents/connector-fixer.md` | Agent for diagnosing and fixing errors                           |
-| `hooks/hooks.json` | Post-edit `postToolUse` hook: inline Python script checks `toolName` and `toolArgs.file_path`; outputs `additionalContext` reminder only for `connector.py`, `configuration.json`, or `requirements.txt` — silent for all other files |
+| `hooks/hooks.json` | Post-edit reminder to run test-connector after code changes |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials                                |
 | `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe)    |
 | `tools/deploy_connector.py` | Deploy connector with auto-discovered destination                |
