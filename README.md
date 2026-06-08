@@ -125,7 +125,6 @@ claude-code/                        Claude Code plugin (mostly generated)
   CLAUDE.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
-  hooks/hooks.json
   tools/, sdk-reference.md, native-connectors.md
 
 codex/                              Codex CLI plugin (mostly generated)
@@ -139,7 +138,6 @@ copilot/                            GitHub Copilot CLI plugin (mostly generated)
   AGENTS.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
-  hooks/hooks.json
   commands/{build,test,deploy,evaluate}-connector.md
   tools/, sdk-reference.md, native-connectors.md
 
@@ -170,9 +168,9 @@ Only edit files under **`canonical/`** and the static Gemini files at the root (
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml` | (no sync needed) | Gemini only |
-| `claude-code/CLAUDE.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
+| `claude-code/CLAUDE.md` | (no sync needed) | Claude Code only |
 | `codex/AGENTS.md`, `codex/.codex-plugin/plugin.json` | (no sync needed) | Codex only |
-| `copilot/AGENTS.md`, `copilot/hooks/hooks.json`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
+| `copilot/AGENTS.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
 
 Generated files have a `<!-- GENERATED FILE — DO NOT EDIT -->` banner at the top. Edits to them will be overwritten on the next sync.
 
