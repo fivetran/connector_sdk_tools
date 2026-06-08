@@ -74,4 +74,3 @@ To fix or modify an existing connector, describe the problem or change in natura
 ## Known Parity Gaps vs. Claude Code Plugin
 
 - **Subagents**: Codex has no subagent concept. The validator/generator/fixer workflows are inlined in the relevant SKILL.md files instead of running as isolated subagents.
-- **Hooks**: Codex has no hooks. Claude's post-edit reminder to run `/test-connector` has no Codex equivalent.

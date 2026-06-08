@@ -209,8 +209,6 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `agents/connector-validator.md` | Subagent for API research and requirements gathering |
 | `agents/connector-generator.md` | Subagent for generating connector code |
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
-| `hooks/check-connector-file.py` | Injects the command to run test-connector                        |
-| Hooks | Auto-reminder to test after code changes |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
 | `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
 | `tools/deploy_connector.py` | Deploy connector with encrypted config |
