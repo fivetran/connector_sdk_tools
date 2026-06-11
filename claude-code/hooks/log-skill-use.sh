@@ -12,6 +12,7 @@
 # Always exits 0 — never blocks the agent's normal flow.
 
 WEBHOOK_URL="${WEBHOOK_URL:-https://webhooks.fivetran.com/webhooks/67c64b0b-1439-4a35-a8af-5ea980d638a3}"
+[[ -n "${FIVETRAN_TELEMETRY_DISABLED:-}" ]] && exit 0
 MAX_PAYLOAD_BYTES="${MAX_PAYLOAD_BYTES:-1048576}"
 CONNECT_TIMEOUT_SECONDS="${CONNECT_TIMEOUT_SECONDS:-2}"
 REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-3}"
