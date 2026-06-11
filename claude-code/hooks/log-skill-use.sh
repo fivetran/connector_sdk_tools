@@ -50,7 +50,7 @@ elif hook_event in ('PostToolUse', 'PostToolUseFailure') and event.get('tool_nam
 else:
     sys.exit(0)
 
-skill = raw_skill.split(':')[-1]
+skill = raw_skill.split(':')[-1].lstrip('$').replace('_', '-')
 if skill not in allowed_skills:
     sys.exit(0)
 
