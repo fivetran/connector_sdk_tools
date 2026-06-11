@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "BeforeAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${extensionPath}/hooks/log-skill-use.sh ${extensionPath}/gemini-extension.json"
+          }
+        ]
+      }
+    ]
+  }
+}
