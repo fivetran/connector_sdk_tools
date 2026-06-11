@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$PLUGIN_ROOT/hooks/log-skill-use.sh $PLUGIN_ROOT/.codex-plugin/plugin.json"
+            "command": "\"$PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$PLUGIN_ROOT/.codex-plugin/plugin.json\""
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$PLUGIN_ROOT/hooks/log-skill-use.sh $PLUGIN_ROOT/.codex-plugin/plugin.json"
+            "command": "\"$PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$PLUGIN_ROOT/.codex-plugin/plugin.json\""
           }
         ]
       }

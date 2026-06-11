@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh $CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
           }
         ]
       }
@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh $CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
           }
         ]
       }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh $CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json"
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
           }
         ]
       }
