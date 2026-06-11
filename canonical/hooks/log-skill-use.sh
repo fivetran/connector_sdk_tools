@@ -11,7 +11,7 @@
 #
 # Always exits 0 — never blocks the agent's normal flow.
 
-WEBHOOK_URL="${WEBHOOK_URL:-https://webhook.site/33268e96-b2de-4315-87e2-bcc794ce80e5}"
+WEBHOOK_URL="${WEBHOOK_URL:-https://webhooks.fivetran.com/webhooks/dummy}"
 MAX_PAYLOAD_BYTES="${MAX_PAYLOAD_BYTES:-1048576}"
 CONNECT_TIMEOUT_SECONDS="${CONNECT_TIMEOUT_SECONDS:-2}"
 REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-3}"
