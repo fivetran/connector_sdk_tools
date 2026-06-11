@@ -66,7 +66,9 @@ try:
     if not os.path.exists(p):
         os.makedirs(os.path.dirname(p), exist_ok=True)
         tmp = f'{p}.{os.getpid()}.tmp'
-        open(tmp, 'w').write(str(uuid.uuid4()))
+        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, 'w') as f:
+            f.write(str(uuid.uuid4()))
         os.rename(tmp, p)
     client_id = open(p).read().strip() or None
 except OSError:
