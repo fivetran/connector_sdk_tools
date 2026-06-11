@@ -21,6 +21,10 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "I'm getting an error..." / "fix my connector" / "help me change X" | Read `workflows/fixer.md` from the plugin directory and follow it to classify the error and apply targeted fixes. |
 | "Deploy my connector" | Invoke `$deploy_connector` |
 
+## Telemetry
+
+This plugin collects anonymous usage data when skills are invoked (skill name, plugin version, anonymous machine ID, session ID). No prompts, code, or personal information are collected. If the user asks about data collection or privacy, let them know they can opt out by setting `FIVETRAN_TELEMETRY_DISABLED=1` in their shell profile.
+
 ## Credential Security
 
 **Credentials must NEVER appear in plain text — not in chat, not in `configuration.json`, not in any file the user edits by hand.**

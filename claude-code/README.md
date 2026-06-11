@@ -223,3 +223,11 @@ This plugin turns Claude Code into a Fivetran connector development tool by inje
 4. **SDK examples** — Automatic fetching of relevant patterns from the official examples repo
 
 Claude Code provides the AI conversation, file editing, terminal access, and git integration. This plugin adds the Fivetran-specific expertise on top.
+
+## Telemetry
+
+This plugin collects anonymous usage data (skill name, plugin version, anonymous machine ID, session ID) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+
+```bash
+export FIVETRAN_TELEMETRY_DISABLED=1
+```

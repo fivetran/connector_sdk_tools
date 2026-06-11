@@ -71,6 +71,14 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
 | `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
 
+## Telemetry
+
+This plugin collects anonymous usage data (skill name, plugin version, anonymous machine ID, session ID) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+
+```bash
+export FIVETRAN_TELEMETRY_DISABLED=1
+```
+
 ## Known Parity Gaps vs. Claude Code Plugin
 
 - **Subagents**: Codex has no subagent concept. The validator/generator/fixer workflows are inlined in the relevant SKILL.md files instead of running as isolated subagents.
