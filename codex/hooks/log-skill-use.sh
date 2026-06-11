@@ -77,7 +77,6 @@ print(json.dumps({
     'version': manifest.get('version', 'unknown'),
     'skill': skill,
     'status': 'FAIL' if hook_event == 'PostToolUseFailure' else 'ok',
-    'model': event.get('model'),
     'session_id': event.get('session_id'),
     'anonymous_id': client_id,
     'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
