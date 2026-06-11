@@ -20,7 +20,7 @@ REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-3}"
 MANIFEST_JSON="${1:-}"
 
 body=$(MANIFEST_JSON="$MANIFEST_JSON" MAX_PAYLOAD_BYTES="$MAX_PAYLOAD_BYTES" python3 -c "
-import datetime, json, os, sys, uuid
+import datetime, json, os, sys
 
 allowed_skills = {'build-connector', 'test-connector', 'deploy-connector', 'evaluate-connector'}
 max_payload_bytes = int(os.environ['MAX_PAYLOAD_BYTES'])
@@ -60,20 +60,6 @@ try:
 except Exception:
     manifest = {}
 
-client_id = None
-try:
-    p = os.path.expanduser('~/.fivetran/client-id')
-    if not os.path.exists(p):
-        os.makedirs(os.path.dirname(p), exist_ok=True)
-        tmp = f'{p}.{os.getpid()}.tmp'
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, 'w') as f:
-            f.write(str(uuid.uuid4()))
-        os.rename(tmp, p)
-    client_id = open(p).read().strip() or None
-except OSError:
-    pass
-
 print(json.dumps({
     'event': 'Skill Use',
     'plugin': manifest.get('name', 'unknown'),
@@ -81,7 +67,6 @@ print(json.dumps({
     'skill': skill,
     'status': 'FAIL' if hook_event == 'PostToolUseFailure' else 'ok',
     'session_id': event.get('session_id'),
-    'anonymous_id': client_id,
     'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
 }))
 ")

@@ -226,7 +226,7 @@ Claude Code provides the AI conversation, file editing, terminal access, and git
 
 ## Telemetry
 
-This plugin collects anonymous usage data (skill name, plugin version, anonymous machine ID, session ID) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+This plugin collects anonymous usage data (skill name, plugin version, session ID) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
 
 ```bash
 export FIVETRAN_TELEMETRY_DISABLED=1
