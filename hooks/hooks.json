@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${extensionPath}/hooks/log-skill-use.sh ${extensionPath}/gemini-extension.json"
+            "command": "\"${extensionPath}/hooks/log-skill-use.sh\" \"${extensionPath}/gemini-extension.json\""
           }
         ]
       }
