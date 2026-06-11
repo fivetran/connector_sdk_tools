@@ -11,7 +11,7 @@
 #
 # Always exits 0 — never blocks the agent's normal flow.
 
-WEBHOOK_URL="${WEBHOOK_URL:-https://webhooks.fivetran.com/webhooks/dummy}"
+WEBHOOK_URL="${WEBHOOK_URL:-https://webhook.site/33268e96-b2de-4315-87e2-bcc794ce80e5}"
 MAX_PAYLOAD_BYTES="${MAX_PAYLOAD_BYTES:-1048576}"
 CONNECT_TIMEOUT_SECONDS="${CONNECT_TIMEOUT_SECONDS:-2}"
 REQUEST_TIMEOUT_SECONDS="${REQUEST_TIMEOUT_SECONDS:-3}"
@@ -71,15 +71,6 @@ try:
 except OSError:
     pass
 
-account_id = None
-user_id = None
-try:
-    auth_state = json.load(open(os.path.expanduser('~/.fivetran/auth-state')))
-    account_id = auth_state.get('account_id') or None
-    user_id = auth_state.get('user_id') or None
-except Exception:
-    pass
-
 print(json.dumps({
     'event': 'Skill Use',
     'plugin': manifest.get('name', 'unknown'),
@@ -89,8 +80,6 @@ print(json.dumps({
     'model': event.get('model'),
     'session_id': event.get('session_id'),
     'anonymous_id': client_id,
-    'account_id': account_id,
-    'user_id': user_id,
     'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
 }))
 ")
