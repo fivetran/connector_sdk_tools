@@ -79,6 +79,7 @@ Once installed, in your connector project directory:
 | `/fivetran-connector-sdk:test-connector` | `$test_connector` | Run and validate an existing connector locally |
 | `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | Deploy a connector to your Fivetran account |
 | `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | Migrate a Fivetran Functions connector to Connector SDK |
+| `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
 
 For code fixes or modifications, describe the problem in natural language — the agent routes to the `connector-fixer` subagent automatically.
 
@@ -104,6 +105,24 @@ The Functions migrator supports AWS Lambda, Azure Functions, Google Cloud Functi
 | `hasMore` | internal loop/checkpoint logic in `update()` |
 
 The migrator removes cloud-provider request/response wrappers, preserves table/state naming unless a rename is intentional, and documents any behavior changes in the migrated connector README.
+
+### Meltano Connector Migrator
+
+Use `/fivetran-connector-sdk:migrate-meltano-connector` or `$migrate_meltano_connector` to port a Meltano extractor or Singer tap workflow to Connector SDK.
+
+The Meltano migrator focuses on extractors/Singer taps. Meltano loaders, targets, dbt transforms, schedules, and environments are not ported into connector code; when those pipeline pieces map to Fivetran platform resources, the migrator documents them as follow-up work for `fivetran-cli`. It maps Meltano and Singer concepts to CSDK concepts:
+
+| Meltano / Singer | Connector SDK |
+|---|---|
+| `meltano.yml` extractor settings / tap `config.json` | `configuration.json` |
+| Singer catalog streams | `schema(configuration)` table entries |
+| `key_properties` / `table-key-properties` | `primary_key` |
+| Singer JSON Schema properties | optional CSDK `columns` |
+| Singer `RECORD` messages | `op.upsert(...)` |
+| Singer `STATE` messages / bookmarks | `op.checkpoint(...)` |
+| replication key metadata | cursor logic in `update()` |
+
+The migrator also requires an explicit decision for full-table streams: keep upsert-only snapshot behavior, or use `op.truncate(...)` before reloading a complete snapshot when the old pipeline relied on replacement semantics. For pipeline setup beyond connector code, install and use `fivetran-cli` (`python3 -m pip install -U fivetran-cli`) after the CSDK connector migration.
 
 ## Temporary Configuration Tool Dependency
 

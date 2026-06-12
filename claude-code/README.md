@@ -107,6 +107,7 @@ Once testing passes, you can:
 - Ask Claude to add more tables or features
 - Run `/test-connector` anytime to re-test
 - Run `/migrate-functions-connector` to port an existing Fivetran Functions connector to Connector SDK
+- Run `/migrate-meltano-connector` to port an existing Meltano extractor or Singer tap to Connector SDK
 - Run `/deploy-connector` when ready to deploy to Fivetran
 
 ### Example Session
@@ -208,6 +209,7 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `/test-connector` | Run and validate connector tests |
 | `/deploy-connector` | Package and deploy to Fivetran |
 | `/migrate-functions-connector` | Migrate Fivetran Functions connectors to Connector SDK |
+| `/migrate-meltano-connector` | Migrate Meltano extractors or Singer taps to Connector SDK |
 | `agents/connector-validator.md` | Subagent for API research and requirements gathering |
 | `agents/connector-generator.md` | Subagent for generating connector code |
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
