@@ -78,8 +78,32 @@ Once installed, in your connector project directory:
 | `/fivetran-connector-sdk:build-connector` | `$build_connector` | Research an API and generate a new connector |
 | `/fivetran-connector-sdk:test-connector` | `$test_connector` | Run and validate an existing connector locally |
 | `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | Deploy a connector to your Fivetran account |
+| `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | Migrate a Fivetran Functions connector to Connector SDK |
 
 For code fixes or modifications, describe the problem in natural language — the agent routes to the `connector-fixer` subagent automatically.
+
+## Migration Skills
+
+The plugin includes AI-guided migration skills for moving existing custom connector code to Fivetran Connector SDK. These are not deterministic one-shot conversion scripts; the agent reads the source connector, identifies the source runtime and data contract, ports the logic into a CSDK project, and validates the result against SDK patterns.
+
+### Functions Connector Migrator
+
+Use `/fivetran-connector-sdk:migrate-functions-connector` or `$migrate_functions_connector` to port a Fivetran Functions connector to Connector SDK.
+
+The Functions migrator supports AWS Lambda, Azure Functions, Google Cloud Functions, and standalone handler examples. It maps Function connector concepts to CSDK concepts:
+
+| Functions connector | Connector SDK |
+|---|---|
+| `request.secrets` | `configuration` |
+| `request.state` | `state` |
+| returned `schema` | `schema(configuration)` |
+| `insert[table]` | `op.upsert(...)` |
+| `delete[table]` | `op.delete(...)` with primary-key fields only |
+| top-level `softDelete` | `op.truncate(...)` for listed tables |
+| returned `state` | `op.checkpoint(...)` |
+| `hasMore` | internal loop/checkpoint logic in `update()` |
+
+The migrator removes cloud-provider request/response wrappers, preserves table/state naming unless a rename is intentional, and documents any behavior changes in the migrated connector README.
 
 ## Temporary Configuration Tool Dependency
 

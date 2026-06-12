@@ -7,29 +7,29 @@
 #   canonical/sdk-reference.md
 #   canonical/native-connectors.md
 #   canonical/workflows/{validator,generator,fixer}.md
-#   canonical/skills/{build,test,deploy}-connector/SKILL.md
+#   canonical/skills/{build,test,deploy,evaluate,migrate-functions}-connector/SKILL.md
 #   canonical/tools/*
 #
 # Generated files (DO NOT edit directly — edits will be overwritten):
 #   claude-code/sdk-reference.md
 #   claude-code/native-connectors.md
 #   claude-code/agents/connector-{validator,generator,fixer}.md
-#   claude-code/skills/{build,test,deploy}-connector/SKILL.md
+#   claude-code/skills/{build,test,deploy,evaluate,migrate-functions}-connector/SKILL.md
 #   claude-code/tools/*
 #   codex/sdk-reference.md
 #   codex/native-connectors.md
-#   codex/skills/{build,test,deploy}-connector/SKILL.md
+#   codex/skills/{build,test,deploy,evaluate,migrate-functions}-connector/SKILL.md
 #   codex/workflows/{validator,generator,fixer}.md
 #   codex/tools/*
 #   sdk-reference.md                                         (Gemini)
 #   native-connectors.md                                     (Gemini)
 #   agents/connector-{validator,generator,fixer}.md          (Gemini)
-#   skills/{build,test,deploy}-connector/SKILL.md            (Gemini)
+#   skills/{build,test,deploy,evaluate,migrate-functions}-connector/SKILL.md            (Gemini)
 #   tools/*                                                  (Gemini)
 #   copilot/sdk-reference.md                                 (Copilot CLI)
 #   copilot/native-connectors.md                             (Copilot CLI)
 #   copilot/agents/connector-{validator,generator,fixer}.md  (Copilot CLI)
-#   copilot/skills/{build,test,deploy}-connector/SKILL.md    (Copilot CLI)
+#   copilot/skills/{build,test,deploy,evaluate,migrate-functions}-connector/SKILL.md    (Copilot CLI)
 #   copilot/tools/*                                          (Copilot CLI)
 
 set -euo pipefail
@@ -47,7 +47,7 @@ CLAUDE_DIR="claude-code"
 CODEX_DIR="codex"
 GEMINI_DIR="."
 COPILOT_DIR="copilot"
-SKILLS=(build-connector test-connector deploy-connector evaluate-connector)
+SKILLS=(build-connector test-connector deploy-connector evaluate-connector migrate-functions-connector)
 
 # --- Helpers ---
 

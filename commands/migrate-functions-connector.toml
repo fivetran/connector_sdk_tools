@@ -1,0 +1,4 @@
+description = "Migrate a Fivetran Functions connector to Connector SDK"
+prompt = """
+Invoke the `migrate-functions-connector` skill from this extension to migrate an existing Fivetran Functions connector to a Fivetran Connector SDK connector.
+"""

@@ -10,6 +10,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | `/fivetran-connector-sdk:test-connector` | User wants to test an existing connector |
 | `/fivetran-connector-sdk:deploy-connector` | User wants to deploy to Fivetran |
 | `/fivetran-connector-sdk:evaluate-connector` | User wants a code review or quality report |
+| `/fivetran-connector-sdk:migrate-functions-connector` | User wants to migrate a Fivetran Functions connector to Connector SDK |
 
 ## Routing
 
@@ -18,6 +19,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "Build/create a connector for X" | Run `/fivetran-connector-sdk:build-connector` |
 | "Help me connect to [data source]" | Run `/fivetran-connector-sdk:build-connector` |
 | "Start from / use the community connector for X" | Run `/fivetran-connector-sdk:build-connector` (Phase 1 discovery finds the match and scaffolds it with `fivetran init --template`) |
+| "Migrate my Fivetran Functions connector" / "Port this Lambda/Azure/GCP Function connector to Connector SDK" | Run `/fivetran-connector-sdk:migrate-functions-connector` |
 | "Test my connector" | Run `/fivetran-connector-sdk:test-connector` |
 | "I'm getting an error..." / "fix my connector" / "help me change X" | Invoke the `connector-fixer` subagent with the error details and user context. Do not handle code fixes in the main thread. |
 | "Deploy my connector" | Run `/fivetran-connector-sdk:deploy-connector` |

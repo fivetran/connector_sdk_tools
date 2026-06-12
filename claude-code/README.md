@@ -106,6 +106,7 @@ If it fails, Claude will diagnose the issue:
 Once testing passes, you can:
 - Ask Claude to add more tables or features
 - Run `/test-connector` anytime to re-test
+- Run `/migrate-functions-connector` to port an existing Fivetran Functions connector to Connector SDK
 - Run `/deploy-connector` when ready to deploy to Fivetran
 
 ### Example Session
@@ -206,6 +207,7 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `/build-connector` | Full generation workflow (research → generate → test → auto-fix) |
 | `/test-connector` | Run and validate connector tests |
 | `/deploy-connector` | Package and deploy to Fivetran |
+| `/migrate-functions-connector` | Migrate Fivetran Functions connectors to Connector SDK |
 | `agents/connector-validator.md` | Subagent for API research and requirements gathering |
 | `agents/connector-generator.md` | Subagent for generating connector code |
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
