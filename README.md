@@ -88,6 +88,12 @@ For code fixes or modifications, describe the problem in natural language — th
 
 The plugin includes AI-guided migration skills for moving existing custom connector code to Fivetran Connector SDK. These are not deterministic one-shot conversion scripts; the agent reads the source connector, identifies the source runtime and data contract, ports the logic into a CSDK project, and validates the result against SDK patterns.
 
+To use a migrator, open your coding agent in the directory where you want the migrated Connector SDK project to be created, then invoke the relevant slash command or Codex skill and point it at the existing connector source. Provide any useful local paths, example config files, catalogs, state files, schemas, tests, or docs. The agent should inspect the source first, explain the migration plan and any behavior decisions it needs, then create or update the CSDK files and run local validation where possible.
+
+Keep real credentials out of the prompt. Use redacted example configs, placeholders, or local files that are already handled by your normal credential workflow. Migration skills may need to preserve behavior that depends on existing configuration shape, selected streams, primary keys, cursor fields, full-refresh behavior, delete semantics, or platform pipeline setup, so include those artifacts when they exist.
+
+After migration, review the generated connector code and README, fill in local configuration values, run the plugin's test connector command, and compare the output against the old connector using a small known-good source account or fixture.
+
 ### Functions Connector Migrator
 
 Use `/fivetran-connector-sdk:migrate-functions-connector` or `$migrate_functions_connector` to port a Fivetran Functions connector to Connector SDK.
