@@ -80,6 +80,7 @@ Once installed, in your connector project directory:
 | `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | Deploy a connector to your Fivetran account |
 | `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | Migrate a Fivetran Functions connector to Connector SDK |
 | `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
+| `/fivetran-connector-sdk:migrate-airbyte-connector` | `$migrate_airbyte_connector` | Migrate an Airbyte source connector to Connector SDK |
 
 For code fixes or modifications, describe the problem in natural language — the agent routes to the `connector-fixer` subagent automatically.
 
@@ -123,6 +124,26 @@ The Meltano migrator focuses on extractors/Singer taps. Meltano loaders, targets
 | replication key metadata | cursor logic in `update()` |
 
 The migrator also requires an explicit decision for full-table streams: keep upsert-only snapshot behavior, or use `op.truncate(...)` before reloading a complete snapshot when the old pipeline relied on replacement semantics. For pipeline setup beyond connector code, install and use `fivetran-cli` (`python3 -m pip install -U fivetran-cli`) after the CSDK connector migration.
+
+### Airbyte Connector Migrator
+
+Use `/fivetran-connector-sdk:migrate-airbyte-connector` or `$migrate_airbyte_connector` to port an Airbyte source connector to Connector SDK.
+
+The Airbyte migrator focuses on source connectors. Airbyte destinations, normalization, workspace/job orchestration, Docker packaging, schedules, and platform metadata are not ported into connector code; when those pieces map to Fivetran platform resources, the migrator documents them as follow-up work for `fivetran-cli`. It maps Airbyte concepts to CSDK concepts:
+
+| Airbyte | Connector SDK |
+|---|---|
+| `spec.json` / `connectionSpecification` | `configuration.json` |
+| `airbyte_secret` fields | sensitive config placeholders entered securely |
+| Airbyte catalog streams | `schema(configuration)` table entries |
+| JSON Schema properties | optional CSDK `columns` |
+| configured streams | tables implemented by `schema()` and `update()` |
+| `RECORD` messages | `op.upsert(...)` |
+| `STATE` messages | `op.checkpoint(...)` |
+| incremental sync mode | cursor logic in `update()` |
+| full-refresh overwrite | explicit `op.truncate(...)` plus reload decision |
+
+The migrator also requires explicit decisions for append-only streams without primary keys, full-refresh overwrite behavior, and delete/CDC markers. It does not infer deletes from missing records unless the source stream is intentionally migrated as full-refresh overwrite.
 
 ## Temporary Configuration Tool Dependency
 

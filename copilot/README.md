@@ -46,6 +46,7 @@ Commands appear as slash commands:
 - `/fivetran-connector-sdk:evaluate-connector` — Code review and quality report
 - `/fivetran-connector-sdk:migrate-functions-connector` — Migrate a Fivetran Functions connector to Connector SDK
 - `/fivetran-connector-sdk:migrate-meltano-connector` — Migrate a Meltano extractor or Singer tap to Connector SDK
+- `/fivetran-connector-sdk:migrate-airbyte-connector` — Migrate an Airbyte source connector to Connector SDK
 
 To fix or modify an existing connector, describe the problem or change in natural language — the plugin routes to the `connector-fixer` agent automatically.
 
@@ -59,6 +60,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `commands/evaluate-connector.md` | Static code review and scored report |
 | `commands/migrate-functions-connector.md` | Migrate Fivetran Functions connectors to Connector SDK |
 | `commands/migrate-meltano-connector.md` | Migrate Meltano extractors or Singer taps to Connector SDK |
+| `commands/migrate-airbyte-connector.md` | Migrate Airbyte source connectors to Connector SDK |
 | `agents/connector-validator.md` | Agent for API research and requirements gathering |
 | `agents/connector-generator.md` | Agent for generating connector code |
 | `agents/connector-fixer.md` | Agent for diagnosing and fixing errors |

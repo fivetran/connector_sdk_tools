@@ -58,6 +58,7 @@ Skills appear in the `$` mention popup:
 - `$deploy_connector` — Package and deploy to Fivetran
 - `$migrate_functions_connector` — Migrate a Fivetran Functions connector to Connector SDK
 - `$migrate_meltano_connector` — Migrate a Meltano extractor or Singer tap to Connector SDK
+- `$migrate_airbyte_connector` — Migrate an Airbyte source connector to Connector SDK
 
 To fix or modify an existing connector, describe the problem or change in natural language — the plugin guides the agent through the fixer workflow (classification → pattern research → targeted fix).
 
@@ -70,6 +71,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `skills/deploy-connector/` | Package and deploy to Fivetran |
 | `skills/migrate-functions-connector/` | Migrate Fivetran Functions connectors to Connector SDK |
 | `skills/migrate-meltano-connector/` | Migrate Meltano extractors or Singer taps to Connector SDK |
+| `skills/migrate-airbyte-connector/` | Migrate Airbyte source connectors to Connector SDK |
 | `workflows/fixer.md` | Canonical fix workflow (applied when user reports an error or asks for a change) |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
 | `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |

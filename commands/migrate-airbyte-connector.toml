@@ -1,0 +1,4 @@
+description = "Migrate an Airbyte source connector to Connector SDK"
+prompt = """
+Invoke the `migrate-airbyte-connector` skill from this extension to migrate an existing Airbyte source connector to a Fivetran Connector SDK connector.
+"""
