@@ -27,7 +27,7 @@ Verify the connector is ready:
    - `connector = Connector(update=update, schema=schema)` in global scope
    - `if __name__ == "__main__": connector.debug()` entry point
    - No forbidden patterns (`Dict[str, Any]`, `Generator[op.Operation, ...]`, `op.Operation` in type hints)
-3. **Configuration**: `configuration.json` is JSON with a top-level `encrypted` field containing encrypted credential values. Legacy files that start with `ENCRYPTED:` are also acceptable. If credentials are not encrypted, stop and tell the user to enter credentials through `tools/enter_configuration.py` in a separate terminal. Do not read, print, copy, or deploy plaintext credential values.
+3. **Configuration**: `configuration.json` is JSON. `enter_configuration.py` encrypts every field by default using inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, but user-chosen plaintext values are also accepted. Do not read, print, copy, or deploy plaintext configuration values in chat.
 
 ## Step 2: Run Final Test
 
@@ -51,10 +51,10 @@ The tool:
 1. Reads `FIVETRAN_API_KEY` from the environment.
 2. Calls `GET /v1/groups` to discover the destination (group) name, picking the single one automatically or prompting if more than one exists.
 3. Derives the connection name from the connector directory name (sanitized to Fivetran rules). To set it explicitly, pass `--connection <name>` (must begin with `_` or a lowercase letter; only `_`, lowercase, digits).
-4. Invokes `fivetran deploy --destination <name> --connection <name> --force` with the encrypted configuration (passed via named pipe, never written to disk). `--force` auto-answers the overwrite prompts so redeploys don't hang.
+4. Invokes `fivetran deploy --destination <name> --connection <name> --force` with the runtime configuration passed via named pipe after decrypting configuration values in memory. `--force` auto-answers the overwrite prompts so redeploys don't hang.
 5. Captures and prints the Connection ID from the deploy log.
 
-If `deploy_connector.py` exits with "configuration.json is not encrypted", do not continue deployment. Direct the user to run:
+If deploy fails because an encrypted value cannot be decrypted, direct the user to run:
 
 macOS/Linux:
 ```bash
@@ -68,9 +68,9 @@ cd "<connector_directory>"
 python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
-Then re-run deploy after the user confirms the file is encrypted.
+Then re-run deploy after the user confirms configuration values have been refreshed.
 
-If the local encryption secret file does not exist yet, `enter_configuration.py` creates it before encrypting `configuration.json`.
+If the local encryption secret file does not exist yet, `enter_configuration.py` creates it before encrypting configuration values.
 
 ### Prerequisite: `FIVETRAN_API_KEY`
 

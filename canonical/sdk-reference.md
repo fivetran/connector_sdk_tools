@@ -228,7 +228,7 @@ def update(configuration, state):
 - **Datetime fields** — always use UTC, format as `'%Y-%m-%dT%H:%M:%SZ'`
 - **Never use `exit()`** — use `raise RuntimeError(...)` instead
 - **`connector = Connector(...)`** must be in global scope, NOT under `if __name__`
-- **Encrypted config** — if configuration.json contains a top-level `encrypted` field, this is normal; decryption happens at runtime. Legacy configs that start with `ENCRYPTED:` are also supported.
+- **Encrypted configuration values** — if configuration.json contains inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal; decryption happens at runtime.
 
 ## Connector Discovery
 

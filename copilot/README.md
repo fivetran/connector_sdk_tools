@@ -30,11 +30,11 @@ Windows PowerShell:
 python -m pip install -r "C:\path\to\copilot\tools\requirements.txt"
 ```
 
-This dependency install is temporary. Until secure configuration entry is available directly in the Fivetran Connector SDK CLI, the plugin uses `tools/enter_configuration.py` to encrypt `configuration.json`.
+This dependency install is temporary. Until secure configuration entry is available directly in the Fivetran Connector SDK CLI, the plugin uses `tools/enter_configuration.py` to encrypt configuration values in `configuration.json`.
 
-On first run, `enter_configuration.py` creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows). It uses that secret to add encrypted credential values to the top-level `encrypted` field in `configuration.json`; the AI does not see the secret or plaintext credentials. The original placeholder fields remain as the recoverable baseline.
+On first run, `enter_configuration.py` creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows). It uses that secret to write inline `ENCRYPTED:v1:<key_id>:local-fernet:` values for every field. The AI does not see plaintext configuration values.
 
-Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret so they can decrypt the `encrypted` field. To start credential entry over, delete the `encrypted` field from `configuration.json` and run `enter_configuration.py` again.
+Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret to decrypt configuration values at runtime. To start configuration entry over, run `enter_configuration.py` again.
 
 ## Usage
 
