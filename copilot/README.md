@@ -59,5 +59,5 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `agents/connector-generator.md` | Agent for generating connector code |
 | `agents/connector-fixer.md` | Agent for diagnosing and fixing errors |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
-| `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
+| `tools/run_connector.py` | Run connector with runtime config via named pipe |
 | `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |

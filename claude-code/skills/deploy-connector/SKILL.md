@@ -112,7 +112,7 @@ This calls `PATCH /v1/connections/{id}` with `{"paused": false}`; Fivetran then 
 
 ## Redeploying (updating an existing connection)
 
-To update a deployed connection, redeploy with the **same connection name and destination** (the tool derives the same name from the directory, or pass `--connection <name>`). The tool's `--force` flag auto-answers the "update connection code / overwrite configuration.json" prompts. Redeploying replaces the connection's code; the encrypted `configuration.json` is sent again, replacing the stored configuration values. A redeploy does not pause an already-running connection — the in-progress sync finishes on the old code, and the next sync uses the new code.
+To update a deployed connection, redeploy with the **same connection name and destination** (the tool derives the same name from the directory, or pass `--connection <name>`). The tool's `--force` flag auto-answers the "update connection code / overwrite configuration.json" prompts. Redeploying replaces the connection's code; the wrapper decrypts local encrypted values in memory and passes runtime configuration to `fivetran deploy`, replacing the connection's stored configuration values. A redeploy does not pause an already-running connection — the in-progress sync finishes on the old code, and the next sync uses the new code.
 
 ## Alternative: Manual Packaging
 

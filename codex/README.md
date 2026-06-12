@@ -68,7 +68,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `skills/deploy-connector/` | Package and deploy to Fivetran |
 | `workflows/fixer.md` | Canonical fix workflow (applied when user reports an error or asks for a change) |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
-| `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
+| `tools/run_connector.py` | Run connector with runtime config via named pipe |
 | `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
 
 ## Known Parity Gaps vs. Claude Code Plugin

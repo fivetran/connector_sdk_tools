@@ -167,7 +167,7 @@ python -m pip install -r /path/to/claude-code/tools/requirements.txt
 python /path/to/claude-code/tools/enter_configuration.py configuration.json
 ```
 
-On first run, it creates a local encryption secret under your user profile. This encrypts your credentials so the AI cannot see them.
+On first run, it creates a local encryption secret under your user profile. This encrypts local configuration values so the AI cannot see them.
 
 ### Test a Connector
 ```
@@ -210,8 +210,8 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `agents/connector-generator.md` | Subagent for generating connector code |
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
-| `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
-| `tools/deploy_connector.py` | Deploy connector with encrypted config |
+| `tools/run_connector.py` | Run connector with runtime config via named pipe |
+| `tools/deploy_connector.py` | Deploy connector with runtime config via named pipe |
 
 ## How It Works
 
