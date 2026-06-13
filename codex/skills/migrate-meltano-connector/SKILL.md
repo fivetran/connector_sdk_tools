@@ -60,7 +60,7 @@ Read source files and identify:
 - Replication method and replication keys from metadata, SDK stream settings, or tap source code.
 - State/bookmark shape from `state.json`, Singer `STATE` messages, or tap source code.
 - Tap configuration fields, defaults, env aliases, and which fields are credentials.
-- Complex settings such as arrays and objects. Record how they will be represented as flat CSDK string configuration fields.
+- Complex settings such as arrays and objects. Prefer separate connector deployments for multi-entity settings; record JSON-encoded string handling only when it is needed for parity with the source tap.
 - API/database/file access logic, pagination, rate limiting, retries, and error handling.
 - Parent-child stream dependencies. Some selected child streams require parent stream API calls for context even when the parent stream is not selected for output.
 - Pipeline intent from loaders, targets, transformations, schedules, and environments. Record this separately from extractor migration as potential `fivetran-cli` follow-up work.
@@ -75,7 +75,7 @@ Use this mapping:
 |------------------------|-----------------------|
 | Meltano extractor / Singer tap | One CSDK connector, or one scoped connector per source if the project has multiple unrelated extractors |
 | `meltano.yml` extractor settings / tap `config.json` | Flat string fields in `configuration.json` |
-| Meltano array/object settings | JSON-encoded string fields parsed with `json.loads()` in connector code |
+| Meltano array/object settings | Prefer separate connector deployments for multi-entity sync; use JSON-encoded string fields parsed with `json.loads()` only when unavoidable for source-tap parity |
 | Meltano environment variables and setting aliases | Documented configuration fields; do not embed environment loading into connector code |
 | Singer catalog stream | CSDK `schema(configuration)` table entry |
 | Singer `key_properties`, `table-key-properties`, or stream `primary_keys` | CSDK `primary_key` |
@@ -125,7 +125,7 @@ Edit the CSDK project files:
 - Keep flat string key/value pairs only.
 - Include fields needed by the connector, using obvious placeholders only.
 - Convert nested Meltano settings to clear flat names, and document any rename.
-- Convert Meltano arrays or objects to JSON-encoded string placeholders, such as `"repositories": "[\"owner/repo\"]"` or `"searches": "[{\"name\":\"example\",\"query\":\"repo:owner/repo\"}]"`, then parse and validate them in `connector.py`.
+- Prefer separate connector deployments for multi-entity configs (see `sdk-reference.md`). Only when the source tap truly requires multi-item selection, represent Meltano arrays or objects as JSON-encoded string placeholders, such as `"repositories": "[\"owner/repo\"]"` or `"searches": "[{\"name\":\"example\",\"query\":\"repo:owner/repo\"}]"`, then parse and validate them with `json.loads()` in `connector.py`.
 - Do not include real credentials from `.env`, `config.json`, or Meltano config.
 - Do not use arrays or nested objects.
 

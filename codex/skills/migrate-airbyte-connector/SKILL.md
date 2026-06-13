@@ -80,7 +80,7 @@ Use this mapping:
 | Airbyte source connector | One CSDK connector, or one scoped connector per source if the repo contains multiple unrelated sources |
 | `spec.json` / `connectionSpecification` / manifest `spec` | Flat string fields in `configuration.json` |
 | `airbyte_secret: true` | Sensitive configuration field; placeholder only, entered through secure config tool |
-| Airbyte array/object config fields | JSON-encoded string fields parsed with `json.loads()` in connector code |
+| Airbyte array/object config fields | Prefer separate connector deployments for multi-entity sync; use JSON-encoded string fields parsed with `json.loads()` only when unavoidable for source-connector parity |
 | Airbyte config migrations / deprecated aliases | Backward-compatible parsing or documented renamed fields |
 | `check` command | `validate_configuration(configuration)` or a lightweight authenticated probe |
 | `discover` output / Airbyte catalog stream | CSDK `schema(configuration)` table entry |
@@ -140,7 +140,7 @@ Edit the CSDK project files:
 - Keep flat string key/value pairs only.
 - Include fields needed by the connector, using obvious placeholders only.
 - Convert nested Airbyte settings to clear flat names, and document any rename.
-- Convert Airbyte arrays or objects to JSON-encoded string placeholders, such as `"streams": "[\"users\"]"` or `"credentials": "{\"auth_type\":\"token\"}"`, then parse and validate them in `connector.py`.
+- Prefer separate connector deployments for multi-entity configs (see `sdk-reference.md`). Only when the source connector truly requires multi-item selection, represent Airbyte arrays or objects as JSON-encoded string placeholders, such as `"streams": "[\"users\"]"` or `"credentials": "{\"auth_type\":\"token\"}"`, then parse and validate them with `json.loads()` in `connector.py`.
 - Preserve support for deprecated Airbyte config aliases when source code has explicit migration logic, or document that the CSDK connector only supports the new field names.
 - Do not include real credentials from `config.json`, `.env`, or Airbyte UI exports.
 - Do not use arrays or nested objects.
