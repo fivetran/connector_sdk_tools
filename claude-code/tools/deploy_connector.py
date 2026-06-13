@@ -122,7 +122,10 @@ def decrypt_config_values(config: dict) -> dict:
 
     for field, value in config.items():
         if isinstance(value, str) and value.startswith(ENCRYPTED_PREFIX):
-            runtime_config[field] = decrypt_value(value)
+            try:
+                runtime_config[field] = decrypt_value(value)
+            except DecryptionFailed as exc:
+                raise DecryptionFailed(f"Failed to decrypt configuration field {field!r}.") from exc
         else:
             runtime_config[field] = value
 
@@ -461,8 +464,10 @@ def main():
 
     try:
         config = load_runtime_config(config_path)
-    except DecryptionFailed:
+    except DecryptionFailed as exc:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
+        if str(exc):
+            print(str(exc), file=sys.stderr)
         print("Make sure the local encryption secret matches what was used to encrypt.", file=sys.stderr)
         print(f"Expected local secret file: {SECRET_FILE}", file=sys.stderr)
         sys.exit(1)
