@@ -1,6 +1,7 @@
 ---
 name: migrate-meltano-connector
 description: Migrate an existing Meltano extractor or Singer tap workflow to a Fivetran Connector SDK connector. Use when the user has a Meltano project, meltano.yml extractor, custom Singer tap, catalog/state/config files, or tap source code they want to port to CSDK.
+argument-hint: "Path or description of the Meltano project or Singer tap to migrate"
 ---
 
 > **Context**: This plugin is for the Fivetran Connector SDK (CSDK). "CSDK" is shorthand for "Connector SDK".

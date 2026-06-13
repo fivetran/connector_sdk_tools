@@ -1,6 +1,7 @@
 ---
 name: migrate-functions-connector
 description: Migrate an existing Fivetran Functions connector to a Fivetran Connector SDK connector. Use when the user has an AWS Lambda, Azure Function, Google Cloud Function, or other Fivetran Functions connector they want to port to CSDK.
+argument-hint: "Path or description of the Functions connector to migrate"
 ---
 
 <!--

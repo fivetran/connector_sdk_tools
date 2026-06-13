@@ -1,6 +1,7 @@
 ---
 name: migrate-airbyte-connector
 description: Migrate an existing Airbyte source connector to a Fivetran Connector SDK connector. Use when the user has an Airbyte Python CDK source, low-code YAML manifest, source connector directory, configured catalog, spec/config/state files, or Airbyte protocol output they want to port to CSDK.
+argument-hint: "Path or description of the Airbyte source connector to migrate"
 ---
 
 <!--
