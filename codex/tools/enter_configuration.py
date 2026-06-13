@@ -123,7 +123,11 @@ def encrypt_value(value: str) -> str:
     """Encrypt a single sensitive field value."""
     Fernet, _ = get_fernet()
     key_id, key = get_encryption_key()
-    fernet = Fernet(key)
+    try:
+        fernet = Fernet(key)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError("local encryption key is invalid") from exc
+
     encrypted = fernet.encrypt(value.encode('utf-8'))
     return f"{ENCRYPTED_PREFIX}{ENCRYPTED_TOKEN_VERSION}:{key_id}:{ENCRYPTED_TOKEN_ALGORITHM}:{encrypted.decode('utf-8')}"
 
@@ -132,7 +136,10 @@ def decrypt_value(encrypted_content: str) -> str:
     """Decrypt a single encrypted sensitive field value."""
     Fernet, InvalidToken = get_fernet()
     local_key_id, key = get_encryption_key(create_secret=False)
-    fernet = Fernet(key)
+    try:
+        fernet = Fernet(key)
+    except (TypeError, ValueError) as exc:
+        raise DecryptionFailed from exc
 
     if not encrypted_content.startswith(ENCRYPTED_PREFIX):
         raise DecryptionFailed
@@ -145,10 +152,9 @@ def decrypt_value(encrypted_content: str) -> str:
 
     try:
         decrypted_bytes = fernet.decrypt(token.encode('utf-8'))
-    except InvalidToken:
-        raise DecryptionFailed
-
-    return decrypted_bytes.decode('utf-8')
+        return decrypted_bytes.decode('utf-8')
+    except (InvalidToken, UnicodeDecodeError) as exc:
+        raise DecryptionFailed from exc
 
 
 def load_configuration(config_path: Path) -> tuple[dict, bool, bool]:

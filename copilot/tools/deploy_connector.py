@@ -96,7 +96,11 @@ def decrypt_value(encrypted_content: str) -> str:
     """Decrypt a single encrypted value."""
     Fernet, InvalidToken = get_fernet()
     local_key_id, key = get_encryption_key()
-    fernet = Fernet(key)
+    try:
+        fernet = Fernet(key)
+    except (TypeError, ValueError) as exc:
+        raise DecryptionFailed from exc
+
     if not encrypted_content.startswith(ENCRYPTED_PREFIX):
         raise DecryptionFailed
     parts = encrypted_content[len(ENCRYPTED_PREFIX):].split(":", 3)
@@ -107,9 +111,9 @@ def decrypt_value(encrypted_content: str) -> str:
         raise DecryptionFailed
     try:
         decrypted_bytes = fernet.decrypt(token.encode('utf-8'))
-    except InvalidToken as exc:
+        return decrypted_bytes.decode('utf-8')
+    except (InvalidToken, UnicodeDecodeError) as exc:
         raise DecryptionFailed from exc
-    return decrypted_bytes.decode('utf-8')
 
 
 def decrypt_config_values(config: dict) -> dict:
