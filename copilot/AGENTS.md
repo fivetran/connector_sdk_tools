@@ -25,7 +25,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 
 ## Credential Security
 
-**Configuration values must NEVER appear in plain text — not in chat, not in `configuration.json`, not in any file the user edits by hand.**
+**Sensitive configuration values must NEVER appear in plain text in chat; use `enter_configuration.py` to encrypt configuration values in `configuration.json` by default.**
 
 When the user needs to enter configuration values, do NOT:
 - Tell them to edit fields in `configuration.json` directly
