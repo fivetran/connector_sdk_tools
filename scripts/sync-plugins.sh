@@ -7,7 +7,7 @@
 #   canonical/sdk-reference.md
 #   canonical/native-connectors.md
 #   canonical/workflows/{validator,generator,fixer}.md
-#   canonical/skills/{build,test,deploy}-connector/SKILL.md
+#   canonical/skills/{build,test,deploy,evaluate}-connector/SKILL.md
 #   canonical/tools/*
 #   canonical/hooks/log-skill-use.sh
 #

@@ -119,6 +119,7 @@ canonical/                          edit these (source of truth)
   workflows/{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
   tools/{enter_configuration,run_connector,deploy_connector}.py
+  hooks/log-skill-use.sh
 
 claude-code/                        Claude Code plugin (mostly generated)
   .claude-plugin/plugin.json
@@ -168,6 +169,7 @@ Only edit files under **`canonical/`** and the agent-specific static integration
 | `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents |
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
+| `canonical/hooks/log-skill-use.sh` | `bash scripts/sync-plugins.sh` | Claude Code, Codex, Gemini |
 | `README.md` | (no sync needed) | root docs |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml`, `hooks/hooks.json` | (no sync needed) | Gemini only |
 | `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
