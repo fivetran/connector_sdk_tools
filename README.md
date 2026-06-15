@@ -130,6 +130,7 @@ claude-code/                        Claude Code plugin (mostly generated)
 codex/                              Codex CLI plugin (mostly generated)
   .codex-plugin/plugin.json
   AGENTS.md
+  hooks.json
   skills/{build,test,deploy}-connector/SKILL.md
   workflows/{validator,generator,fixer}.md
   tools/, sdk-reference.md, native-connectors.md
@@ -158,7 +159,7 @@ tools/                              Gemini tools (generated copy of canonical/to
 
 ### What to edit
 
-Only edit files under **`canonical/`** and the static Gemini files at the root (`gemini-extension.json`, `GEMINI.md`, `commands/*.toml`). Everything else is regenerated.
+Only edit files under **`canonical/`** and the agent-specific static integration files listed below. Everything else is regenerated.
 
 | Editing... | Run after | Affects |
 |---|---|---|
@@ -167,10 +168,11 @@ Only edit files under **`canonical/`** and the static Gemini files at the root (
 | `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents |
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
-| `GEMINI.md`, `gemini-extension.json`, `commands/*.toml` | (no sync needed) | Gemini only |
-| `claude-code/CLAUDE.md` | (no sync needed) | Claude Code only |
-| `codex/AGENTS.md`, `codex/.codex-plugin/plugin.json` | (no sync needed) | Codex only |
-| `copilot/AGENTS.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
+| `README.md` | (no sync needed) | root docs |
+| `GEMINI.md`, `gemini-extension.json`, `commands/*.toml`, `hooks/hooks.json` | (no sync needed) | Gemini only |
+| `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
+| `codex/AGENTS.md`, `codex/README.md`, `codex/.codex-plugin/plugin.json`, `codex/hooks.json` | (no sync needed) | Codex only |
+| `copilot/AGENTS.md`, `copilot/README.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
 
 Generated files have a `<!-- GENERATED FILE — DO NOT EDIT -->` banner at the top. Edits to them will be overwritten on the next sync.
 
@@ -198,7 +200,7 @@ git config core.hooksPath .githooks
 
 ## Telemetry
 
-This plugin collects **anonymous usage data** to help improve the product. Each time a skill is invoked, a small event is sent containing: the skill name, plugin name and version, model, status, session ID, and timestamp. No prompts, code, file contents, or personal information are ever collected.
+This plugin collects **anonymous usage data** to help improve the product. Each time a skill is invoked, a small event is sent containing: the skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, and timestamp. No prompts, code, file contents, or personal information are ever collected.
 
 To opt out, set the following environment variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
 

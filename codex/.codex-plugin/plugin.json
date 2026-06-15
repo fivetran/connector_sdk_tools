@@ -6,6 +6,7 @@
     "name": "Fivetran"
   },
   "skills": "./skills/",
+  "hooks": "./hooks.json",
   "interface": {
     "displayName": "Fivetran Connector SDK",
     "shortDescription": "Build, test, and deploy Fivetran connectors",

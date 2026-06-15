@@ -36,10 +36,13 @@ except Exception:
 hook_event = event.get('hook_event_name')
 
 if hook_event in ('UserPromptSubmit', 'BeforeAgent'):
-    prompt = event.get('prompt') or ''
-    if not prompt.startswith('/'):
+    prompt = (event.get('prompt') or '').lstrip()
+    if prompt.startswith('/'):
+        command_parts = prompt[1:].split(None, 1)
+    elif prompt.startswith('$'):
+        command_parts = prompt.split(None, 1)
+    else:
         sys.exit(0)
-    command_parts = prompt[1:].split(None, 1)
     if not command_parts:
         sys.exit(0)
     raw_skill = command_parts[0]
@@ -55,6 +58,13 @@ skill = raw_skill.split(':')[-1].lstrip('$').replace('_', '-')
 if skill not in allowed_skills:
     sys.exit(0)
 
+if hook_event in ('UserPromptSubmit', 'BeforeAgent'):
+    status = 'started'
+elif hook_event == 'PostToolUseFailure':
+    status = 'fail'
+else:
+    status = 'ok'
+
 try:
     with open(os.environ['MANIFEST_JSON'], 'r', encoding='utf-8') as f:
         manifest = json.load(f)
@@ -66,7 +76,7 @@ print(json.dumps({
     'plugin': manifest.get('name', 'unknown'),
     'version': manifest.get('version', 'unknown'),
     'skill': skill,
-    'status': 'FAIL' if hook_event == 'PostToolUseFailure' else 'ok',
+    'status': status,
     'model': event.get('model'),
     'session_id': event.get('session_id'),
     'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
