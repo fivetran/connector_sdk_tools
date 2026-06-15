@@ -115,7 +115,6 @@ Only `enter_configuration.py` creates the secret. The test and deploy tools requ
 ```
 canonical/                          edit these (source of truth)
   sdk-reference.md
-  native-connectors.md
   workflows/{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
   tools/{enter_configuration,run_connector,deploy_connector}.py
@@ -126,7 +125,7 @@ claude-code/                        Claude Code plugin (mostly generated)
   CLAUDE.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
-  tools/, sdk-reference.md, native-connectors.md
+  tools/, sdk-reference.md
 
 codex/                              Codex CLI plugin (mostly generated)
   .codex-plugin/plugin.json
@@ -134,14 +133,14 @@ codex/                              Codex CLI plugin (mostly generated)
   hooks.json
   skills/{build,test,deploy}-connector/SKILL.md
   workflows/{validator,generator,fixer}.md
-  tools/, sdk-reference.md, native-connectors.md
+  tools/, sdk-reference.md
 
 copilot/                            GitHub Copilot CLI plugin (mostly generated)
   AGENTS.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
   commands/{build,test,deploy,evaluate}-connector.md
-  tools/, sdk-reference.md, native-connectors.md
+  tools/, sdk-reference.md
 
 gemini-extension.json               Gemini CLI extension manifest (root-only requirement)
 GEMINI.md                           Gemini context file
@@ -165,7 +164,6 @@ Only edit files under **`canonical/`** and the agent-specific static integration
 | Editing... | Run after | Affects |
 |---|---|---|
 | `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all four agents |
-| `canonical/native-connectors.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents |
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
