@@ -7,8 +7,9 @@
 #   canonical/sdk-reference.md
 #   canonical/native-connectors.md
 #   canonical/workflows/{validator,generator,fixer}.md
-#   canonical/skills/{build,test,deploy}-connector/SKILL.md
+#   canonical/skills/{build,test,deploy,evaluate}-connector/SKILL.md
 #   canonical/tools/*
+#   canonical/hooks/log-skill-use.sh
 #
 # Generated files (DO NOT edit directly — edits will be overwritten):
 #   claude-code/sdk-reference.md
@@ -16,16 +17,19 @@
 #   claude-code/agents/connector-{validator,generator,fixer}.md
 #   claude-code/skills/{build,test,deploy}-connector/SKILL.md
 #   claude-code/tools/*
+#   claude-code/hooks/log-skill-use.sh
 #   codex/sdk-reference.md
 #   codex/native-connectors.md
 #   codex/skills/{build,test,deploy}-connector/SKILL.md
 #   codex/workflows/{validator,generator,fixer}.md
 #   codex/tools/*
+#   codex/hooks/log-skill-use.sh
 #   sdk-reference.md                                         (Gemini)
 #   native-connectors.md                                     (Gemini)
 #   agents/connector-{validator,generator,fixer}.md          (Gemini)
 #   skills/{build,test,deploy}-connector/SKILL.md            (Gemini)
 #   tools/*                                                  (Gemini)
+#   hooks/log-skill-use.sh                                   (Gemini)
 #   copilot/sdk-reference.md                                 (Copilot CLI)
 #   copilot/native-connectors.md                             (Copilot CLI)
 #   copilot/agents/connector-{validator,generator,fixer}.md  (Copilot CLI)
@@ -43,6 +47,7 @@ NATIVE_LIST="$CANONICAL/native-connectors.md"
 WORKFLOWS_DIR="$CANONICAL/workflows"
 SKILLS_DIR="$CANONICAL/skills"
 TOOLS_SRC="$CANONICAL/tools"
+HOOKS_SRC="$CANONICAL/hooks"
 CLAUDE_DIR="claude-code"
 CODEX_DIR="codex"
 GEMINI_DIR="."
@@ -240,6 +245,17 @@ copy_tools() {
   done
 }
 
+copy_hooks() {
+  local dest_dir="$1"
+  mkdir -p "$dest_dir"
+  for f in "$HOOKS_SRC"/*; do
+    [[ -f "$f" ]] || continue
+    cp "$f" "$dest_dir/$(basename "$f")"
+    chmod +x "$dest_dir/$(basename "$f")"
+    echo "  wrote $dest_dir/$(basename "$f")"
+  done
+}
+
 # --- Sync actions ---
 
 echo "Syncing sdk-reference.md..."
@@ -289,5 +305,12 @@ copy_tools "$CLAUDE_DIR/tools"
 copy_tools "$CODEX_DIR/tools"
 copy_tools "$GEMINI_DIR/tools"
 copy_tools "$COPILOT_DIR/tools"
+
+echo "Copying hooks..."
+copy_hooks "$CLAUDE_DIR/hooks"
+copy_hooks "$CODEX_DIR/hooks"
+copy_hooks "$GEMINI_DIR/hooks"
+# Copilot CLI has no lifecycle hook system (no UserPromptSubmit/PostToolUse events);
+# it uses commands/ markdown files only, so hooks are not synced there.
 
 echo "Done."

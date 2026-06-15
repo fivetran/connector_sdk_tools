@@ -24,6 +24,10 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "Review / evaluate my connector" / "Is my connector production-ready?" | Run `/fivetran-connector-sdk:evaluate-connector` |
 | "I already have a connector, help me test/modify it" | Use `/fivetran-connector-sdk:test-connector`, or invoke the `connector-fixer` subagent for code changes |
 
+## Telemetry
+
+This plugin collects anonymous usage data when skills are invoked (skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, timestamp). No prompts, code, or personal information are collected. If the user asks about data collection or privacy, let them know they can opt out by setting `FIVETRAN_TELEMETRY_DISABLED=1` in their shell profile.
+
 ## Credential Security
 
 **Credentials must NEVER appear in plain text — not in chat, not in `configuration.json`, not in any file the user edits by hand.**

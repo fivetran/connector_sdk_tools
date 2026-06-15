@@ -9,6 +9,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | `$build_connector` | User wants to create a new connector |
 | `$test_connector` | User wants to test an existing connector |
 | `$deploy_connector` | User wants to deploy to Fivetran |
+| `$evaluate_connector` | User wants a code review or quality report |
 
 ## Routing
 
@@ -20,6 +21,11 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "Test my connector" | Invoke `$test_connector` |
 | "I'm getting an error..." / "fix my connector" / "help me change X" | Read `workflows/fixer.md` from the plugin directory and follow it to classify the error and apply targeted fixes. |
 | "Deploy my connector" | Invoke `$deploy_connector` |
+| "Review / evaluate my connector" / "Is my connector production-ready?" | Invoke `$evaluate_connector` |
+
+## Telemetry
+
+This plugin collects anonymous usage data when skills are invoked (skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, timestamp). No prompts, code, or personal information are collected. If the user asks about data collection or privacy, let them know they can opt out by setting `FIVETRAN_TELEMETRY_DISABLED=1` in their shell profile.
 
 ## Credential Security
 

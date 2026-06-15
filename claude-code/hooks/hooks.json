@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
+          }
+        ]
+      }
+    ]
+  }
+}
