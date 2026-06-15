@@ -5,7 +5,6 @@
 #
 # Canonical sources (edit these):
 #   canonical/sdk-reference.md
-#   canonical/native-connectors.md
 #   canonical/workflows/{validator,generator,fixer}.md
 #   canonical/skills/{build,test,deploy,evaluate}-connector/SKILL.md
 #   canonical/tools/*
@@ -13,25 +12,21 @@
 #
 # Generated files (DO NOT edit directly — edits will be overwritten):
 #   claude-code/sdk-reference.md
-#   claude-code/native-connectors.md
 #   claude-code/agents/connector-{validator,generator,fixer}.md
 #   claude-code/skills/{build,test,deploy}-connector/SKILL.md
 #   claude-code/tools/*
 #   claude-code/hooks/log-skill-use.sh
 #   codex/sdk-reference.md
-#   codex/native-connectors.md
 #   codex/skills/{build,test,deploy}-connector/SKILL.md
 #   codex/workflows/{validator,generator,fixer}.md
 #   codex/tools/*
 #   codex/hooks/log-skill-use.sh
 #   sdk-reference.md                                         (Gemini)
-#   native-connectors.md                                     (Gemini)
 #   agents/connector-{validator,generator,fixer}.md          (Gemini)
 #   skills/{build,test,deploy}-connector/SKILL.md            (Gemini)
 #   tools/*                                                  (Gemini)
 #   hooks/log-skill-use.sh                                   (Gemini)
 #   copilot/sdk-reference.md                                 (Copilot CLI)
-#   copilot/native-connectors.md                             (Copilot CLI)
 #   copilot/agents/connector-{validator,generator,fixer}.md  (Copilot CLI)
 #   copilot/skills/{build,test,deploy}-connector/SKILL.md    (Copilot CLI)
 #   copilot/tools/*                                          (Copilot CLI)
@@ -43,7 +38,6 @@ cd "$REPO_ROOT"
 
 CANONICAL="canonical"
 SDK_REF="$CANONICAL/sdk-reference.md"
-NATIVE_LIST="$CANONICAL/native-connectors.md"
 WORKFLOWS_DIR="$CANONICAL/workflows"
 SKILLS_DIR="$CANONICAL/skills"
 TOOLS_SRC="$CANONICAL/tools"
@@ -263,12 +257,6 @@ copy_with_banner "$SDK_REF" "$CLAUDE_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$CODEX_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$GEMINI_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$COPILOT_DIR/sdk-reference.md"
-
-echo "Syncing native-connectors.md..."
-copy_with_banner "$NATIVE_LIST" "$CLAUDE_DIR/native-connectors.md"
-copy_with_banner "$NATIVE_LIST" "$CODEX_DIR/native-connectors.md"
-copy_with_banner "$NATIVE_LIST" "$GEMINI_DIR/native-connectors.md"
-copy_with_banner "$NATIVE_LIST" "$COPILOT_DIR/native-connectors.md"
 
 echo "Assembling Claude subagent files..."
 for role in validator generator fixer; do

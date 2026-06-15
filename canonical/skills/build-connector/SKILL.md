@@ -18,21 +18,40 @@ You are building a complete Fivetran connector from the user's description. This
 
 Run all three checks in order and present findings to the user. The user decides — if they prefer to build custom even when a managed option exists, proceed to Phase 1.
 
-### Check 1: Is there already a native Fivetran connector for this source?
+### Check 1: Is there already a Fivetran connector for this source?
 
-Read the bundled catalog file `native-connectors.md` in the plugin directory. Do a case-insensitive fuzzy match on the source name the user mentioned against the entries.
+Fetch all five category pages in parallel using WebFetch and scan each for the source name the user mentioned (case-insensitive fuzzy match):
 
-- **If you find a match or a very close match**, tell the user:
+- https://fivetran.com/docs/connectors/databases
+- https://fivetran.com/docs/connectors/events
+- https://fivetran.com/docs/connectors/files
+- https://fivetran.com/docs/connectors/functions
+- https://fivetran.com/docs/connectors/applications
 
-  > *"Fivetran already has a native **{Match}** connector ([catalog](https://fivetran.com/integrations)). That's typically the best choice — Fivetran maintains it, handles API/schema changes, and you don't write or maintain any code. You can configure it in the Fivetran dashboard. Would you like to go that route? Or do you have a specific need (e.g., custom endpoint, unsupported object, non-standard auth) that requires a custom CSDK connector?"*
+Ask each fetch: "List all connector names on this page, one per line."
 
-  Wait for the user's answer. If they choose the native connector, stop and direct them to the Fivetran dashboard. If they want custom CSDK anyway, usually skip Check 2 and go straight to Phase 1 (Lite rarely beats an existing native).
+- **If you find a match or a very close match in any page**, tell the user:
 
-- **If there's no match**, do NOT assert "no native connector exists." The bundled list may be out of date. Say:
+  > *"Would you prefer to use our **{Match}** managed native connector or need to customize it for your use case? The connector is maintained by Fivetran — no code to write or maintain. You can configure it directly in the Fivetran dashboard."*
 
-  > *"I don't see **{Source}** in the bundled Fivetran catalog list, but the list may be stale. Please quickly check https://fivetran.com/integrations to confirm. If it exists there, use the native connector. If not, I'll continue to Check 2."*
+  Wait for the user's answer. If they choose the managed connector, stop and direct them to the Fivetran dashboard. If they want custom CSDK anyway, go straight to Phase 1.
 
-  Only proceed to Check 2 after the user confirms there's no native connector.
+- **If there's no match**, the applications page may be incomplete (it is a large list and can be truncated). As a fallback, probe a few direct URL slug variations using WebFetch — try the most likely slugs derived from the source name (lowercase, spaces to hyphens, common abbreviations) across all categories:
+
+  ```
+  https://fivetran.com/docs/connectors/applications/{slug}
+  https://fivetran.com/docs/connectors/databases/{slug}
+  https://fivetran.com/docs/connectors/files/{slug}
+  https://fivetran.com/docs/connectors/events/{slug}
+  ```
+
+  For example, for "Google Analytics 4" try: `google-analytics-4`, `google-analytics`. For "Amazon RDS for MySQL" try: `amazon-rds-mysql`, `mysql-rds`. Fetch 2–3 variations — if a page returns a valid connector description, a match exists.
+
+  If the slug probes also return no match, tell the user:
+
+  > *"I didn't find **{Source}** in Fivetran's connector catalog, but the catalog may be incomplete. Please quickly verify at https://fivetran.com/integrations before we proceed."*
+
+  Proceed to Check 2 once the user confirms.
 
 ### Check 2: Is this a good fit for a Lite Connector (AI builder)?
 
