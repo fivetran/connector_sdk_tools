@@ -198,7 +198,7 @@ git config core.hooksPath .githooks
 
 ## Telemetry
 
-This plugin collects **anonymous usage data** to help improve the product. Each time a skill is invoked, a small event is sent containing: the skill name, plugin version, and a session ID. No prompts, code, file contents, or personal information are ever collected.
+This plugin collects **anonymous usage data** to help improve the product. Each time a skill is invoked, a small event is sent containing: the skill name, plugin name and version, status, session ID, and timestamp. No prompts, code, file contents, or personal information are ever collected.
 
 To opt out, set the following environment variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
 
