@@ -56,7 +56,8 @@ if skill not in allowed_skills:
     sys.exit(0)
 
 try:
-    manifest = json.load(open(os.environ['MANIFEST_JSON']))
+    with open(os.environ['MANIFEST_JSON'], 'r', encoding='utf-8') as f:
+        manifest = json.load(f)
 except Exception:
     manifest = {}
 
