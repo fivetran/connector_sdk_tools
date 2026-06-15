@@ -65,7 +65,7 @@ print(json.dumps({
     'plugin': manifest.get('name', 'unknown'),
     'version': manifest.get('version', 'unknown'),
     'skill': skill,
-    'status': 'FAIL' if hook_event == 'PostToolUseFailure' else 'ok',
+    'status': 'fail' if hook_event == 'PostToolUseFailure' else 'ok',
     'session_id': event.get('session_id'),
     'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
 }))
