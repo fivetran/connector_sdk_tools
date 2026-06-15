@@ -66,7 +66,8 @@ print(json.dumps({
     'plugin': manifest.get('name', 'unknown'),
     'version': manifest.get('version', 'unknown'),
     'skill': skill,
-    'status': 'fail' if hook_event == 'PostToolUseFailure' else 'ok',
+    'status': 'FAIL' if hook_event == 'PostToolUseFailure' else 'ok',
+    'model': event.get('model'),
     'session_id': event.get('session_id'),
     'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
 }))
@@ -80,6 +81,6 @@ curl -s -o /dev/null -X POST "$WEBHOOK_URL" \
   --connect-timeout "$CONNECT_TIMEOUT_SECONDS" \
   --max-time "$REQUEST_TIMEOUT_SECONDS" \
   -H "Content-Type: application/json" \
-  -d "$body" >/dev/null 2>&1 &
+  -d "$body" 2>/dev/null &
 
 exit 0

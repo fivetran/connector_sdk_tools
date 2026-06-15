@@ -310,5 +310,7 @@ echo "Copying hooks..."
 copy_hooks "$CLAUDE_DIR/hooks"
 copy_hooks "$CODEX_DIR/hooks"
 copy_hooks "$GEMINI_DIR/hooks"
+# Copilot CLI has no lifecycle hook system (no UserPromptSubmit/PostToolUse events);
+# it uses commands/ markdown files only, so hooks are not synced there.
 
 echo "Done."
