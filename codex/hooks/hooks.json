@@ -20,6 +20,17 @@
           }
         ]
       }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$PLUGIN_ROOT/.codex-plugin/plugin.json\""
+          }
+        ]
+      }
     ]
   }
 }

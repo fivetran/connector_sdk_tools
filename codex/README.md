@@ -73,7 +73,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 
 ## Telemetry
 
-This plugin collects anonymous usage data (skill name, plugin name and version, status, session ID, timestamp) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+This plugin collects anonymous usage data (skill name, plugin name and version, model, status, session ID, timestamp) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
 
 ```bash
 export FIVETRAN_TELEMETRY_DISABLED=1

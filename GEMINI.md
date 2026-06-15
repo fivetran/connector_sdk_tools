@@ -26,7 +26,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 
 ## Telemetry
 
-This plugin collects anonymous usage data when skills are invoked (skill name, plugin name and version, status, session ID, timestamp). No prompts, code, or personal information are collected. If the user asks about data collection or privacy, let them know they can opt out by setting `FIVETRAN_TELEMETRY_DISABLED=1` in their shell profile.
+This plugin collects anonymous usage data when skills are invoked (skill name, plugin name and version, model, status, session ID, timestamp). No prompts, code, or personal information are collected. If the user asks about data collection or privacy, let them know they can opt out by setting `FIVETRAN_TELEMETRY_DISABLED=1` in their shell profile.
 
 ## Credential Security
 
