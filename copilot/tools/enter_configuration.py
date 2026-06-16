@@ -54,11 +54,18 @@ def create_master_secret(replacing_existing: bool = False) -> str:
         pass
 
     if replacing_existing:
-        SECRET_FILE.write_text(master_secret + "\n")
+        tmp_path = SECRET_FILE.parent / f".csdk_secret_{secrets.token_hex(4)}"
         try:
-            SECRET_FILE.chmod(0o600)
-        except OSError:
-            pass
+            fd = os.open(str(tmp_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "w") as f:
+                f.write(master_secret + "\n")
+            os.replace(str(tmp_path), str(SECRET_FILE))
+        except Exception:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+            raise
         print("Replaced an unsupported local encryption secret format.")
     else:
         fd = os.open(str(SECRET_FILE), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
@@ -126,7 +133,9 @@ def encrypt_value(value: str) -> str:
     try:
         fernet = Fernet(key)
     except (TypeError, ValueError) as exc:
-        raise RuntimeError("local encryption key is invalid") from exc
+        raise RuntimeError(
+            f"local encryption key is invalid — delete {SECRET_FILE} and rerun this script"
+        ) from exc
 
     encrypted = fernet.encrypt(value.encode('utf-8'))
     return f"{ENCRYPTED_PREFIX}{ENCRYPTED_TOKEN_VERSION}:{key_id}:{ENCRYPTED_TOKEN_ALGORITHM}:{encrypted.decode('utf-8')}"
@@ -192,8 +201,6 @@ def load_configuration(config_path: Path) -> tuple[dict, bool, bool]:
                 config[field] = ""
         else:
             config[field] = value
-            if is_sensitive_field(field) and value:
-                can_keep_existing = True
 
     return config, had_encrypted_values, can_keep_existing
 
@@ -248,14 +255,24 @@ def main():
     for field, current_value in config.items():
         if is_sensitive_field(field):
             keep_hint = " [press Enter to keep existing]" if can_keep_existing and current_value else ""
-            value = getpass.getpass(f"  {field}{keep_hint}: ")
-            if can_keep_existing and not value and current_value:
-                value = current_value
+            while True:
+                value = getpass.getpass(f"  {field}{keep_hint}: ")
+                if value:
+                    break
+                if can_keep_existing and current_value:
+                    value = current_value
+                    break
+                print(f"  (value required — enter a value for {field!r})")
         else:
             default_hint = f" [{current_value}]" if current_value else ""
-            value = input(f"  {field}{default_hint}: ").strip()
-            if not value and current_value:
-                value = current_value
+            while True:
+                value = input(f"  {field}{default_hint}: ").strip()
+                if value:
+                    break
+                if current_value:
+                    value = current_value
+                    break
+                print(f"  (value required — enter a value for {field!r})")
 
         new_config[field] = value
 

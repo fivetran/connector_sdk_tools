@@ -32,7 +32,7 @@ This plugin collects anonymous usage data when skills are invoked (skill name, p
 
 ## Credential Security
 
-**Sensitive configuration values must NEVER appear in plain text in chat; use `enter_configuration.py` to encrypt configuration values in `configuration.json` by default.**
+**Sensitive configuration values must NEVER appear in plain text in chat.** Use `enter_configuration.py` to encrypt configuration values in `configuration.json` by default; the runner also accepts user-chosen plaintext field values.
 
 When the user needs to enter configuration values, do NOT:
 - Tell them to edit fields in `configuration.json` directly
