@@ -140,7 +140,7 @@ Edit the CSDK project files:
 - Keep flat string key/value pairs only.
 - Include fields needed by the connector, using obvious placeholders only.
 - Convert nested Airbyte settings to clear flat names, and document any rename.
-- Prefer separate connector deployments for multi-entity configs (see `sdk-reference.md:135`). Only when the Airbyte source truly requires multi-item selection, convert Airbyte arrays or objects to JSON-encoded string placeholders, such as `"streams": "[\"users\"]"` or `"credentials": "{\"auth_type\":\"token\"}"`, then parse and validate them with `json.loads()` in `connector.py`.
+- Prefer separate connector deployments for multi-entity configs (see `sdk-reference.md`). Only when the Airbyte source truly requires multi-item selection, convert Airbyte arrays or objects to JSON-encoded string placeholders, such as `"streams": "[\"users\"]"` or `"credentials": "{\"auth_type\":\"token\"}"`, then parse and validate them with `json.loads()` in `connector.py`.
 - Preserve support for deprecated Airbyte config aliases when source code has explicit migration logic, or document that the CSDK connector only supports the new field names.
 - Do not include real credentials from `config.json`, `.env`, or Airbyte UI exports.
 - Do not use arrays or nested objects.
