@@ -56,6 +56,7 @@ Skills appear in the `$` mention popup:
 - `$build_connector` — Research an API and generate a complete connector
 - `$test_connector` — Run and validate your connector locally
 - `$deploy_connector` — Package and deploy to Fivetran
+- `$evaluate_connector` — Code review and quality report
 - `$migrate_functions_connector` — Migrate a Fivetran Functions connector to Connector SDK
 - `$migrate_meltano_connector` — Migrate a Meltano extractor or Singer tap to Connector SDK
 - `$migrate_airbyte_connector` — Migrate an Airbyte source connector to Connector SDK
