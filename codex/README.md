@@ -69,6 +69,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `skills/build-connector/` | Full generation workflow (research → generate → test → auto-fix) |
 | `skills/test-connector/` | Run and validate connector tests |
 | `skills/deploy-connector/` | Package and deploy to Fivetran |
+| `skills/evaluate-connector/` | Static code review and scored report |
 | `skills/migrate-functions-connector/` | Migrate Fivetran Functions connectors to Connector SDK |
 | `skills/migrate-meltano-connector/` | Migrate Meltano extractors or Singer taps to Connector SDK |
 | `skills/migrate-airbyte-connector/` | Migrate Airbyte source connectors to Connector SDK |
