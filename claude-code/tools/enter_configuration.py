@@ -3,23 +3,25 @@
 Enter and encrypt configuration values for a Fivetran connector.
 
 Run this script directly in your terminal to securely enter API credentials.
-Values are encrypted before being saved to configuration.json.
+Configuration field values are encrypted before being saved to configuration.json.
+Runtime tools also allow user-chosen plaintext values.
 
 Uses a local master secret file, creating it on first use.
 """
-import base64
 import getpass
-import hashlib
 import json
 import os
+import secrets
 import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 
 ENCRYPTED_PREFIX = "ENCRYPTED:"
-ENCRYPTED_FIELD = "encrypted"
+ENCRYPTED_TOKEN_VERSION = "v1"
+ENCRYPTED_TOKEN_ALGORITHM = "local-fernet"
 SECRET_FILE = Path.home() / ".fivetran" / "csdk_master_secret"
+FERNET_KEY_PREFIX = "FERNET_KEY:"
 
 
 class MissingMasterSecret(Exception):
@@ -40,130 +42,179 @@ def get_fernet():
     return Fernet, InvalidToken
 
 
-def load_master_secret(create: bool) -> str:
-    """Load the local master secret file, optionally creating it."""
-    import secrets as secrets_module
-
-    if SECRET_FILE.exists():
-        master_secret = SECRET_FILE.read_text().strip()
-        if master_secret:
-            return master_secret
-
-    if not create:
-        raise MissingMasterSecret
-
-    master_secret = secrets_module.token_urlsafe(32)
+def create_master_secret(replacing_existing: bool = False) -> str:
+    """Create a local Fernet key file with owner-only permissions."""
+    Fernet, _ = get_fernet()
+    key_id = secrets.token_urlsafe(8)
+    master_secret = f"{FERNET_KEY_PREFIX}{ENCRYPTED_TOKEN_VERSION}:{key_id}:{Fernet.generate_key().decode('utf-8')}"
     SECRET_FILE.parent.mkdir(parents=True, exist_ok=True)
     try:
         SECRET_FILE.parent.chmod(0o700)
     except OSError:
         pass
 
-    fd = os.open(str(SECRET_FILE), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-    with os.fdopen(fd, "w") as f:
-        f.write(master_secret + "\n")
+    if replacing_existing:
+        tmp_path = SECRET_FILE.parent / f".csdk_secret_{secrets.token_hex(4)}"
+        try:
+            fd = os.open(str(tmp_path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "w") as f:
+                f.write(master_secret + "\n")
+            os.replace(str(tmp_path), str(SECRET_FILE))
+        except Exception:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
+            raise
+        print("Replaced an unsupported local encryption secret format.")
+    else:
+        fd = os.open(str(SECRET_FILE), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(fd, "w") as f:
+            f.write(master_secret + "\n")
+        print("Created a local encryption secret.")
 
-    print("Created a local encryption secret.")
     print(f"Saved it to: {SECRET_FILE}")
     print("This script will use it now, and the test/deploy tools will use it later.")
     print("")
     return master_secret
 
 
-def get_encryption_key(username: str = "local-user", create_secret: bool = True) -> bytes:
-    """Derive encryption key from the local master secret."""
+def load_master_secret(create: bool) -> str:
+    """Load the local master secret file, optionally creating it."""
+    if SECRET_FILE.exists():
+        try:
+            SECRET_FILE.parent.chmod(0o700)
+            SECRET_FILE.chmod(0o600)
+        except OSError:
+            pass
+        master_secret = SECRET_FILE.read_text().strip()
+        if parse_master_secret(master_secret):
+            return master_secret
+        if create:
+            return create_master_secret(replacing_existing=True)
+
+    if not create:
+        raise MissingMasterSecret
+
+    return create_master_secret()
+
+
+def parse_master_secret(master_secret: str) -> tuple[str, bytes] | None:
+    """Return key metadata from a supported local secret file."""
+    if not master_secret.startswith(FERNET_KEY_PREFIX):
+        return None
+    parts = master_secret[len(FERNET_KEY_PREFIX):].split(":", 2)
+    if len(parts) != 3:
+        return None
+    version, key_id, key = parts
+    if version != ENCRYPTED_TOKEN_VERSION or not key_id or not key:
+        return None
+    return key_id, key.encode("utf-8")
+
+
+def get_encryption_key(create_secret: bool = True) -> tuple[str, bytes]:
+    """Return the local Fernet key id and key."""
     master_secret = load_master_secret(create=create_secret)
-
-    key = hashlib.pbkdf2_hmac(
-        'sha256',
-        master_secret.encode('utf-8'),
-        username.encode('utf-8'),
-        iterations=100000,
-        dklen=32
-    )
-    return base64.urlsafe_b64encode(key)
+    parsed = parse_master_secret(master_secret)
+    if parsed is None:
+        raise MissingMasterSecret
+    return parsed
 
 
-def encrypt_config(config: dict) -> str:
-    """Encrypt a configuration dictionary."""
+def is_sensitive_field(field: str) -> bool:
+    """Return whether a configuration field should be protected at rest."""
+    return True
+
+
+def encrypt_value(value: str) -> str:
+    """Encrypt a single sensitive field value."""
     Fernet, _ = get_fernet()
-    key = get_encryption_key()
-    fernet = Fernet(key)
-    json_bytes = json.dumps(config, indent=2).encode('utf-8')
-    encrypted = fernet.encrypt(json_bytes)
-    return ENCRYPTED_PREFIX + encrypted.decode('utf-8')
-
-
-def decrypt_config(encrypted_content: str) -> dict:
-    """Decrypt an encrypted configuration string."""
-    Fernet, InvalidToken = get_fernet()
-    key = get_encryption_key(create_secret=False)
-    fernet = Fernet(key)
-
-    if encrypted_content.startswith(ENCRYPTED_PREFIX):
-        encrypted_content = encrypted_content[len(ENCRYPTED_PREFIX):]
-
+    key_id, key = get_encryption_key()
     try:
-        decrypted_bytes = fernet.decrypt(encrypted_content.encode('utf-8'))
-    except InvalidToken:
+        fernet = Fernet(key)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            f"local encryption key is invalid — delete {SECRET_FILE} and rerun this script"
+        ) from exc
+
+    encrypted = fernet.encrypt(value.encode('utf-8'))
+    return f"{ENCRYPTED_PREFIX}{ENCRYPTED_TOKEN_VERSION}:{key_id}:{ENCRYPTED_TOKEN_ALGORITHM}:{encrypted.decode('utf-8')}"
+
+
+def decrypt_value(encrypted_content: str) -> str:
+    """Decrypt a single encrypted sensitive field value."""
+    Fernet, InvalidToken = get_fernet()
+    local_key_id, key = get_encryption_key(create_secret=False)
+    try:
+        fernet = Fernet(key)
+    except (TypeError, ValueError) as exc:
+        raise DecryptionFailed from exc
+
+    if not encrypted_content.startswith(ENCRYPTED_PREFIX):
+        raise DecryptionFailed
+    parts = encrypted_content[len(ENCRYPTED_PREFIX):].split(":", 3)
+    if len(parts) != 4:
+        raise DecryptionFailed
+    version, key_id, algorithm, token = parts
+    if version != ENCRYPTED_TOKEN_VERSION or key_id != local_key_id or algorithm != ENCRYPTED_TOKEN_ALGORITHM:
         raise DecryptionFailed
 
-    return json.loads(decrypted_bytes.decode('utf-8'))
+    try:
+        decrypted_bytes = fernet.decrypt(token.encode('utf-8'))
+        return decrypted_bytes.decode('utf-8')
+    except (InvalidToken, UnicodeDecodeError) as exc:
+        raise DecryptionFailed from exc
 
 
-def load_configuration(config_path: Path) -> tuple[dict, dict, bool, bool]:
+def load_configuration(config_path: Path) -> tuple[dict, bool, bool]:
     """
-    Return baseline config, current values for prompting, whether encrypted
-    values exist, and whether existing encrypted values can be kept.
+    Return current values for prompting, whether encrypted values exist,
+    and whether existing values can be kept.
     """
     content = config_path.read_text().strip()
 
-    if content.startswith(ENCRYPTED_PREFIX):
-        try:
-            config = decrypt_config(content)
-        except MissingMasterSecret:
-            print("Error: configuration.json uses the old whole-file encrypted format, but the local encryption secret is missing.")
-            print(f"Expected local secret file: {SECRET_FILE}")
-            print("Because the old format does not preserve baseline field names, this script cannot recover it automatically.")
-            sys.exit(1)
-        except DecryptionFailed:
-            print("Error: configuration.json uses the old whole-file encrypted format, but this local secret cannot decrypt it.")
-            print(f"Expected local secret file: {SECRET_FILE}")
-            print("Because the old format does not preserve baseline field names, this script cannot recover it automatically.")
-            sys.exit(1)
-        baseline = {field: "" for field in config}
-        return baseline, config, True, True
-
     try:
-        baseline = json.loads(content)
+        raw_config = json.loads(content)
     except json.JSONDecodeError as e:
         print(f"Error: Invalid JSON in {config_path}: {e}")
         sys.exit(1)
 
-    if not isinstance(baseline, dict):
+    if not isinstance(raw_config, dict):
         print(f"Error: {config_path} must contain a JSON object.")
         sys.exit(1)
 
-    encrypted_content = baseline.get(ENCRYPTED_FIELD)
-    baseline = {k: v for k, v in baseline.items() if k != ENCRYPTED_FIELD}
+    config = {}
+    had_encrypted_values = False
+    can_keep_existing = False
 
-    if encrypted_content:
-        if not isinstance(encrypted_content, str):
-            print(f"Error: {ENCRYPTED_FIELD!r} must contain an encrypted string.")
-            sys.exit(1)
-        try:
-            config = decrypt_config(encrypted_content)
-            return baseline, config, True, True
-        except (MissingMasterSecret, DecryptionFailed):
-            if baseline:
+    for field, value in raw_config.items():
+        if is_sensitive_field(field) and isinstance(value, str) and value.startswith(ENCRYPTED_PREFIX):
+            had_encrypted_values = True
+            try:
+                config[field] = decrypt_value(value)
+                can_keep_existing = True
+            except (MissingMasterSecret, DecryptionFailed):
                 print("")
-                print("Could not decrypt existing encrypted values.")
-                print("Keeping the baseline field names and prompting for replacement values.")
+                print(f"Could not decrypt the existing encrypted value for {field!r}.")
+                print("Prompting for a replacement value.")
                 print("")
-                return baseline, {field: "" for field in baseline}, True, False
-            raise
+                config[field] = ""
+        else:
+            config[field] = value
 
-    return baseline, baseline, False, False
+    return config, had_encrypted_values, can_keep_existing
+
+
+def protect_config_values(config: dict) -> dict:
+    """Return a JSON-ready config with all field values encrypted."""
+    output_config = {}
+    for field, value in config.items():
+        string_value = value if isinstance(value, str) else str(value)
+        if is_sensitive_field(field):
+            output_config[field] = encrypt_value(string_value)
+        else:
+            output_config[field] = string_value
+    return output_config
 
 
 def main():
@@ -187,7 +238,7 @@ def main():
         print("Make sure you're in a connector directory with a configuration.json file.")
         sys.exit(1)
 
-    baseline_config, config, had_encrypted_values, can_keep_existing = load_configuration(config_path)
+    config, had_encrypted_values, can_keep_existing = load_configuration(config_path)
     if had_encrypted_values:
         print(f"{config_path} already has encrypted values. Enter replacement values below.")
         if can_keep_existing:
@@ -199,33 +250,36 @@ def main():
 
     print(f"\nEnter values for {len(config)} field(s):\n")
 
-    # Collect values for each field
-    sensitive_keywords = ['key', 'token', 'secret', 'password', 'credential', 'auth']
     new_config = {}
 
     for field, current_value in config.items():
-        is_sensitive = any(kw in field.lower() for kw in sensitive_keywords)
-
-        if is_sensitive:
+        if is_sensitive_field(field):
             keep_hint = " [press Enter to keep existing]" if can_keep_existing and current_value else ""
-            value = getpass.getpass(f"  {field}{keep_hint}: ")
-            if can_keep_existing and not value and current_value:
-                value = current_value
+            while True:
+                value = getpass.getpass(f"  {field}{keep_hint}: ")
+                if value:
+                    break
+                if can_keep_existing and current_value:
+                    value = current_value
+                    break
+                print(f"  (value required — enter a value for {field!r})")
         else:
             default_hint = f" [{current_value}]" if current_value else ""
-            value = input(f"  {field}{default_hint}: ").strip()
-            if not value and current_value:
-                value = current_value
+            while True:
+                value = input(f"  {field}{default_hint}: ").strip()
+                if value:
+                    break
+                if current_value:
+                    value = current_value
+                    break
+                print(f"  (value required — enter a value for {field!r})")
 
         new_config[field] = value
 
-    # Encrypt and save
     try:
-        encrypted = encrypt_config(new_config)
-        output_config = dict(baseline_config)
-        output_config[ENCRYPTED_FIELD] = encrypted
+        output_config = protect_config_values(new_config)
         config_path.write_text(json.dumps(output_config, indent=2) + "\n")
-        print(f"\nConfiguration encrypted and saved to {config_path}")
+        print(f"\nConfiguration values encrypted and saved to {config_path}")
     except Exception as e:
         print(f"\nError: Failed to encrypt: {e}")
         sys.exit(1)

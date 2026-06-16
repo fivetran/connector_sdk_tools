@@ -79,13 +79,13 @@ python -m pip install -r "C:\path\to\claude-code\tools\requirements.txt"
 python "C:\path\to\claude-code\tools\enter_configuration.py" "configuration.json"
 ```
 
-Enter your API credentials when prompted. They are encrypted immediately into the top-level `encrypted` field in `configuration.json` — Claude never sees them. The original placeholder fields remain as the recoverable baseline.
+Enter configuration values when prompted. Every field value is encrypted immediately as an inline `ENCRYPTED:v1:<key_id>:local-fernet:` value in `configuration.json`. Claude never sees plaintext configuration values.
 
 The dependency install is temporary. Once secure configuration entry is available in the Fivetran Connector SDK CLI, this helper script flow will be replaced.
 
-**First time only:** The tool creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows) and uses it immediately. Claude never sees the secret or plaintext credentials.
+**First time only:** The tool creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows) and uses it immediately. Claude never sees the secret or plaintext configuration values.
 
-Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret so they can decrypt the `encrypted` field. To start credential entry over, delete the `encrypted` field from `configuration.json` and run `enter_configuration.py` again.
+Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret to decrypt configuration values at runtime. To start configuration entry over, run `enter_configuration.py` again.
 
 Go back to Claude Code and tell it you've entered your credentials.
 
@@ -170,7 +170,7 @@ python -m pip install -r /path/to/claude-code/tools/requirements.txt
 python /path/to/claude-code/tools/enter_configuration.py configuration.json
 ```
 
-On first run, it creates a local encryption secret under your user profile. This encrypts your credentials so the AI cannot see them.
+On first run, it creates a local encryption secret under your user profile. This encrypts local configuration values so the AI cannot see them.
 
 ### Test a Connector
 ```
@@ -216,8 +216,8 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `agents/connector-generator.md` | Subagent for generating connector code |
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
-| `tools/run_connector.py` | Run connector with encrypted config (decrypts via named pipe) |
-| `tools/deploy_connector.py` | Deploy connector with encrypted config |
+| `tools/run_connector.py` | Run connector with runtime config via named pipe |
+| `tools/deploy_connector.py` | Deploy connector with runtime config via named pipe |
 
 ## How It Works
 

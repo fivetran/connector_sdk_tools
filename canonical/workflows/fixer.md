@@ -239,6 +239,6 @@ EXAMPLES STUDIED:
 
 **IMPORTANT:**
 - Never modify plugin tools (anything under the plugin directory). Only fix user connector code.
-- If config contains a top-level `encrypted` field, this is normal — do NOT try to "fix" it.
-- Legacy configs that start with `ENCRYPTED:` are also normal.
+- If config fields contain inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal — do NOT try to "fix" it.
+- Legacy configs that start with `ENCRYPTED:` may exist, but the current tools expect `configuration.json` to be a JSON object; recreate the file with the correct fields and rerun `enter_configuration.py` to rewrite values.
 - For fundamental design issues, recommend using the validator to find a better starting point.

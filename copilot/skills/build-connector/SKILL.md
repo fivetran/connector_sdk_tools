@@ -128,37 +128,37 @@ uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_
 
 ## Phase 5: Enter Configuration & Test
 
-After scaffolding and customizing the files (or finding existing files with placeholder values), credentials must be entered via the encryption script. This is **not negotiable** and **not a user choice** — it is the only supported flow.
+After scaffolding and customizing the files (or finding existing files with placeholder values), configuration values must be entered via the encryption script. This is **not negotiable** and **not a user choice** — it is the only supported configuration-entry flow.
 
 **HARD RULES — violating any of these is a failure:**
-- DO NOT use `AskUserQuestion` (or any choice-menu / multi-option UI) to ask how the user wants to enter credentials. There is exactly one way.
-- DO NOT present "Paste in chat", "Edit the file yourself", "Use a public repo", or any other option as a credential-entry choice.
-- DO NOT tell the user to edit `configuration.json` manually under any circumstances.
-- DO NOT accept credentials pasted in chat.
+- DO NOT use `AskUserQuestion` (or any choice-menu / multi-option UI) to ask how the user wants to enter configuration values. There is exactly one way.
+- DO NOT present "Paste in chat", "Edit the file yourself", "Use a public repo", or any other option as a configuration-entry choice.
+- DO NOT tell the user to paste configuration values in chat.
+- DO NOT accept values pasted in chat.
 - DO NOT run `enter_configuration.py` yourself. The user must run it in their own separate terminal.
-- DO NOT proceed to running `run_connector.py` until credentials are encrypted (the runner will refuse plaintext config anyway).
+- DO NOT inspect or print configuration values.
 
 **THE ONLY ACCEPTABLE FLOW.** Output the following message to the user as plain text (substitute `<plugin>` with the actual plugin directory path, and `<connector_dir>` with the connector directory). Use one fenced command block: `bash` on macOS/Linux, `powershell` on Windows. Quote both paths. Do not insert a line break inside the `python` command.
 
 ````text
-I've generated the connector files (or the files already exist). To fill in credentials securely, open a separate terminal, then run:
+I've generated the connector files (or the files already exist). To fill in configuration values securely, open a separate terminal, then run:
 
 ```bash
 cd "<connector_dir>"
 python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
-The script will prompt you for each credential field and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
+The script will prompt you for each configuration field and encrypt values in place. I never see plaintext configuration values. Let me know when it's done and I'll run the test.
 If the local encryption secret file does not exist yet, the script creates it first.
 ````
 
-After the user confirms credentials are entered, run the connector via the secure runner:
+After the user confirms configuration values are entered, run the connector via the secure runner:
 
 ```bash
 python <plugin>/tools/run_connector.py <connector_dir>
 ```
 
-This decrypts the config in memory and passes it via named pipe — plaintext credentials never touch disk. If `run_connector.py` exits with "configuration.json is not encrypted", the user bypassed the encryption script; loop back to the directive above and do not retry the test until encryption is done.
+This decrypts encrypted configuration values in memory, passes user-chosen plaintext values through, and supplies the runtime config via named pipe.
 
 Check results:
 

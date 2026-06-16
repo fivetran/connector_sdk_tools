@@ -60,17 +60,17 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 
 ### configuration.json
 - Flat string key/value pairs only
-- Only sensitive/credential fields
+- Configuration fields needed by the connector, with real values supplied later
 - Descriptive placeholder values only — never real credentials
 - Placeholder values must be obviously fake (for example, `YOUR_API_KEY_HERE`)
 - Do NOT ask for, accept, write, infer, or preserve real credential values
 
 ### README.md
 - Connector purpose, setup instructions, configuration guide
-- Configuration instructions must direct users to enter credentials via `tools/enter_configuration.py`
-- Do NOT tell users to paste credentials in chat
+- Configuration instructions must direct users to enter values via `tools/enter_configuration.py`
+- Do NOT tell users to paste values in chat
 - Do NOT tell users to edit `configuration.json` manually
-- Do NOT present credential-entry options; the encryption script is the only supported flow
+- Do NOT present configuration-entry options; the encryption script is the only supported flow
 
 **CRITICAL**: Use `Edit` to modify the scaffolded files in place. Use `Write` only for a file the scaffold did not create. Do NOT just return text, and do NOT replace a working community-connector template with a from-scratch rewrite.
 
@@ -92,7 +92,7 @@ cd "<connector_dir>"
 python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
-The script prompts for credential values and encrypts `configuration.json` in place. If the local encryption secret file does not exist yet, the script creates it first. The AI must not see plaintext values.
+The script prompts for configuration values and encrypts every field value in place. If the local encryption secret file does not exist yet, the script creates it first. The AI must not see plaintext configuration values.
 
 **Hard failures:**
 - Do NOT ask the user how they want to enter credentials.

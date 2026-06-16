@@ -3,15 +3,13 @@
 Deploy a connector to Fivetran.
 
 Reads FIVETRAN_API_KEY from env, auto-discovers the destination via the
-Fivetran REST API, then passes the encrypted configuration to `fivetran
-deploy` via a named pipe (plaintext credentials never touch disk).
+Fivetran REST API, then passes the configuration to `fivetran deploy` via a
+named pipe after decrypting configuration values in memory.
 
 Usage:
     python deploy_connector.py <connector_directory>
 """
 import argparse
-import base64
-import hashlib
 import json
 import os
 import re
@@ -28,8 +26,10 @@ SCRIPT_DIR = Path(__file__).parent.resolve()
 API_BASE = "https://api.fivetran.com/v1"
 
 ENCRYPTED_PREFIX = "ENCRYPTED:"
-ENCRYPTED_FIELD = "encrypted"
+ENCRYPTED_TOKEN_VERSION = "v1"
+ENCRYPTED_TOKEN_ALGORITHM = "local-fernet"
 SECRET_FILE = Path.home() / ".fivetran" / "csdk_master_secret"
+FERNET_KEY_PREFIX = "FERNET_KEY:"
 
 
 class DecryptionFailed(Exception):
@@ -49,62 +49,101 @@ def get_fernet():
 def load_master_secret() -> str:
     """Load the local master secret file."""
     if SECRET_FILE.exists():
+        try:
+            SECRET_FILE.parent.chmod(0o700)
+            SECRET_FILE.chmod(0o600)
+        except OSError:
+            pass
         master_secret = SECRET_FILE.read_text().strip()
-        if master_secret:
+        if parse_master_secret(master_secret):
             return master_secret
+        print("Unsupported local encryption secret format.", file=sys.stderr)
+        print("", file=sys.stderr)
+        print("Run enter_configuration.py in a separate terminal to create a new secret", file=sys.stderr)
+        print("and rewrite configuration values in configuration.json.", file=sys.stderr)
+        sys.exit(1)
 
     print("No local encryption secret found.", file=sys.stderr)
     print("", file=sys.stderr)
     print("Run enter_configuration.py in a separate terminal first. It will", file=sys.stderr)
-    print(f"create {SECRET_FILE} and encrypt configuration.json.", file=sys.stderr)
+    print(f"create {SECRET_FILE} and encrypt configuration values in configuration.json.", file=sys.stderr)
     sys.exit(1)
 
 
-def get_encryption_key(username: str = "local-user") -> bytes:
-    """Derive encryption key from the local master secret."""
+def parse_master_secret(master_secret: str) -> tuple[str, bytes] | None:
+    """Return key metadata from a supported local secret file."""
+    if not master_secret.startswith(FERNET_KEY_PREFIX):
+        return None
+    parts = master_secret[len(FERNET_KEY_PREFIX):].split(":", 2)
+    if len(parts) != 3:
+        return None
+    version, key_id, key = parts
+    if version != ENCRYPTED_TOKEN_VERSION or not key_id or not key:
+        return None
+    return key_id, key.encode("utf-8")
+
+
+def get_encryption_key() -> tuple[str, bytes]:
+    """Return the local Fernet key id and key."""
     master_secret = load_master_secret()
-
-    key = hashlib.pbkdf2_hmac(
-        'sha256',
-        master_secret.encode('utf-8'),
-        username.encode('utf-8'),
-        iterations=100000,
-        dklen=32
-    )
-    return base64.urlsafe_b64encode(key)
+    parsed = parse_master_secret(master_secret)
+    if parsed is None:
+        raise DecryptionFailed
+    return parsed
 
 
-def decrypt_config(encrypted_content: str) -> dict:
+def decrypt_value(encrypted_content: str) -> str:
+    """Decrypt a single encrypted value."""
     Fernet, InvalidToken = get_fernet()
-    key = get_encryption_key()
-    fernet = Fernet(key)
-    if encrypted_content.startswith(ENCRYPTED_PREFIX):
-        encrypted_content = encrypted_content[len(ENCRYPTED_PREFIX):]
+    local_key_id, key = get_encryption_key()
     try:
-        decrypted_bytes = fernet.decrypt(encrypted_content.encode('utf-8'))
-    except InvalidToken as exc:
+        fernet = Fernet(key)
+    except (TypeError, ValueError) as exc:
         raise DecryptionFailed from exc
-    return json.loads(decrypted_bytes.decode('utf-8'))
+
+    if not encrypted_content.startswith(ENCRYPTED_PREFIX):
+        raise DecryptionFailed
+    parts = encrypted_content[len(ENCRYPTED_PREFIX):].split(":", 3)
+    if len(parts) != 4:
+        raise DecryptionFailed
+    version, key_id, algorithm, token = parts
+    if version != ENCRYPTED_TOKEN_VERSION or key_id != local_key_id or algorithm != ENCRYPTED_TOKEN_ALGORITHM:
+        raise DecryptionFailed
+    try:
+        decrypted_bytes = fernet.decrypt(token.encode('utf-8'))
+        return decrypted_bytes.decode('utf-8')
+    except (InvalidToken, UnicodeDecodeError) as exc:
+        raise DecryptionFailed from exc
 
 
-def load_encrypted_config_content(config_path: Path) -> str | None:
+def decrypt_config_values(config: dict) -> dict:
+    """Decrypt inline encrypted fields and pass plaintext values through."""
+    runtime_config = {}
+
+    for field, value in config.items():
+        if isinstance(value, str) and value.startswith(ENCRYPTED_PREFIX):
+            try:
+                runtime_config[field] = decrypt_value(value)
+            except DecryptionFailed as exc:
+                raise DecryptionFailed(f"Failed to decrypt configuration field {field!r}.") from exc
+        else:
+            runtime_config[field] = value
+
+    return runtime_config
+
+
+def load_runtime_config(config_path: Path) -> dict:
     content = config_path.read_text().strip()
-    if content.startswith(ENCRYPTED_PREFIX):
-        return content
 
     try:
         config = json.loads(content)
-    except json.JSONDecodeError:
-        return None
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON in {config_path}: {exc}") from exc
 
     if not isinstance(config, dict):
-        return None
+        raise ValueError(f"{config_path} must contain a JSON object.")
 
-    encrypted_content = config.get(ENCRYPTED_FIELD)
-    if isinstance(encrypted_content, str) and encrypted_content.startswith(ENCRYPTED_PREFIX):
-        return encrypted_content
-
-    return None
+    return decrypt_config_values(config)
 
 
 def load_api_key() -> str:
@@ -423,25 +462,17 @@ def main():
         print(f"Error: configuration.json not found in {connector_dir}")
         sys.exit(1)
 
-    encrypted_content = load_encrypted_config_content(config_path)
-    if not encrypted_content:
-        print("Error: configuration.json is not encrypted.", file=sys.stderr)
-        print("", file=sys.stderr)
-        print("Credentials must be entered via the encryption script — never edited", file=sys.stderr)
-        print("by hand or pasted in chat. Run, in a separate terminal:", file=sys.stderr)
-        print("", file=sys.stderr)
-        print(f'  cd "{connector_dir}"', file=sys.stderr)
-        print(f'  python "{SCRIPT_DIR}/enter_configuration.py" "configuration.json"', file=sys.stderr)
-        print("", file=sys.stderr)
-        print("Then re-run this command.", file=sys.stderr)
-        sys.exit(2)
-
     try:
-        config = decrypt_config(encrypted_content)
-    except DecryptionFailed:
+        config = load_runtime_config(config_path)
+    except DecryptionFailed as exc:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
+        if str(exc):
+            print(str(exc), file=sys.stderr)
         print("Make sure the local encryption secret matches what was used to encrypt.", file=sys.stderr)
         print(f"Expected local secret file: {SECRET_FILE}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
 
     api_key = load_api_key()

@@ -21,7 +21,7 @@ Example: "Which connector would you like to test? I found: github_connector, str
 
 Check that required files exist in the connector directory:
 - `connector.py` — main implementation
-- `configuration.json` — encrypted credentials and settings
+- `configuration.json` — connector settings with encrypted field values
 - `requirements.txt` — dependencies
 
 If any are missing, inform the user and stop.
@@ -44,17 +44,15 @@ uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_
 
 ## Step 3: Credential Gate
 
-Do not manually inspect `configuration.json`. Do not read it to determine whether values are placeholders. The secure runner is the only configuration gate.
+Do not manually inspect values in `configuration.json`. The secure runner is the configuration loader.
 
 **HARD RULES — violating any of these is a failure:**
 - DO NOT use `AskUserQuestion` (or any checkbox / choice-menu / multi-option UI) to ask how the user wants to enter credentials. There is exactly one way.
-- DO NOT present "I'll update configuration.json myself", "Tell me the values to use", "Use values already in place", or any other credential-entry choice.
-- DO NOT ask the user to paste credentials in chat.
-- DO NOT tell the user to edit `configuration.json` manually.
+- DO NOT present "Tell me the values to use" or any chat-based credential-entry choice.
+- DO NOT ask the user to paste configuration values in chat.
+- DO NOT ask the user to show you fields from `configuration.json`.
 - DO NOT run `enter_configuration.py` yourself. The user must run it in their own separate terminal.
-- DO NOT print placeholder values, plaintext values, tokens, repository lists, usernames, passwords, or API keys from `configuration.json`.
-- DO NOT parse, quote, summarize, or expose any values from `configuration.json`.
-- DO NOT list field names from `configuration.json`.
+- DO NOT print, quote, summarize, or expose values from `configuration.json`.
 - DO NOT ask any credential-related question before running the secure runner.
 
 Run the secure runner immediately:
@@ -63,21 +61,21 @@ Run the secure runner immediately:
 python <plugin>/tools/run_connector.py <connector_directory>
 ```
 
-If the runner exits with "configuration.json is not encrypted", relay this exact secure flow as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths), then stop and wait. Use one fenced command block: `bash` on macOS/Linux, `powershell` on Windows. Quote both paths. Do not insert a line break inside the `python` command.
+If the runner exits because an encrypted value cannot be decrypted, relay this exact secure flow as plain text (substitute `<plugin>`, `<connector_directory>` with actual paths), then stop and wait. Use one fenced command block: `bash` on macOS/Linux, `powershell` on Windows. Quote both paths. Do not insert a line break inside the `python` command.
 
 ````text
-I can't run the connector until configuration.json is encrypted. To enter credentials securely, open a separate terminal, then run:
+I can't run the connector until the encrypted configuration values can be decrypted. To refresh configuration values securely, open a separate terminal, then run:
 
 ```bash
 cd "<connector_directory>"
 python "<plugin>/tools/enter_configuration.py" "configuration.json"
 ```
 
-The script will prompt for the configuration fields and encrypt them in place. I never see the plaintext values. Let me know when it's done and I'll run the test.
+The script will prompt for the configuration fields and encrypt values in place. I never see plaintext configuration values. Let me know when it's done and I'll run the test.
 If the local encryption secret file does not exist yet, the script creates it first.
 ````
 
-Do not use a choice UI for this. There is no alternate credential-entry flow.
+Do not use a choice UI for chat-based credential entry.
 
 ## Step 4: Run the Connector
 
@@ -95,13 +93,13 @@ Windows PowerShell:
 cd "<connector_directory>"; .\.venv\Scripts\fivetran.exe reset --force
 ```
 
-If Step 3 already ran the secure runner and it succeeded, do not run it again. If the user returned after encrypting credentials, run the secure runner:
+If Step 3 already ran the secure runner and it succeeded, do not run it again. If the user returned after encrypting configuration values, run the secure runner:
 
 ```bash
 python <plugin>/tools/run_connector.py <connector_directory>
 ```
 
-This decrypts the config using the local encryption secret file and runs `fivetran debug` without ever writing plaintext credentials to disk.
+This decrypts configuration values using the local encryption secret file and runs `fivetran debug` without writing plaintext values to disk.
 
 **IMPORTANT**: If `run_connector.py` fails, report the error to the user. Do NOT read or modify plugin tools.
 

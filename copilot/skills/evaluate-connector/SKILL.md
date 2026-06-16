@@ -126,7 +126,7 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Datetime string vs datetime object in `op.upsert()` data — SDK accepts both
 - `yield from` inside a helper pagination generator that streams raw API records — this is correct and unrelated to SDK operations
 - `log.fine()` or `log.severe()` as a required issue — they are deprecated but still work; flag as good_to_have only
-- A top-level `encrypted` field in `configuration.json` — this is normal; the plugin encrypts credentials there at runtime
+- Inline `ENCRYPTED:v1:<key_id>:local-fernet:` values in `configuration.json` — this is normal; the plugin decrypts configuration values at runtime.
 
 ---
 

@@ -177,9 +177,19 @@ On first run, `enter_configuration.py` creates a local encryption secret under y
 - macOS/Linux: `~/.fivetran/csdk_master_secret`
 - Windows: `%USERPROFILE%\.fivetran\csdk_master_secret`
 
-It uses that secret to add encrypted credential values to the top-level `encrypted` field in `configuration.json`; the AI does not see the secret or plaintext credentials. The original placeholder fields remain in the file as the recoverable baseline. To start credential entry over, delete the `encrypted` field and run `enter_configuration.py` again.
+It uses that secret to encrypt every configuration field value. Those encrypted values are written inline in `configuration.json` with an `ENCRYPTED:v1:<key_id>:local-fernet:` prefix. The AI does not see plaintext configuration values. To start configuration entry over, run `enter_configuration.py` again.
 
-Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret so they can decrypt an already-encrypted `configuration.json`.
+Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret to decrypt configuration values at runtime.
+
+## Security Model
+
+The configuration encryption in this plugin is **local-at-rest protection** for AI-assisted development. Its primary purpose is to keep sensitive configuration values out of the AI conversation and out of local files that agents may need to reason around.
+
+`enter_configuration.py` runs in the user's own terminal and encrypts configuration values in `configuration.json` by default. Because the current Connector SDK configuration format does not define field sensitivity, the tool defaults to encrypting every field. If a user intentionally changes a field back to plaintext, `run_connector.py` and `deploy_connector.py` pass that value through unchanged; values with the `ENCRYPTED:v1:<key_id>:local-fernet:` prefix are decrypted locally.
+
+Encrypted values are **not uploaded as encrypted blobs** by these wrapper tools. For local tests, `run_connector.py` decrypts in memory and passes runtime configuration to `fivetran debug` via a named pipe. For deployment, `deploy_connector.py` decrypts in memory and passes runtime configuration to `fivetran deploy` via a named pipe. After that point, configuration handling is Fivetran Connector SDK / Fivetran platform behavior, not this local encryption layer.
+
+The local encryption secret currently lives under the user's profile (`~/.fivetran/csdk_master_secret` or `%USERPROFILE%\.fivetran\csdk_master_secret`) with owner-only permissions. This is not intended to be a general-purpose production secret manager. If the local secret is lost or should no longer be trusted, delete it and rerun `enter_configuration.py` to rewrite local configuration values. OS-backed protection is tracked in `TODO.md` as a future improvement to remove the Python crypto dependency and avoid managing a local secret file directly.
 
 ## Repository Layout
 
