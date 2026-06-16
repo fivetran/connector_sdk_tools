@@ -1,0 +1,4 @@
+description = "Migrate a Meltano extractor or Singer tap to Connector SDK"
+prompt = """
+Invoke the `migrate-meltano-connector` skill from this extension to migrate an existing Meltano extractor or Singer tap workflow to a Fivetran Connector SDK connector.
+"""

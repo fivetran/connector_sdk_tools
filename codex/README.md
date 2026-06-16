@@ -56,6 +56,10 @@ Skills appear in the `$` mention popup:
 - `$build_connector` — Research an API and generate a complete connector
 - `$test_connector` — Run and validate your connector locally
 - `$deploy_connector` — Package and deploy to Fivetran
+- `$evaluate_connector` — Code review and quality report
+- `$migrate_functions_connector` — Migrate a Fivetran Functions connector to Connector SDK
+- `$migrate_meltano_connector` — Migrate a Meltano extractor or Singer tap to Connector SDK
+- `$migrate_airbyte_connector` — Migrate an Airbyte source connector to Connector SDK
 
 To fix or modify an existing connector, describe the problem or change in natural language — the plugin guides the agent through the fixer workflow (classification → pattern research → targeted fix).
 
@@ -66,10 +70,22 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `skills/build-connector/` | Full generation workflow (research → generate → test → auto-fix) |
 | `skills/test-connector/` | Run and validate connector tests |
 | `skills/deploy-connector/` | Package and deploy to Fivetran |
+| `skills/evaluate-connector/` | Static code review and scored report |
+| `skills/migrate-functions-connector/` | Migrate Fivetran Functions connectors to Connector SDK |
+| `skills/migrate-meltano-connector/` | Migrate Meltano extractors or Singer taps to Connector SDK |
+| `skills/migrate-airbyte-connector/` | Migrate Airbyte source connectors to Connector SDK |
 | `workflows/fixer.md` | Canonical fix workflow (applied when user reports an error or asks for a change) |
 | `tools/enter_configuration.py` | Enter and encrypt API credentials |
 | `tools/run_connector.py` | Run connector with runtime config via named pipe |
 | `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
+
+## Telemetry
+
+This plugin collects anonymous usage data (skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, timestamp) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+
+```bash
+export FIVETRAN_TELEMETRY_DISABLED=1
+```
 
 ## Known Parity Gaps vs. Claude Code Plugin
 

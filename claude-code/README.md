@@ -106,6 +106,9 @@ If it fails, Claude will diagnose the issue:
 Once testing passes, you can:
 - Ask Claude to add more tables or features
 - Run `/test-connector` anytime to re-test
+- Run `/migrate-functions-connector` to port an existing Fivetran Functions connector to Connector SDK
+- Run `/migrate-meltano-connector` to port an existing Meltano extractor or Singer tap to Connector SDK
+- Run `/migrate-airbyte-connector` to port an existing Airbyte source connector to Connector SDK
 - Run `/deploy-connector` when ready to deploy to Fivetran
 
 ### Example Session
@@ -206,6 +209,9 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `/build-connector` | Full generation workflow (research → generate → test → auto-fix) |
 | `/test-connector` | Run and validate connector tests |
 | `/deploy-connector` | Package and deploy to Fivetran |
+| `/migrate-functions-connector` | Migrate Fivetran Functions connectors to Connector SDK |
+| `/migrate-meltano-connector` | Migrate Meltano extractors or Singer taps to Connector SDK |
+| `/migrate-airbyte-connector` | Migrate Airbyte source connectors to Connector SDK |
 | `agents/connector-validator.md` | Subagent for API research and requirements gathering |
 | `agents/connector-generator.md` | Subagent for generating connector code |
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
@@ -223,3 +229,11 @@ This plugin turns Claude Code into a Fivetran connector development tool by inje
 4. **SDK examples** — Automatic fetching of relevant patterns from the official examples repo
 
 Claude Code provides the AI conversation, file editing, terminal access, and git integration. This plugin adds the Fivetran-specific expertise on top.
+
+## Telemetry
+
+This plugin collects anonymous usage data (skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, timestamp) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+
+```bash
+export FIVETRAN_TELEMETRY_DISABLED=1
+```

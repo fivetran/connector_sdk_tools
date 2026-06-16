@@ -78,8 +78,79 @@ Once installed, in your connector project directory:
 | `/fivetran-connector-sdk:build-connector` | `$build_connector` | Research an API and generate a new connector |
 | `/fivetran-connector-sdk:test-connector` | `$test_connector` | Run and validate an existing connector locally |
 | `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | Deploy a connector to your Fivetran account |
+| `/fivetran-connector-sdk:evaluate-connector` | `$evaluate_connector` | Code review and quality report |
+| `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | Migrate a Fivetran Functions connector to Connector SDK |
+| `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
+| `/fivetran-connector-sdk:migrate-airbyte-connector` | `$migrate_airbyte_connector` | Migrate an Airbyte source connector to Connector SDK |
 
 For code fixes or modifications, describe the problem in natural language — the agent routes to the `connector-fixer` subagent automatically.
+
+## Migration Skills
+
+The plugin includes AI-guided migration skills for moving existing custom connector code to Fivetran Connector SDK. These are not deterministic one-shot conversion scripts; the agent reads the source connector, identifies the source runtime and data contract, ports the logic into a CSDK project, and validates the result against SDK patterns.
+
+To use a migrator, open your coding agent in the directory where you want the migrated Connector SDK project to be created, then invoke the relevant slash command or Codex skill and point it at the existing connector source. Provide any useful local paths, example config files, catalogs, state files, schemas, tests, or docs. The agent should inspect the source first, explain the migration plan and any behavior decisions it needs, then create or update the CSDK files and run local validation where possible.
+
+Keep real credentials out of the prompt. Use redacted example configs, placeholders, or local files that are already handled by your normal credential workflow. Migration skills may need to preserve behavior that depends on existing configuration shape, selected streams, primary keys, cursor fields, full-refresh behavior, delete semantics, or platform pipeline setup, so include those artifacts when they exist.
+
+After migration, review the generated connector code and README, fill in local configuration values, run the plugin's test connector command, and compare the output against the old connector using a small known-good source account or fixture.
+
+### Functions Connector Migrator
+
+Use `/fivetran-connector-sdk:migrate-functions-connector` or `$migrate_functions_connector` to port a Fivetran Functions connector to Connector SDK.
+
+The Functions migrator supports AWS Lambda, Azure Functions, Google Cloud Functions, and standalone handler examples. It maps Function connector concepts to CSDK concepts:
+
+| Functions connector | Connector SDK |
+|---|---|
+| `request.secrets` | `configuration` |
+| `request.state` | `state` |
+| returned `schema` | `schema(configuration)` |
+| `insert[table]` | `op.upsert(...)` |
+| `delete[table]` | `op.delete(...)` with primary-key fields only |
+| top-level `softDelete` | `op.truncate(...)` for listed tables |
+| returned `state` | `op.checkpoint(...)` |
+| `hasMore` | internal loop/checkpoint logic in `update()` |
+
+The migrator removes cloud-provider request/response wrappers, preserves table/state naming unless a rename is intentional, and documents any behavior changes in the migrated connector README.
+
+### Meltano Connector Migrator
+
+Use `/fivetran-connector-sdk:migrate-meltano-connector` or `$migrate_meltano_connector` to port a Meltano extractor or Singer tap workflow to Connector SDK.
+
+The Meltano migrator focuses on extractors/Singer taps. Meltano loaders, targets, dbt transforms, schedules, and environments are not ported into connector code; when those pipeline pieces map to Fivetran platform resources, the migrator documents them as follow-up work for `fivetran-cli`. It maps Meltano and Singer concepts to CSDK concepts:
+
+| Meltano / Singer | Connector SDK |
+|---|---|
+| `meltano.yml` extractor settings / tap `config.json` | `configuration.json` |
+| Singer catalog streams | `schema(configuration)` table entries |
+| `key_properties` / `table-key-properties` | `primary_key` |
+| Singer JSON Schema properties | optional CSDK `columns` |
+| Singer `RECORD` messages | `op.upsert(...)` |
+| Singer `STATE` messages / bookmarks | `op.checkpoint(...)` |
+| replication key metadata | cursor logic in `update()` |
+
+The migrator also requires an explicit decision for full-table streams: keep upsert-only snapshot behavior, or use `op.truncate(...)` before reloading a complete snapshot when the old pipeline relied on replacement semantics. For pipeline setup beyond connector code, install and use `fivetran-cli` (`python3 -m pip install -U fivetran-cli`) after the CSDK connector migration.
+
+### Airbyte Connector Migrator
+
+Use `/fivetran-connector-sdk:migrate-airbyte-connector` or `$migrate_airbyte_connector` to port an Airbyte source connector to Connector SDK.
+
+The Airbyte migrator focuses on source connectors. Airbyte destinations, normalization, workspace/job orchestration, Docker packaging, schedules, and platform metadata are not ported into connector code; when those pieces map to Fivetran platform resources, the migrator documents them as follow-up work for `fivetran-cli`. It maps Airbyte concepts to CSDK concepts:
+
+| Airbyte | Connector SDK |
+|---|---|
+| `spec.json` / `connectionSpecification` | `configuration.json` |
+| `airbyte_secret` fields | sensitive config placeholders entered securely |
+| Airbyte catalog streams | `schema(configuration)` table entries |
+| JSON Schema properties | optional CSDK `columns` |
+| configured streams | tables implemented by `schema()` and `update()` |
+| `RECORD` messages | `op.upsert(...)` |
+| `STATE` messages | `op.checkpoint(...)` |
+| incremental sync mode | cursor logic in `update()` |
+| full-refresh overwrite | explicit `op.truncate(...)` plus reload decision |
+
+The migrator also requires explicit decisions for append-only streams without primary keys, full-refresh overwrite behavior, and delete/CDC markers. It does not infer deletes from missing records unless the source stream is intentionally migrated as full-refresh overwrite.
 
 ## Temporary Configuration Tool Dependency
 
@@ -125,31 +196,32 @@ The local encryption secret currently lives under the user's profile (`~/.fivetr
 ```
 canonical/                          edit these (source of truth)
   sdk-reference.md
-  native-connectors.md
   workflows/{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
   tools/{enter_configuration,run_connector,deploy_connector}.py
+  hooks/log-skill-use.sh
 
 claude-code/                        Claude Code plugin (mostly generated)
   .claude-plugin/plugin.json
   CLAUDE.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
-  tools/, sdk-reference.md, native-connectors.md
+  tools/, sdk-reference.md
 
 codex/                              Codex CLI plugin (mostly generated)
   .codex-plugin/plugin.json
   AGENTS.md
+  hooks.json
   skills/{build,test,deploy}-connector/SKILL.md
   workflows/{validator,generator,fixer}.md
-  tools/, sdk-reference.md, native-connectors.md
+  tools/, sdk-reference.md
 
 copilot/                            GitHub Copilot CLI plugin (mostly generated)
   AGENTS.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
   commands/{build,test,deploy,evaluate}-connector.md
-  tools/, sdk-reference.md, native-connectors.md
+  tools/, sdk-reference.md
 
 gemini-extension.json               Gemini CLI extension manifest (root-only requirement)
 GEMINI.md                           Gemini context file
@@ -168,19 +240,20 @@ tools/                              Gemini tools (generated copy of canonical/to
 
 ### What to edit
 
-Only edit files under **`canonical/`** and the static Gemini files at the root (`gemini-extension.json`, `GEMINI.md`, `commands/*.toml`). Everything else is regenerated.
+Only edit files under **`canonical/`** and the agent-specific static integration files listed below. Everything else is regenerated.
 
 | Editing... | Run after | Affects |
 |---|---|---|
 | `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all four agents |
-| `canonical/native-connectors.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents |
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
-| `GEMINI.md`, `gemini-extension.json`, `commands/*.toml` | (no sync needed) | Gemini only |
-| `claude-code/CLAUDE.md` | (no sync needed) | Claude Code only |
-| `codex/AGENTS.md`, `codex/.codex-plugin/plugin.json` | (no sync needed) | Codex only |
-| `copilot/AGENTS.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
+| `canonical/hooks/log-skill-use.sh` | `bash scripts/sync-plugins.sh` | Claude Code, Codex, Gemini |
+| `README.md` | (no sync needed) | root docs |
+| `GEMINI.md`, `gemini-extension.json`, `commands/*.toml`, `hooks/hooks.json` | (no sync needed) | Gemini only |
+| `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
+| `codex/AGENTS.md`, `codex/README.md`, `codex/.codex-plugin/plugin.json`, `codex/hooks.json` | (no sync needed) | Codex only |
+| `copilot/AGENTS.md`, `copilot/README.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
 
 Generated files have a `<!-- GENERATED FILE — DO NOT EDIT -->` banner at the top. Edits to them will be overwritten on the next sync.
 
@@ -204,6 +277,16 @@ Install once per clone:
 
 ```bash
 git config core.hooksPath .githooks
+```
+
+## Telemetry
+
+This plugin collects **anonymous usage data** to help improve the product. Each time a skill is invoked, a small event is sent containing: the skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, and timestamp. No prompts, code, file contents, or personal information are ever collected.
+
+To opt out, set the following environment variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
+
+```bash
+export FIVETRAN_TELEMETRY_DISABLED=1
 ```
 
 ## License
