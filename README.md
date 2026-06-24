@@ -15,7 +15,7 @@ pip install fivetran-connector-sdk
 fivetran init
 ```
 
-`fivetran init` scaffolds a new connector project and offers to configure a coding agent for you — detecting which of Claude Code, Codex CLI, or Gemini CLI you have installed and running the relevant plugin install command on your behalf. You can also skip the agent setup if you'd rather install it yourself; see the matrix below.
+`fivetran init` scaffolds a new connector project and offers to configure a coding agent for you — detecting which of Claude Code, Codex CLI, Gemini CLI, or the standalone GitHub Copilot CLI you have installed and running the relevant plugin install command on your behalf. You can also skip the agent setup if you'd rather install it yourself; see the matrix below.
 
 ## Install the plugin manually
 
@@ -68,6 +68,12 @@ copilot plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
 See [`copilot/README.md`](copilot/README.md) for the full tutorial.
+
+### GitHub Copilot in IDEs
+
+The plugin assets for GitHub Copilot are included in this repository under [`copilot/`](copilot/), and the plugin can be installed directly from source. However, installing it through the Connector SDK PyPI package or `fivetran init` is **not supported** for IDE-integrated Copilot extensions (VS Code, JetBrains, etc.) as those environments manage plugin installation from within the IDE itself.
+
+To install from source in VS Code, follow the [VS Code agent plugin install guide](https://code.visualstudio.com/docs/agent-customization/agent-plugins#_install-a-plugin-from-source) and point it at this repository. For other IDEs, consult their documentation on installing Copilot agent plugins.
 
 ## Usage
 
