@@ -37,6 +37,57 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# --- Version management ---
+# Format: YYYY.M.D.N  (e.g. 2026.6.25.1)
+# N auto-increments when multiple releases happen on the same calendar day.
+
+_today_prefix() {
+  # Returns YYYY.M.D with no zero-padding (e.g. 2026.6.25)
+  local y m d
+  y=$(date "+%Y")
+  m=$(date "+%-m" 2>/dev/null || date "+%m" | sed 's/^0//')
+  d=$(date "+%-d" 2>/dev/null || date "+%d" | sed 's/^0//')
+  echo "${y}.${m}.${d}"
+}
+
+compute_version() {
+  local prefix
+  prefix="$(_today_prefix)"
+
+  # Read the current version from the Claude plugin manifest (source of truth).
+  local current_version=""
+  local manifest="claude-code/.claude-plugin/plugin.json"
+  if [[ -f "$manifest" ]]; then
+    current_version=$(grep '"version"' "$manifest" | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  fi
+
+  local iteration=1
+  # If the current version already has today's date prefix, bump the iteration.
+  if [[ "$current_version" == "$prefix."* ]]; then
+    local current_iteration="${current_version##*.}"
+    iteration=$(( current_iteration + 1 ))
+  fi
+
+  echo "${prefix}.${iteration}"
+}
+
+NEW_VERSION="$(compute_version)"
+echo "Plugin version: $NEW_VERSION"
+
+update_version_in_file() {
+  local file="$1"
+  # Replace all "version": "..." occurrences in-place.
+  sed -i.bak "s/\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"version\": \"${NEW_VERSION}\"/g" "$file"
+  rm -f "${file}.bak"
+  echo "  updated version in $file"
+}
+
+echo "Updating versions..."
+update_version_in_file "claude-code/.claude-plugin/plugin.json"
+update_version_in_file "codex/.codex-plugin/plugin.json"
+update_version_in_file "gemini-extension.json"
+update_version_in_file ".github/plugin/marketplace.json"
+
 CANONICAL="canonical"
 SDK_REF="$CANONICAL/sdk-reference.md"
 WORKFLOWS_DIR="$CANONICAL/workflows"
