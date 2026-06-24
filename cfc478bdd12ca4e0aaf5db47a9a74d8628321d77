@@ -1,0 +1,23 @@
+scripts/sync-plugins.sh
+  c465e6291f21ef8e 40-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "cfc478bdd12ca4e0aaf5db47a9a74d8628321d77",
+  "prompts": {
+    "c465e6291f21ef8e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6f59d225-e893-4846-b485-74285c74c5be",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Sahil Khirwal <sahil.khirwal@fivetran.com>",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 5,
+      "accepted_lines": 51,
+      "overriden_lines": 0
+    }
+  }
+}
