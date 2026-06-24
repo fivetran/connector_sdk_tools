@@ -1,0 +1,23 @@
+README.md
+  427037bdca87dc65 18,72-73,75,77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "c12617c60c09bd7843d30709f0ef0a6108cb7f62",
+  "prompts": {
+    "427037bdca87dc65": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f27ceded-2305-4a5d-b381-1f82b4099030",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Sahil Khirwal <sahil.khirwal@fivetran.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 1,
+      "accepted_lines": 8,
+      "overriden_lines": 2
+    }
+  }
+}
