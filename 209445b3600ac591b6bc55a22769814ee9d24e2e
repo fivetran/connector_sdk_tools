@@ -1,0 +1,25 @@
+README.md
+  9c0f9bd431f62b99 270,272-282,286
+scripts/sync-plugins.sh
+  9c0f9bd431f62b99 37-48,55-56,59,62-64,91,93,98-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.1",
+  "base_commit_sha": "209445b3600ac591b6bc55a22769814ee9d24e2e",
+  "prompts": {
+    "9c0f9bd431f62b99": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "952f39ed-6d7f-4d25-80e0-6129f71e993e",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Sahil Khirwal <sahil.khirwal@fivetran.com>",
+      "messages": [],
+      "total_additions": 45,
+      "total_deletions": 15,
+      "accepted_lines": 44,
+      "overriden_lines": 1
+    }
+  }
+}
