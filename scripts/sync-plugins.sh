@@ -34,8 +34,77 @@
 
 set -euo pipefail
 
+# --- Argument parsing ---
+# --bump   Increment the plugin version. Omit for routine content syncs (e.g.
+#          the pre-commit hook) so the script stays idempotent: running it on
+#          an already-synced repo produces no diff.
+BUMP_VERSION=false
+for arg in "$@"; do
+  case "$arg" in
+    --bump) BUMP_VERSION=true ;;
+    *) echo "Unknown argument: $arg" >&2; exit 1 ;;
+  esac
+done
+
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
+
+# --- Version management ---
+# Format: YYYY.M.D.N  (e.g. 2026.6.25.1)
+# N auto-increments when multiple releases happen on the same calendar day.
+# Version is only written when --bump is passed; otherwise manifests are left
+# untouched so the pre-commit hook never creates a spurious diff.
+
+_today_prefix() {
+  # Returns YYYY.M.D with no zero-padding (e.g. 2026.6.25). Uses UTC so the
+  # version is identical across timezones.
+  local y m d
+  y=$(date -u "+%Y")
+  m=$(date -u "+%-m" 2>/dev/null || date -u "+%m" | sed 's/^0//')
+  d=$(date -u "+%-d" 2>/dev/null || date -u "+%d" | sed 's/^0//')
+  echo "${y}.${m}.${d}"
+}
+
+compute_version() {
+  local prefix
+  prefix="$(_today_prefix)"
+
+  # Read the current version from the Claude plugin manifest (source of truth).
+  local current_version=""
+  local manifest="claude-code/.claude-plugin/plugin.json"
+  if [[ -f "$manifest" ]]; then
+    current_version=$(grep '"version"' "$manifest" | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+  fi
+
+  local iteration=1
+  # If the current version already has today's date prefix, bump the iteration.
+  if [[ "$current_version" == "$prefix."* ]]; then
+    local current_iteration="${current_version##*.}"
+    iteration=$(( current_iteration + 1 ))
+  fi
+
+  echo "${prefix}.${iteration}"
+}
+
+update_version_in_file() {
+  local file="$1"
+  local version="$2"
+  # Replace all "version": "..." occurrences in-place.
+  sed -i.bak "s/\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"version\": \"${version}\"/g" "$file"
+  rm -f "${file}.bak"
+  echo "  updated version in $file"
+}
+
+if [[ "$BUMP_VERSION" == true ]]; then
+  NEW_VERSION="$(compute_version)"
+  echo "Bumping plugin version to $NEW_VERSION..."
+  update_version_in_file "claude-code/.claude-plugin/plugin.json" "$NEW_VERSION"
+  update_version_in_file "codex/.codex-plugin/plugin.json" "$NEW_VERSION"
+  update_version_in_file "gemini-extension.json" "$NEW_VERSION"
+  update_version_in_file ".github/plugin/marketplace.json" "$NEW_VERSION"
+else
+  echo "Skipping version bump (pass --bump to increment the version)."
+fi
 
 CANONICAL="canonical"
 SDK_REF="$CANONICAL/sdk-reference.md"

@@ -2,7 +2,7 @@
   "name": "fivetran-connector-sdk-ai",
   "metadata": {
     "description": "AI-powered tools for building, testing, and deploying Fivetran connectors",
-    "version": "1.0.0"
+    "version": "2026.6.25.1"
   },
   "owner": {
     "name": "Fivetran",
@@ -13,7 +13,7 @@
       "name": "fivetran-connector-sdk",
       "source": "./copilot",
       "description": "Build, test, and deploy Fivetran connectors with AI assistance",
-      "version": "1.0.0",
+      "version": "2026.6.25.1",
       "skills": [
         "./skills/build-connector",
         "./skills/test-connector",
