@@ -48,9 +48,10 @@ Do not stop and ask for the source until these steps have been tried.
    a per-sync `reason` and `sync_id`:
    `GET /v1/connections/{connection_id}/sync-history?start_time=...&end_time=...`
    Query the failure's time window rather than the whole history.
-3. **Recover the deployed source.** Packages are listed with their `connection_id`
-   (`fivetran beta connector-sdk-package list` or `GET /v1/connector-sdk/packages`);
-   the connection record does not name its package. Download the archive with
+3. **Recover the deployed source.** The connection's JSON record names its package
+   in `config.package_id`. The package list (`fivetran beta connector-sdk-package
+   list` or `GET /v1/connector-sdk/packages`, keyed by `connection_id`) is needed
+   only when that field is absent. Download the archive with
    `GET /v1/connector-sdk/packages/{package_id}/download` (Basic auth with the
    API key). Inspect the archive listing, then extract into a fresh directory; do
    not overwrite existing files. The archive can include generated artifacts such
