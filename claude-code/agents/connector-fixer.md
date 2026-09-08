@@ -1,7 +1,7 @@
 ---
 name: connector-fixer
 description: Debug and fix errors in a Fivetran connector. Use when tests fail or the user reports connector issues.
-tools: Read, Edit, WebFetch, Grep, Glob
+tools: Read, Edit, Bash, WebFetch, Grep, Glob
 model: sonnet
 maxTurns: 15
 permissionMode: acceptEdits
@@ -34,13 +34,45 @@ You MUST classify every error as one of:
 
 **ERROR_TYPE: FIRST_RUN**
 - Connector has never succeeded — likely credentials/config issue
-- Do NOT attempt code changes
-- Guide user to verify config (invalid API keys, wrong endpoints, missing permissions)
+- Verify config first (invalid API keys, wrong endpoints, missing permissions)
 - Common signs: "All values must be STRING", auth errors, 404s on first run
+- A defect visible in the source is still CODE on a first run — for example
+  `state["cursor"]` read from the empty initial state, which raises `KeyError`
+  before any request is made. Classify by evidence, not by run count.
 
 **ERROR_TYPE: CODE**
 - Connector worked before or has clear code bugs (syntax, logic, SDK misuse)
 - Proceed to fix using the systematic approach below
+
+## Locate the Source and the Failure (REQUIRED when the code is not local)
+
+A deployed Connector SDK connection can be diagnosed without the project on disk.
+Do not stop and ask for the source until these steps have been tried.
+
+1. **Identify the connection.** `fivetran beta connection get <connection-id>` or
+   `GET /v1/connections/{connection_id}`. Confirm `service` is `connector_sdk`;
+   Fivetran-managed connectors cannot be run or patched with the SDK.
+2. **Get the failure reason.** The connection's `status.tasks` gives an error class
+   such as `python_code_throwing_error` and often no details. Sync history carries
+   a per-sync `reason` and `sync_id`:
+   `GET /v1/connections/{connection_id}/sync-history?start_time=...&end_time=...`
+   Query the failure's time window rather than the whole history.
+3. **Recover the deployed source.** Packages are listed with their `connection_id`
+   (`fivetran beta connector-sdk-package list` or `GET /v1/connector-sdk/packages`);
+   the connection record does not name its package. Download the archive with
+   `GET /v1/connector-sdk/packages/{package_id}/download` (Basic auth with the
+   API key). Inspect the archive listing, then extract into a fresh directory; do
+   not overwrite existing files. The archive can include generated artifacts such
+   as `configuration_form.pb`; `fivetran deploy` regenerates them, so remove the
+   downloaded copy before redeploying or the upload fails on a duplicate entry.
+4. **Reproduce locally.** Follow `skills/test-connector/SKILL.md` from the plugin
+   directory for environment setup and configuration handling. Run the connector
+   through `python "<plugin>/tools/run_connector.py" "<connector_directory>"`,
+   which loads encrypted configuration and invokes `fivetran debug`. A local
+   failure is evidence to compare with production, not proof of a shared cause;
+   note any state or environment differences.
+
+Reference: https://fivetran.com/docs/developer-resources/rest-api/api-reference
 
 ## Systematic Debugging (for CODE errors)
 
@@ -147,6 +179,7 @@ op.delete(table, keys)
 | Invalid schema key or type name | Use only `table`/`primary_key`/`columns` keys and valid SDK type names |
 | `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
+| `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |
 
 ## EXAMPLE CATEGORIZATION GUIDE
 
