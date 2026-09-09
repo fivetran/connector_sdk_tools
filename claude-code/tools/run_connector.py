@@ -6,8 +6,9 @@ Decrypts configuration values in memory and passes the full configuration to
 fivetran debug via named pipe.
 
 Usage:
-    python run_connector.py <connector_directory>
+    python run_connector.py <connector_directory> [--timeout-seconds SECONDS]
 """
+import argparse
 import json
 import os
 import shutil
@@ -306,11 +307,17 @@ def find_fivetran_executable(connector_dir: Path) -> str:
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python run_connector.py <connector_directory>")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("connector_directory", type=Path)
+    parser.add_argument(
+        "--timeout-seconds", type=int, default=120,
+        help="Debug time limit in seconds (default: 120; maximum: 600).",
+    )
+    args = parser.parse_args()
+    if not 0 < args.timeout_seconds <= 600:
+        parser.error("--timeout-seconds must be between 1 and 600")
 
-    connector_dir = Path(sys.argv[1]).resolve()
+    connector_dir = args.connector_directory.resolve()
 
     if not connector_dir.exists():
         print(f"Error: Directory not found: {connector_dir}")
@@ -359,7 +366,7 @@ def main():
             timed_out = True
             process.kill()
 
-        timer = threading.Timer(60, timeout_handler)
+        timer = threading.Timer(args.timeout_seconds, timeout_handler)
         timer.start()
 
         try:
@@ -370,7 +377,7 @@ def main():
             timer.cancel()
 
         if timed_out:
-            print("\nError: Command timed out after 60 seconds")
+            print(f"\nError: Command timed out after {args.timeout_seconds} seconds")
             sys.exit(124)
 
         if config_pipe.writer_error:

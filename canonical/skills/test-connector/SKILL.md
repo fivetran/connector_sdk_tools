@@ -67,8 +67,13 @@ cd "<connector_directory>"; .\.venv\Scripts\fivetran.exe reset --force
 Once configuration is ready, run the connector once; reuse an already successful test:
 
 ```bash
-python <plugin>/tools/run_connector.py <connector_directory>
+python <plugin>/tools/run_connector.py <connector_directory> --timeout-seconds 600
 ```
+
+The runner defaults to 120 seconds and accepts up to 600. Use 600 for debug
+runs because the first run downloads and starts the Java tester. Set the
+harness command timeout to 600 seconds as well.
+
 
 This passes plaintext configuration through to `fivetran debug`; only existing encrypted fields require decryption. Plaintext configuration never requires an encryption key.
 

@@ -135,8 +135,13 @@ ordinary JSON values as agreed with the user. Do not force custom encryption.
 Once configuration is ready, run the connector:
 
 ```bash
-python <plugin>/tools/run_connector.py <connector_dir>
+python <plugin>/tools/run_connector.py <connector_dir> --timeout-seconds 600
 ```
+
+The runner defaults to 120 seconds and accepts up to 600. Use 600 for debug
+runs because the first run downloads and starts the Java tester. Set the
+harness command timeout to 600 seconds as well.
+
 
 The runner passes plaintext values through and decrypts only existing encrypted
 fields. Plaintext configuration does not require a local encryption key.

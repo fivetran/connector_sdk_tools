@@ -64,7 +64,7 @@ Do not stop and ask for the source until these steps have been tried.
    downloaded copy before redeploying or the upload fails on a duplicate entry.
 4. **Reproduce locally.** Follow `skills/test-connector/SKILL.md` from the plugin
    directory for environment setup and configuration handling. Run the connector
-   through `python "<plugin>/tools/run_connector.py" "<connector_directory>"`,
+   through `python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600`,
    which accepts plaintext configuration and invokes `fivetran debug`. A local
    failure is evidence to compare with production, not proof of a shared cause;
    note any state or environment differences.

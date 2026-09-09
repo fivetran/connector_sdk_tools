@@ -28,8 +28,13 @@ Verify the connector is ready:
 Use the secure runner:
 
 ```bash
-python <plugin>/tools/run_connector.py <connector_directory>
+python <plugin>/tools/run_connector.py <connector_directory> --timeout-seconds 600
 ```
+
+The runner defaults to 120 seconds and accepts up to 600. Use 600 for debug
+runs because the first run downloads and starts the Java tester. Set the
+harness command timeout to 600 seconds as well.
+
 
 If the test fails, classify the error (INFRA / FIRST_RUN / CODE) and — for CODE errors — apply the fixer workflow (see `workflows/fixer.md` in the plugin, or — in plugins that support subagents — invoke the `connector-fixer` subagent).
 
