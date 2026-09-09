@@ -187,15 +187,30 @@ The Airbyte migrator focuses on source connectors. Airbyte destinations, normali
 
 The migrator also requires explicit decisions for append-only streams without primary keys, full-refresh overwrite behavior, and delete/CDC markers. It does not infer deletes from missing records unless the source stream is intentionally migrated as full-refresh overwrite.
 
-## Temporary Configuration Tool Dependency
+## Configuration
 
-Until secure configuration entry is available directly in the Fivetran Connector SDK CLI, the plugin uses `tools/enter_configuration.py` to encrypt `configuration.json`. Before running that script, install the plugin tool dependencies in the same terminal:
+Reuse existing `configuration.json` values. For repairs, the agent first attempts
+supported read-only retrieval of missing production values; masked values cannot
+be reused. If values are still missing, try `fivetran configuration` in the
+connector directory to use its setup form. Without a form, use ordinary JSON and
+supply only the missing fields; adding a form is optional.
+
+The agent can write supplied settings directly. Enter secrets through the form or
+local file entry, keep them out of chat, and keep configuration out of version
+control. See [Configuration entry](sdk-reference.md#configuration-entry) for the
+shared workflow.
+
+### Optional encrypted configuration
+
+`tools/enter_configuration.py` remains available for local encryption, but is not
+required for ordinary JSON configuration. To use it or decrypt previously
+encrypted fields, install the tool dependencies:
 
 ```bash
 python -m pip install -r "/path/to/plugin/tools/requirements.txt"
 ```
 
-For Claude Code installed from the marketplace, the path will look like:
+For Claude Code installed from the marketplace:
 
 macOS/Linux:
 ```bash
@@ -207,24 +222,18 @@ Windows PowerShell:
 python -m pip install -r "$env:USERPROFILE\.claude\plugins\cache\fivetran-connector-sdk-ai\fivetran-connector-sdk\<version>\tools\requirements.txt"
 ```
 
-On first run, `enter_configuration.py` creates a local encryption secret under your user profile:
+The entry helper encrypts every field with an `ENCRYPTED:v1:<key_id>:local-fernet:`
+prefix. It creates a local key when absent at `~/.fivetran/csdk_master_secret`
+(macOS/Linux) or `%USERPROFILE%\.fivetran\csdk_master_secret` (Windows).
+Only encrypted fields require that matching key; plaintext fields pass through
+unchanged. If encrypted values cannot be decrypted, preserve usable values and
+collect replacements through the configuration workflow above. Do not replace the
+key as a routine repair step.
 
-- macOS/Linux: `~/.fivetran/csdk_master_secret`
-- Windows: `%USERPROFILE%\.fivetran\csdk_master_secret`
-
-It uses that secret to encrypt every configuration field value. Those encrypted values are written inline in `configuration.json` with an `ENCRYPTED:v1:<key_id>:local-fernet:` prefix. The AI does not see plaintext configuration values. To start configuration entry over, run `enter_configuration.py` again.
-
-Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret to decrypt configuration values at runtime.
-
-## Security Model
-
-The configuration encryption in this plugin is **local-at-rest protection** for AI-assisted development. Its primary purpose is to keep sensitive configuration values out of the AI conversation and out of local files that agents may need to reason around.
-
-`enter_configuration.py` runs in the user's own terminal and encrypts configuration values in `configuration.json` by default. Because the current Connector SDK configuration format does not define field sensitivity, the tool defaults to encrypting every field. If a user intentionally changes a field back to plaintext, `run_connector.py` and `deploy_connector.py` pass that value through unchanged; values with the `ENCRYPTED:v1:<key_id>:local-fernet:` prefix are decrypted locally.
-
-Encrypted values are **not uploaded as encrypted blobs** by these wrapper tools. For local tests, `run_connector.py` decrypts in memory and passes runtime configuration to `fivetran debug` via a named pipe. For deployment, `deploy_connector.py` decrypts in memory and passes runtime configuration to `fivetran deploy` via a named pipe. After that point, configuration handling is Fivetran Connector SDK / Fivetran platform behavior, not this local encryption layer.
-
-The local encryption secret currently lives under the user's profile (`~/.fivetran/csdk_master_secret` or `%USERPROFILE%\.fivetran\csdk_master_secret`) with owner-only permissions. This is not intended to be a general-purpose production secret manager. If the local secret is lost or should no longer be trusted, delete it and rerun `enter_configuration.py` to rewrite local configuration values. OS-backed protection is tracked in `TODO.md` as a future improvement to remove the Python crypto dependency and avoid managing a local secret file directly.
+This is local encryption at rest, not a production secret manager. Test and deploy
+helpers decrypt encrypted fields in memory and pass runtime configuration to the
+SDK via a named pipe. They do not upload the encryption envelopes; subsequent
+configuration handling belongs to the SDK and Fivetran platform.
 
 ## Repository Layout
 
@@ -286,7 +295,7 @@ Only edit files under **`canonical/`** and the agent-specific static integration
 | `canonical/hooks/log-skill-use.sh` | `bash scripts/sync-plugins.sh` | Claude Code, Codex, Gemini |
 | `README.md` | (no sync needed) | root docs |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml`, `hooks/hooks.json` | (no sync needed) | Gemini only |
-| `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
+| `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/commands/*.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
 | `codex/AGENTS.md`, `codex/README.md`, `codex/.codex-plugin/plugin.json`, `codex/hooks.json` | (no sync needed) | Codex only |
 | `copilot/AGENTS.md`, `copilot/README.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
 

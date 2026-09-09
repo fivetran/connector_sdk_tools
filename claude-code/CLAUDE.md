@@ -34,31 +34,8 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 
 This plugin collects anonymous usage data when skills are invoked (skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, timestamp). No prompts, code, or personal information are collected. If the user asks about data collection or privacy, let them know they can opt out by setting `FIVETRAN_TELEMETRY_DISABLED=1` in their shell profile.
 
-## Credential Security
+## Configuration
 
-**Sensitive configuration values must NEVER appear in plain text in chat.** Use `enter_configuration.py` to encrypt configuration values in `configuration.json` by default; the runner also accepts user-chosen plaintext field values.
-
-When the user needs to enter configuration values, do NOT:
-- Tell them to edit fields in `configuration.json` directly
-- Ask them to paste values in chat
-- Suggest any other entry method
-- Use `AskUserQuestion`, checkbox prompts, choice menus, or multi-option UIs for credential entry
-- Offer options such as "I'll update configuration.json myself", "Tell me the values to use", or "Use values already in place"
-
-ALWAYS direct them to run, in a separate terminal from the connector directory. Use a command block appropriate to the user's OS.
-
-macOS/Linux:
-```bash
-python "<plugin_dir>/tools/enter_configuration.py" "configuration.json"
-```
-
-Windows PowerShell:
-```powershell
-python "<plugin_dir>\tools\enter_configuration.py" "configuration.json"
-```
-
-This script prompts for each configuration field and writes encrypted values inline for every field. The AI never sees plaintext configuration values. The `run_connector.py` tool decrypts configuration values in memory via named pipe at runtime.
-
-If a user intentionally changes a field back to plaintext, the runner will pass it through. Do not print, quote, or summarize values from the file.
-
-For testing, do not inspect values in `configuration.json` before running. Run `tools/run_connector.py` as the configuration loader. Do not ask how the user wants to provide values.
+Follow [Configuration entry](sdk-reference.md#configuration-entry) for reusing,
+retrieving, and collecting configuration values. Keep secrets out of chat and
+populated configuration out of tool output and version control.
