@@ -276,3 +276,8 @@ EXAMPLES STUDIED:
 - If config fields contain inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal — do NOT try to "fix" it.
 - Follow **Configuration entry** in `sdk-reference.md`: reuse local values first, recover missing deployed values when available, then use the SDK form or supplied plaintext values. Offer to add a setup form only with user agreement. Do not require encryption or key replacement.
 - For fundamental design issues, recommend using the validator to find a better starting point.
+
+When deploying a repair, follow the deploy skill and pass the existing
+`--connection-id` to `tools/deploy_connector.py`. The helper resolves the
+connection's name and destination; do not rediscover a target from the account's
+full destination list or infer it from the recovered directory name.

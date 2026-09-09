@@ -2,8 +2,8 @@
 """
 Deploy a connector to Fivetran.
 
-Reads FIVETRAN_API_KEY from env, auto-discovers the destination via the
-Fivetran REST API, then passes the configuration to `fivetran deploy` via a
+Reads FIVETRAN_API_KEY from env, resolves an existing connection or an explicit
+destination, then passes the configuration to `fivetran deploy` via a
 named pipe after decrypting configuration values in memory.
 
 Usage:
@@ -18,6 +18,7 @@ import subprocess
 import sys
 import threading
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
@@ -212,6 +213,13 @@ def pick_one(items: list, label_fn, prompt: str, singular: str):
         item = items[0]
         print(f"Using {singular}: {label_fn(item)}")
         return item
+    if not sys.stdin.isatty():
+        print(
+            "Error: Multiple destinations require an explicit target without an interactive "
+            "terminal. Use --connection-id for an existing connection or --destination "
+            "for a new deployment.", file=sys.stderr,
+        )
+        sys.exit(1)
     print(f"\n{prompt}")
     for i, item in enumerate(items, 1):
         print(f"  [{i}] {label_fn(item)}")
@@ -221,7 +229,11 @@ def pick_one(items: list, label_fn, prompt: str, singular: str):
             idx = int(choice) - 1
             if 0 <= idx < len(items):
                 return items[idx]
-        except (ValueError, EOFError):
+        except EOFError:
+            print("Error: Input closed before a destination was selected. "
+                  "Use --connection-id or --destination.", file=sys.stderr)
+            sys.exit(1)
+        except ValueError:
             pass
         print("Invalid selection. Try again.")
 
@@ -247,6 +259,26 @@ def discover_destination_name(api_key: str) -> str:
         singular="destination",
     )
     return group["name"]
+
+
+def existing_connection_target(api_key: str, connection_id: str) -> tuple[str, str]:
+    """Resolve the authoritative connection name and destination for a redeployment."""
+    connection = fivetran_get(
+        f"/connections/{urllib.parse.quote(connection_id, safe='')}", api_key,
+    ).get("data", {})
+    if connection.get("service") != "connector_sdk":
+        raise ValueError("--connection-id must identify a Connector SDK connection.")
+    group_id = connection.get("group_id")
+    name = connection.get("schema")
+    if not isinstance(group_id, str) or not group_id or not isinstance(name, str) or not name:
+        raise ValueError("Connection details did not include its group_id and schema; deployment stopped.")
+    group = fivetran_get(
+        f"/groups/{urllib.parse.quote(group_id, safe='')}", api_key,
+    ).get("data", {})
+    destination = group.get("name")
+    if not isinstance(destination, str) or not destination:
+        raise ValueError("Group details did not include its name; deployment stopped.")
+    return name, destination
 
 
 def sanitize_connection_name(raw: str) -> str:
@@ -438,10 +470,14 @@ def main():
     parser = argparse.ArgumentParser(description="Deploy a connector to Fivetran")
     parser.add_argument("connector_directory", help="Path to the connector directory")
     parser.add_argument("--connection", help="Connection name (default: derived from the directory name)")
+    parser.add_argument("--destination", help="Destination (group) name for a new deployment")
     parser.add_argument("--start-sync", action="store_true",
                         help="Unpause an already-deployed connection to start syncing (use with --connection-id)")
-    parser.add_argument("--connection-id", help="Connection ID to unpause (required with --start-sync)")
+    parser.add_argument("--connection-id", help="Existing connection ID to redeploy, or unpause with --start-sync")
     args = parser.parse_args()
+    if args.connection_id and (args.connection or args.destination):
+        parser.error("--connection-id cannot be combined with --connection or --destination; "
+                     "the existing connection determines both.")
 
     # Opt-in unpause path: start the initial sync of an already-deployed connection.
     # The build/deploy skill calls this only after the user explicitly confirms.
@@ -476,8 +512,16 @@ def main():
         sys.exit(1)
 
     api_key = load_api_key()
-    destination_name = discover_destination_name(api_key)
-    connection_name = args.connection or sanitize_connection_name(connector_dir.name)
+    if args.connection_id:
+        try:
+            connection_name, destination_name = existing_connection_target(api_key, args.connection_id)
+        except ValueError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        destination_name = args.destination or discover_destination_name(api_key)
+        connection_name = args.connection or sanitize_connection_name(connector_dir.name)
+    print(f"Destination: {destination_name}")
     print(f"Deploying as connection: {connection_name}")
 
     config_pipe = ConfigPipe(connector_dir, config)
@@ -498,7 +542,7 @@ def main():
             "--force",
         ]
 
-        connection_id = None
+        connection_id = args.connection_id
         process = subprocess.Popen(
             cmd,
             cwd=connector_dir,
@@ -523,12 +567,12 @@ def main():
             if connection_id:
                 print(f"Deployed. Connection ID: {connection_id}")
                 print(f"Dashboard: https://fivetran.com/dashboard/connections/{connection_id}/status")
-                print("The connection is created PAUSED. To start the initial sync (this begins")
-                print("consuming MAR), run after confirming with the user:")
-                print(f'  python "{SCRIPT_DIR}/deploy_connector.py" "{connector_dir}" --start-sync --connection-id {connection_id}')
+                if not args.connection_id:
+                    print("If the connection is paused, start syncing (consumes MAR) only after")
+                    print("confirming with the user:")
+                    print(f'  python "{SCRIPT_DIR}/deploy_connector.py" "{connector_dir}" --start-sync --connection-id {connection_id}')
             else:
-                print("Deployed. The connection is created PAUSED; start the initial sync from the")
-                print("Fivetran dashboard or via the REST API (the Connection ID is in the log above).")
+                print("Deployed. Check connection status in the Fivetran dashboard.")
 
         sys.exit(process.returncode)
 
