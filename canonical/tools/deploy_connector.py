@@ -213,13 +213,6 @@ def pick_one(items: list, label_fn, prompt: str, singular: str):
         item = items[0]
         print(f"Using {singular}: {label_fn(item)}")
         return item
-    if not sys.stdin.isatty():
-        print(
-            "Error: Multiple destinations require an explicit target without an interactive "
-            "terminal. Use --connection-id for an existing connection or --destination "
-            "for a new deployment.", file=sys.stderr,
-        )
-        sys.exit(1)
     print(f"\n{prompt}")
     for i, item in enumerate(items, 1):
         print(f"  [{i}] {label_fn(item)}")

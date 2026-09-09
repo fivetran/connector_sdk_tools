@@ -60,9 +60,9 @@ For an existing connection it reads connection details and then that connection'
 group details. Do not combine `--connection-id` with name or destination overrides.
 
 If no destination is supplied for a new connection, a single available destination
-is selected automatically. Multiple destinations require an interactive terminal
-or an explicit argument. Closed input ends the command; do not retry without
-providing the target.
+is selected automatically. Multiple destinations require a selection on stdin or an explicit argument.
+Harnesses without an input channel should pass the target explicitly. Closed
+input ends the command; do not retry without providing the target.
 
 For missing configuration or unusable encrypted values, follow **Configuration
 entry** in `sdk-reference.md`. Plaintext values are supported without a key; do

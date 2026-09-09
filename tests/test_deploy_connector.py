@@ -89,18 +89,41 @@ class DeployTests(unittest.TestCase):
                 self.assertEqual(self.run_main("--connection-id", "existing_id", option, "other"), 2)
                 self.assertFalse((self.project / "invocation.json").exists())
 
-    def test_noninteractive_selection_and_eof_exit_without_retry(self):
-        for interactive in (False, True):
-            with self.subTest(interactive=interactive), \
-                 patch.object(sys.stdin, "isatty", return_value=interactive), \
-                 patch("builtins.input", side_effect=EOFError) as prompt, \
-                 contextlib.redirect_stdout(io.StringIO()), \
-                 contextlib.redirect_stderr(io.StringIO()):
-                with self.assertRaises(SystemExit) as error:
-                    self.helper.pick_one([{"name": "a"}, {"name": "b"}],
-                                         lambda item: item["name"], "Choose", "destination")
-                self.assertEqual(error.exception.code, 1)
-                self.assertEqual(prompt.call_count, 1 if interactive else 0)
+    def test_closed_input_exits_without_retry(self):
+        with patch("builtins.input", side_effect=EOFError) as prompt, \
+             contextlib.redirect_stdout(io.StringIO()), \
+             contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                self.helper.pick_one([{"name": "a"}, {"name": "b"}],
+                                     lambda item: item["name"], "Choose", "destination")
+            self.assertEqual(error.exception.code, 1)
+            self.assertEqual(prompt.call_count, 1)
+
+    def test_piped_selection_still_works_after_invalid_input(self):
+        items = [{"name": "a"}, {"name": "b"}]
+        with patch.object(sys, "stdin", io.StringIO("invalid\n9\n2\n")), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(
+                self.helper.pick_one(items, lambda item: item["name"], "Choose", "destination"),
+                items[1],
+            )
+
+    def test_interactive_terminal_selection_still_works(self):
+        import pty
+        master, slave = pty.openpty()
+        self.addCleanup(os.close, master)
+        with os.fdopen(slave) as terminal, patch.object(sys, "stdin", terminal), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertTrue(terminal.isatty())
+            os.write(master, b"1\n")
+            self.assertEqual(
+                self.helper.pick_one(["a", "b"], str, "Choose", "destination"), "a",
+            )
+
+    def test_single_destination_needs_no_input(self):
+        with patch("builtins.input", side_effect=AssertionError("unexpected prompt")), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(self.helper.pick_one(["a"], str, "Choose", "destination"), "a")
 
     def test_start_sync_remains_explicit(self):
         with patch.object(self.helper, "unpause_connection") as unpause:
