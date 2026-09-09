@@ -226,6 +226,42 @@ def update(configuration, state):
     op.checkpoint(state=state)
 ```
 
+## Configuration entry
+
+Reuse existing local configuration; collect only missing values. Configuration is
+an ordinary flat `configuration.json` object with string values, not necessarily
+secrets. Preserve values supplied by the user, especially settings they explicitly
+identify as non-sensitive; the agent may fill them into the file directly. Do not
+invent production settings or require the user to re-enter values already supplied.
+
+For a deployed connector with missing local values, attempt supported read-only
+configuration retrieval first. Keep recovered values out of tool output and logs;
+never treat a masked value as usable configuration.
+
+When values still need collecting, try the project's `fivetran configuration`.
+It uses the connector's setup form and saves ordinary JSON; it does not download
+production configuration. Preserve existing files and respect overwrite prompts.
+If the CLI reports that no setup form is defined, ask whether the user wants to add
+one. Only implement that change with their agreement, using the installed SDK's
+configuration-form API and examples, then run `fivetran configuration` again.
+Otherwise fill `configuration.json` with supplied or retrievable values and ask
+only for unresolved fields. Do not require a setup form for a code repair.
+
+The SDK form is interactive. Use the harness's interactive terminal if available;
+otherwise give the user the command to run in the project directory in their own
+terminal. EOF, missing stdin, setup-test errors, or dependency failures do not prove
+that a setup form is absent. Report the actual error and resolve it appropriately.
+Do not ask users to paste secrets into chat; use the form or local file entry for
+secret values. User-supplied values may be written as requested without repeating
+them in the response. Keep configuration out of version control and avoid printing
+populated configuration during inspection or debugging.
+
+Custom encryption and `csdk_master_secret` are not prerequisites. Do not send users
+to `enter_configuration.py` as the default flow or replace their existing key.
+The existing runner also accepts previously encrypted fields; if those cannot be
+decrypted, explain the limitation and obtain replacement values through the flow
+above rather than silently changing keys or discarding usable local values.
+
 ## Gotchas
 
 - **`requests` is bundled** — don't add it to requirements.txt

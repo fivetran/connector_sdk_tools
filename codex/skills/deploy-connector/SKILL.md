@@ -27,7 +27,7 @@ Verify the connector is ready:
    - `connector = Connector(update=update, schema=schema)` in global scope
    - `if __name__ == "__main__": connector.debug()` entry point
    - No forbidden patterns (`Dict[str, Any]`, `Generator[op.Operation, ...]`, `op.Operation` in type hints)
-3. **Configuration**: `configuration.json` is JSON. `enter_configuration.py` encrypts every field by default using inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, but user-chosen plaintext values are also accepted. Do not read, print, copy, or deploy plaintext configuration values in chat.
+3. **Configuration**: `configuration.json` is JSON. Plaintext string values are supported; do not require custom encryption. Do not read, print, copy, or deploy plaintext configuration values in chat.
 
 ## Step 2: Run Final Test
 
@@ -54,23 +54,9 @@ The tool:
 4. Invokes `fivetran deploy --destination <name> --connection <name> --force` with the runtime configuration passed via named pipe after decrypting configuration values in memory. `--force` auto-answers the overwrite prompts so redeploys don't hang.
 5. Captures and prints the Connection ID from the deploy log.
 
-If deploy fails because an encrypted value cannot be decrypted, direct the user to run:
-
-macOS/Linux:
-```bash
-cd "<connector_directory>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
-
-Windows PowerShell:
-```powershell
-cd "<connector_directory>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
-
-Then re-run deploy after the user confirms configuration values have been refreshed.
-
-If the local encryption secret file does not exist yet, `enter_configuration.py` creates it before encrypting configuration values.
+For missing configuration or unusable encrypted values, follow **Configuration
+entry** in `sdk-reference.md`. Plaintext values are supported without a key; do
+not require re-entry or encryption of user-supplied values.
 
 ### Prerequisite: `FIVETRAN_API_KEY`
 

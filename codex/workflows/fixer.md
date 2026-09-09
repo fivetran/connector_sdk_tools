@@ -60,7 +60,7 @@ Do not stop and ask for the source until these steps have been tried.
 4. **Reproduce locally.** Follow `skills/test-connector/SKILL.md` from the plugin
    directory for environment setup and configuration handling. Run the connector
    through `python "<plugin>/tools/run_connector.py" "<connector_directory>"`,
-   which loads encrypted configuration and invokes `fivetran debug`. A local
+   which accepts plaintext configuration and invokes `fivetran debug`. A local
    failure is evidence to compare with production, not proof of a shared cause;
    note any state or environment differences.
 
@@ -280,5 +280,5 @@ EXAMPLES STUDIED:
 **IMPORTANT:**
 - Never modify plugin tools (anything under the plugin directory). Only fix user connector code.
 - If config fields contain inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal — do NOT try to "fix" it.
-- Legacy configs that start with `ENCRYPTED:` may exist, but the current tools expect `configuration.json` to be a JSON object; recreate the file with the correct fields and rerun `enter_configuration.py` to rewrite values.
+- Follow **Configuration entry** in `sdk-reference.md`: reuse local values first, recover missing deployed values when available, then use the SDK form or supplied plaintext values. Offer to add a setup form only with user agreement. Do not require encryption or key replacement.
 - For fundamental design issues, recommend using the validator to find a better starting point.

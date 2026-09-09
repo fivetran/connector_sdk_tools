@@ -73,7 +73,7 @@ Use this mapping:
 |-----------------|-----------------------|
 | Airbyte source connector | One CSDK connector, or one scoped connector per source if the repo contains multiple unrelated sources |
 | `spec.json` / `connectionSpecification` / manifest `spec` | Flat string fields in `configuration.json` |
-| `airbyte_secret: true` | Sensitive configuration field; placeholder only, entered through secure config tool |
+| `airbyte_secret: true` | Sensitive configuration field; collect through SDK form or local file entry if unavailable |
 | Airbyte array/object config fields | Prefer separate connector deployments for multi-entity sync; use JSON-encoded string fields parsed with `json.loads()` only when unavoidable for source-connector parity |
 | Airbyte config migrations / deprecated aliases | Backward-compatible parsing or documented renamed fields |
 | `check` command | `validate_configuration(configuration)` or a lightweight authenticated probe |
@@ -132,7 +132,7 @@ Edit the CSDK project files:
 
 ### `configuration.json`
 - Keep flat string key/value pairs only.
-- Include fields needed by the connector, using obvious placeholders only.
+- Include fields needed by the connector; preserve supplied values and use obvious placeholders for unresolved fields.
 - Convert nested Airbyte settings to clear flat names, and document any rename.
 - Prefer separate connector deployments for multi-entity configs (see `sdk-reference.md`). Only when the Airbyte source truly requires multi-item selection, convert Airbyte arrays or objects to JSON-encoded string placeholders, such as `"streams": "[\"users\"]"` or `"credentials": "{\"auth_type\":\"token\"}"`, then parse and validate them with `json.loads()` in `connector.py`.
 - Preserve support for deprecated Airbyte config aliases when source code has explicit migration logic, or document that the CSDK connector only supports the new field names.
@@ -150,7 +150,7 @@ Edit the CSDK project files:
 - Document configuration fields with placeholders only.
 - Document any behavior changes, especially append-only primary-key strategy, full-refresh overwrite/truncate behavior, delete/CDC handling, stream selection changes, and removed Airbyte platform behavior.
 - Document any platform resources that were intentionally left out of connector code and should be handled with `fivetran-cli`, such as destination/connection setup, scheduling, or transformation resources.
-- Direct users to `tools/enter_configuration.py` for secure configuration entry.
+- Follow **Configuration entry** in `sdk-reference.md`; use the SDK form or ordinary JSON values.
 
 ### `fivetran-cli` follow-up notes
 - If the Airbyte deployment includes destination or connection configuration that maps to Fivetran destinations or connections, document the intended Fivetran CLI resource commands to run after connector migration.
@@ -179,7 +179,7 @@ Check behavior before testing:
 
 Then follow the secure test flow from `test-connector`:
 - Run the secure runner, not `fivetran debug` directly.
-- If configuration values need to be entered or refreshed, direct the user to run `tools/enter_configuration.py` in their own terminal.
+- If configuration values are missing, follow **Configuration entry** in `sdk-reference.md`; preserve supplied and existing values.
 - Do not inspect or print configuration values.
 
 ## Step 6: Report Results

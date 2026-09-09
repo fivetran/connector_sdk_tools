@@ -122,37 +122,18 @@ uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_
 
 ## Phase 5: Enter Configuration & Test
 
-After scaffolding and customizing the files (or finding existing files with placeholder values), configuration values must be entered via the encryption script. This is **not negotiable** and **not a user choice** — it is the only supported configuration-entry flow.
+Follow **Configuration entry** in `sdk-reference.md`: reuse local values, try
+`fivetran configuration` for missing values, offer a setup form if absent, or fill
+ordinary JSON values as agreed with the user. Do not force custom encryption.
 
-**HARD RULES — violating any of these is a failure:**
-- DO NOT use `AskUserQuestion` (or any choice-menu / multi-option UI) to ask how the user wants to enter configuration values. There is exactly one way.
-- DO NOT present "Paste in chat", "Edit the file yourself", "Use a public repo", or any other option as a configuration-entry choice.
-- DO NOT tell the user to paste configuration values in chat.
-- DO NOT accept values pasted in chat.
-- DO NOT run `enter_configuration.py` yourself. The user must run it in their own separate terminal.
-- DO NOT inspect or print configuration values.
-
-**THE ONLY ACCEPTABLE FLOW.** Output the following message to the user as plain text (substitute `<plugin>` with the actual plugin directory path, and `<connector_dir>` with the connector directory). Use one fenced command block: `bash` on macOS/Linux, `powershell` on Windows. Quote both paths. Do not insert a line break inside the `python` command.
-
-````text
-I've generated the connector files (or the files already exist). To fill in configuration values securely, open a separate terminal, then run:
-
-```bash
-cd "<connector_dir>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
-
-The script will prompt you for each configuration field and encrypt values in place. I never see plaintext configuration values. Let me know when it's done and I'll run the test.
-If the local encryption secret file does not exist yet, the script creates it first.
-````
-
-After the user confirms configuration values are entered, run the connector via the secure runner:
+Once configuration is ready, run the connector:
 
 ```bash
 python <plugin>/tools/run_connector.py <connector_dir>
 ```
 
-This decrypts encrypted configuration values in memory, passes user-chosen plaintext values through, and supplies the runtime config via named pipe.
+The runner passes plaintext values through and decrypts only existing encrypted
+fields. Plaintext configuration does not require a local encryption key.
 
 Check results:
 
