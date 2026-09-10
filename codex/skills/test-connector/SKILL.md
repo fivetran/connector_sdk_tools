@@ -27,7 +27,7 @@ Example: "Which connector would you like to test? I found: github_connector, str
 
 Check that required files exist in the connector directory:
 - `connector.py` — main implementation
-- `configuration.json` — connector settings as a flat JSON object
+- `configuration.json` — connector settings as a flat JSON object with string values only
 - `requirements.txt` — dependencies
 
 If any are missing, inform the user and stop.
@@ -53,6 +53,8 @@ uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_
 Follow **Configuration entry** in `sdk-reference.md` only for missing values.
 Reuse existing configuration and accept supplied ordinary values without requiring
 interactive re-entry or encryption. Do not dump configuration into model context.
+Collect missing secrets through the form or the user's local editor/terminal;
+do not ask users to paste them into chat.
 
 ## Step 4: Run the Connector
 
@@ -73,7 +75,7 @@ cd "<connector_directory>"; .\.venv\Scripts\fivetran.exe reset --force
 Once configuration is ready, run the connector once; reuse an already successful test:
 
 ```bash
-python <plugin>/tools/run_connector.py <connector_directory> --timeout-seconds 600
+python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
 ```
 
 The runner defaults to 120 seconds and accepts up to 600. Use 600 for debug

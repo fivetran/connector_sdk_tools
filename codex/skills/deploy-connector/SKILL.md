@@ -34,7 +34,7 @@ Verify the connector is ready:
 Use the secure runner:
 
 ```bash
-python <plugin>/tools/run_connector.py <connector_directory> --timeout-seconds 600
+python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
 ```
 
 The runner defaults to 120 seconds and accepts up to 600. Use 600 for debug
@@ -50,14 +50,14 @@ For an existing connection, use its ID so the tool reuses its current name and
 destination without listing destinations or prompting:
 
 ```bash
-python <plugin>/tools/deploy_connector.py <connector_directory> --connection-id <id>
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection-id "<id>"
 ```
 
 For a new connection, supply the destination (group) name and optionally a
 connection name; otherwise the connection name is derived from the directory:
 
 ```bash
-python <plugin>/tools/deploy_connector.py <connector_directory> --destination <name> --connection <name>
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --destination "<name>" --connection "<name>"
 ```
 
 The tool reads `FIVETRAN_API_KEY`, passes runtime configuration through a named
@@ -107,7 +107,7 @@ After a successful deploy, surface the Connection ID and dashboard link the tool
 Only if the user explicitly confirms, unpause the connection:
 
 ```bash
-python <plugin>/tools/deploy_connector.py <connector_directory> --start-sync --connection-id <id>
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --start-sync --connection-id "<id>"
 ```
 
 This calls `PATCH /v1/connections/{id}` with `{"paused": false}`; Fivetran then begins the initial sync. If the user declines, tell them they can start it anytime from the dashboard link or by re-running the command above.

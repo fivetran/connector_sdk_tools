@@ -7,7 +7,10 @@ destination, then passes the configuration to `fivetran deploy` via a
 named pipe after decrypting configuration values in memory.
 
 Usage:
-    python deploy_connector.py <connector_directory>
+    python deploy_connector.py "<connector_directory>" --connection-id "<id>"
+    python deploy_connector.py "<connector_directory>" --destination "<name>" --connection "<name>"
+    python deploy_connector.py "<connector_directory>" --start-sync --connection-id "<id>"
+    python deploy_connector.py --help
 """
 import argparse
 import json

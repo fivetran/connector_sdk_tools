@@ -124,7 +124,8 @@ Call operations directly.
 ### configuration.json Rules
 - **Flat key/value pairs only** — no nested objects or arrays
 - **All values must be strings**
-- **Only sensitive fields** (api_key, client_secret, password, etc.)
+- **Source credentials and user-specific settings** (api_key, client_secret, password, zip_codes, etc.)
+- Preserve authorized local values; keep populated configuration out of version control
 - **Do NOT include** code settings (pagination_type, page_size) — hardcode in connector.py
 - Multiple items (repos, accounts) = separate connector deployments, NOT array values
 
@@ -243,10 +244,11 @@ only for unresolved fields. Do not require a setup form for a code repair.
 
 The SDK form is interactive. Use the harness's interactive terminal if available;
 otherwise give the user the command to run in the project directory in their own
-terminal. EOF, missing stdin, setup-test errors, or dependency failures do not prove
+terminal. EOF, missing stdin, setup or test errors, or dependency failures do not prove
 that a setup form is absent. Report the actual error and resolve it appropriately.
-Do not ask users to paste secrets into chat; use the form or local file entry for
-secret values. User-supplied values may be written as requested without repeating
+Do not ask users to paste secrets into chat; use the form or have the user enter
+secret values in `configuration.json` using their own local editor or terminal.
+User-supplied values may be written as requested without repeating
 them in the response. Keep configuration out of version control and avoid printing
 populated configuration during inspection or debugging.
 

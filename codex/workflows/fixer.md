@@ -49,12 +49,14 @@ Do not stop and ask for the source until these steps have been tried.
    `GET /v1/connections/{connection_id}/sync-history?start_time=...&end_time=...`
    Query the failure's time window rather than the whole history.
 3. **Recover the deployed source.** The connection's JSON record names its package
-   in `config.package_id`. The package list (`fivetran beta connector-sdk-package
-   list` or `GET /v1/connector-sdk/packages`, keyed by `connection_id`) is needed
-   only when that field is absent. Download the archive with
-   `GET /v1/connector-sdk/packages/{package_id}/download` (Basic auth with the
-   API key). Inspect the archive listing, then extract into a fresh directory; do
-   not overwrite existing files. The archive can include generated artifacts such
+   in `config.package_id`. The package list (`GET /v1/connector-sdk/packages`,
+   keyed by `connection_id`) is needed only when that field is absent.
+   Download the archive with
+   `GET /v1/connector-sdk/packages/{package_id}/download` with
+   `Authorization: Basic <base64>` where `<base64>` encodes `{key}:{secret}`
+   using the Fivetran API key and secret. Inspect the archive listing, then
+   extract into a fresh directory; do not overwrite existing files.
+   The archive can include generated artifacts such
    as `configuration_form.pb`; `fivetran deploy` regenerates them, so remove the
    downloaded copy before redeploying or the upload fails on a duplicate entry.
 4. **Reproduce locally.** Follow `skills/test-connector/SKILL.md` from the plugin
@@ -156,7 +158,8 @@ op.delete(table, keys)
 
 ### Configuration Files
 - Flat structure, string values only
-- Only sensitive fields (api_key, password)
+- Source credentials and user-specific settings (api_key, password, zip_codes)
+- Preserve authorized local values; keep populated configuration out of chat and version control
 - Hardcode code configs in connector.py
 
 ## Common Error Patterns

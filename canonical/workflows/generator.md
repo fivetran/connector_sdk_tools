@@ -158,7 +158,8 @@ op.checkpoint(state=state)
 - **CRITICAL:** configuration.json must be flat, single-level key/value pairs
 - **String values only** - No lists or dictionaries
 - Source credentials and user-specific settings belong in configuration.json (e.g., api_key, username, zip_codes)
-- **Placeholder values only** - No real credentials, tokens, passwords, API keys, or copied user-provided secrets
+- Preserve existing local values and fill values supplied or authorized by the user per **Configuration entry** in `sdk-reference.md`; use placeholders only for unresolved fields
+- Collect missing secrets through the SDK form or the user's local editor/terminal, never by asking for them in chat. Keep populated configuration out of tool output, responses, and version control
 - **Do NOT include** code configurations like pagination_type, page_size, rate_limit settings - hardcode these in connector.py
 
 ### 7. Additional Standards

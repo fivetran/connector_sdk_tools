@@ -73,7 +73,7 @@ Use this mapping:
 |-----------------|-----------------------|
 | Airbyte source connector | One CSDK connector, or one scoped connector per source if the repo contains multiple unrelated sources |
 | `spec.json` / `connectionSpecification` / manifest `spec` | Flat string fields in `configuration.json` |
-| `airbyte_secret: true` | Sensitive configuration field; collect through SDK form or local file entry if unavailable |
+| `airbyte_secret: true` | Sensitive configuration field; collect through SDK form or have the user enter it in `configuration.json` using their local editor/terminal, never in chat |
 | Airbyte array/object config fields | Prefer separate connector deployments for multi-entity sync; use JSON-encoded string fields parsed with `json.loads()` only when unavoidable for source-connector parity |
 | Airbyte config migrations / deprecated aliases | Backward-compatible parsing or documented renamed fields |
 | `check` command | `validate_configuration(configuration)` or a lightweight authenticated probe |

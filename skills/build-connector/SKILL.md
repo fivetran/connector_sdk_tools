@@ -131,11 +131,13 @@ uv pip install --python .\.venv\Scripts\python.exe -r requirements.txt fivetran_
 Follow **Configuration entry** in `sdk-reference.md`: reuse local values, try
 `fivetran configuration` for missing values, offer a setup form if absent, or fill
 ordinary JSON values as agreed with the user. Do not force custom encryption.
+Collect missing secrets through the form or the user's local editor/terminal;
+do not ask users to paste them into chat.
 
 Once configuration is ready, run the connector:
 
 ```bash
-python <plugin>/tools/run_connector.py <connector_dir> --timeout-seconds 600
+python "<plugin>/tools/run_connector.py" "<connector_dir>" --timeout-seconds 600
 ```
 
 The runner defaults to 120 seconds and accepts up to 600. Use 600 for debug
