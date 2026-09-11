@@ -21,7 +21,7 @@ Package and deploy the connector in the current directory.
 
 Verify the connector is ready:
 
-1. **Files exist**: `connector.py`, `configuration.json`, `requirements.txt`, `README.md`
+1. **Files exist**: `connector.py`, `requirements.txt`, `README.md`; `configuration.json` when supplying configuration.
 2. **Code quality**: Read `connector.py` and check for:
    - Both `schema()` and `update()` functions present
    - `connector = Connector(update=update, schema=schema)` in global scope
@@ -60,8 +60,8 @@ connection name; otherwise the connection name is derived from the directory:
 python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --destination "<name>" --connection "<name>"
 ```
 
-The tool reads `FIVETRAN_API_KEY`, passes runtime configuration through a named
-pipe, and invokes `fivetran deploy --destination <name> --connection <name> --force`.
+The tool reads `FIVETRAN_API_KEY`, passes local configuration through a named
+pipe when present, and invokes `fivetran deploy --destination <name> --connection <name> --force`.
 For an existing connection it reads connection details and then that connection's
 group details. Do not combine `--connection-id` with name or destination overrides.
 
@@ -70,7 +70,12 @@ is selected automatically. Multiple destinations require a selection on stdin or
 Harnesses without an input channel should pass the target explicitly. Closed
 input ends the command; do not retry without providing the target.
 
-For missing configuration or unusable encrypted values, follow **Configuration
+A missing local configuration file is allowed; the SDK may still use environment
+configuration. Preserve production settings during code repairs and verify the
+installed SDK's configuration behavior before deploying. Do not confuse local
+test inputs with the production configuration.
+
+For required configuration or unusable encrypted values, follow **Configuration
 entry** in `sdk-reference.md`. Plaintext values are supported without a key; do
 not require re-entry or encryption of user-supplied values.
 

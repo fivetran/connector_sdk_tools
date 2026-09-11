@@ -3,8 +3,9 @@
 Deploy a connector to Fivetran.
 
 Reads FIVETRAN_API_KEY from env, resolves an existing connection or an explicit
-destination, then passes the configuration to `fivetran deploy` via a
-named pipe after decrypting configuration values in memory.
+destination, then passes local configuration to `fivetran deploy` via a
+named pipe after decrypting configuration values in memory. Without a local
+configuration file, the SDK resolves configuration normally.
 
 Usage:
     python deploy_connector.py "<connector_directory>" --connection-id "<id>"
@@ -24,6 +25,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+from contextlib import nullcontext
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
@@ -490,12 +492,8 @@ def main():
         sys.exit(1)
 
     config_path = connector_dir / "configuration.json"
-    if not config_path.exists():
-        print(f"Error: configuration.json not found in {connector_dir}")
-        sys.exit(1)
-
     try:
-        config = load_runtime_config(config_path)
+        config = load_runtime_config(config_path) if config_path.exists() else None
     except DecryptionFailed as exc:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
         if str(exc):
@@ -520,23 +518,24 @@ def main():
     print(f"Destination: {destination_name}")
     print(f"Deploying as connection: {connection_name}")
 
-    config_pipe = ConfigPipe(connector_dir, config)
-    with config_pipe as pipe_path:
+    # Without a local file, leave configuration resolution to the SDK, including
+    # FIVETRAN_CONFIGURATION. No supplied configuration preserves existing values.
+    config_pipe = ConfigPipe(connector_dir, config) if config is not None else None
+    with config_pipe if config_pipe is not None else nullcontext() as pipe_path:
         cmd = [
             find_fivetran_executable(connector_dir),
             "deploy",
-            "--api-key",
-            api_key,
             "--destination",
             destination_name,
             "--connection",
             connection_name,
-            "--configuration",
-            str(pipe_path),
             # Auto-answer the "update connection / overwrite configuration?" prompts so
             # redeploys don't block waiting on stdin.
             "--force",
         ]
+
+        if pipe_path is not None:
+            cmd.extend(["--configuration", str(pipe_path)])
 
         connection_id = args.connection_id
         process = subprocess.Popen(
@@ -554,7 +553,7 @@ def main():
                 connection_id = match.group(1)
         process.wait()
 
-        if config_pipe.writer_error:
+        if config_pipe is not None and config_pipe.writer_error:
             print(f"Error: Failed to write configuration pipe: {config_pipe.writer_error}", file=sys.stderr)
             sys.exit(1)
 

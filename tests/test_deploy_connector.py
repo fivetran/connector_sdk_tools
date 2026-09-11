@@ -30,10 +30,14 @@ class DeployTests(unittest.TestCase):
         executable.parent.mkdir(parents=True)
         executable.write_text(
             f"#!{sys.executable}\n"
-            "import json, pathlib, sys\n"
+            "import json, os, pathlib, sys\n"
             "assert sys.argv[1] == 'deploy'\n"
-            "with open(sys.argv[sys.argv.index('--configuration')+1]) as stream:\n"
-            "    assert json.load(stream) == {'zip_codes': '90210'}\n"
+            "assert '--api-key' not in sys.argv\n"
+            "assert os.environ['FIVETRAN_API_KEY'] == 'Zml4dHVyZTpmaXh0dXJl'\n"
+            "if '--configuration' in sys.argv:\n"
+            "    with open(sys.argv[sys.argv.index('--configuration')+1]) as stream:\n"
+            "        pathlib.Path('submitted-config.json').write_text(json.dumps(json.load(stream)))\n"
+            "pathlib.Path('environment-config.json').write_text(json.dumps(os.getenv('FIVETRAN_CONFIGURATION')))\n"
             "pathlib.Path('invocation.json').write_text(json.dumps(sys.argv[1:]))\n"
             "print('Connection ID: existing_id')\n"
         )
@@ -71,6 +75,21 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(args[args.index("--connection") + 1], "original_name")
         self.assertEqual(args[args.index("--destination") + 1], "Original Destination")
         self.assertFalse((self.project / ".config_pipe").exists())
+        self.assertEqual(json.loads((self.project / "submitted-config.json").read_text()),
+                         {"zip_codes": "90210"})
+
+    def test_missing_local_configuration_defers_to_sdk(self):
+        (self.project / "configuration.json").unlink()
+        for value in (None, '{"zip_codes":"10001"}'):
+            with self.subTest(environment=value), patch.dict(os.environ):
+                os.environ.pop("FIVETRAN_CONFIGURATION", None)
+                if value is not None:
+                    os.environ["FIVETRAN_CONFIGURATION"] = value
+                self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+                self.assertNotIn("--configuration", self.invocation())
+                self.assertFalse((self.project / "configuration.json").exists())
+                self.assertFalse((self.project / "submitted-config.json").exists())
+                self.assertEqual(json.loads((self.project / "environment-config.json").read_text()), value)
 
     def test_explicit_new_destination_needs_no_discovery(self):
         self.assertEqual(self.run_main("--destination", "Chosen Group", "--connection", "new"), 0)
