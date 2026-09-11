@@ -142,6 +142,12 @@ def load_runtime_config(config_path: Path) -> dict:
     if not isinstance(config, dict):
         raise ValueError(f"{config_path} must contain a JSON object.")
 
+    for field, value in config.items():
+        if not isinstance(value, str):
+            raise ValueError(
+                f"Configuration field {field!r} must be a string; "
+                "nested objects, arrays, numbers, booleans, and null are not supported."
+            )
     return decrypt_config_values(config)
 
 
@@ -299,6 +305,7 @@ class ConfigPipe:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.cancelled.set()
+        cleanup_error = None
         if self.writer_thread is not None:
             if os.name == "nt" and self.writer_thread.is_alive():
                 import ctypes
@@ -307,6 +314,7 @@ class ConfigPipe:
                 kernel32.OpenThread.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
                 kernel32.OpenThread.restype = wintypes.HANDLE
                 kernel32.CancelSynchronousIo.argtypes = [wintypes.HANDLE]
+                kernel32.CancelSynchronousIo.restype = wintypes.BOOL
                 kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
                 handle = kernel32.OpenThread(0x0001, False, self.writer_thread.native_id)
                 if handle:
@@ -316,12 +324,22 @@ class ConfigPipe:
                         # owns/closes the pipe handle.
                         deadline = time.monotonic() + 1
                         while self.writer_thread.is_alive() and time.monotonic() < deadline:
-                            kernel32.CancelSynchronousIo(handle)
+                            if not kernel32.CancelSynchronousIo(handle):
+                                error = ctypes.get_last_error()
+                                if error != 1168:  # ERROR_NOT_FOUND: no pending I/O yet
+                                    cleanup_error = f"CancelSynchronousIo failed (Windows error {error})"
+                                    break
                             self.writer_thread.join(0.05)
                     finally:
                         kernel32.CloseHandle(handle)
+                else:
+                    cleanup_error = "OpenThread failed; could not cancel the configuration writer"
             else:
                 self.writer_thread.join(timeout=1)
+            if self.writer_thread.is_alive():
+                detail = cleanup_error or "configuration writer did not stop within the cleanup deadline"
+                print(f"Warning: {detail}. Its pipe may remain open until this process exits.",
+                      file=sys.stderr)
         if self.pipe_path is not None:
             try:
                 if self.pipe_path.exists():
@@ -499,8 +517,7 @@ def run_debug(cmd, connector_dir, timeout_seconds):
             for signum, handler in previous_handlers.items():
                 signal.signal(signum, handler)
     if timed_out.is_set():
-        print(f"\nError: Command timed out after {timeout_seconds} seconds")
-        return 124
+        raise subprocess.TimeoutExpired(cmd, timeout_seconds)
     return process.returncode
 
 
@@ -548,8 +565,10 @@ def main():
             str(pipe_path),
         ]
 
-        returncode = run_debug(cmd, connector_dir, args.timeout_seconds)
-        if returncode == 124:
+        try:
+            returncode = run_debug(cmd, connector_dir, args.timeout_seconds)
+        except subprocess.TimeoutExpired:
+            print(f"\nError: Command timed out after {args.timeout_seconds} seconds")
             sys.exit(124)
 
         if config_pipe.writer_error:

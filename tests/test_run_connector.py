@@ -2,6 +2,9 @@
 
 import os
 import importlib.util
+import contextlib
+import io
+import json
 from pathlib import Path
 import signal
 import subprocess
@@ -9,7 +12,7 @@ import sys
 import tempfile
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 
 HELPER = Path(__file__).resolve().parents[1] / "canonical/tools/run_connector.py"
@@ -23,6 +26,57 @@ def load_helper():
 
 
 class LifecycleTests(unittest.TestCase):
+    def test_child_exit_124_is_not_a_timeout(self):
+        helper = load_helper()
+        self.assertEqual(helper.run_debug(
+            [sys.executable, "-c", "raise SystemExit(124)"], Path.cwd(), 5), 124)
+
+    def test_child_exit_124_still_reports_pipe_error(self):
+        helper = load_helper()
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / 'configuration.json').write_text('{}')
+            pipe = Mock()
+            pipe.__enter__ = Mock(return_value='unused')
+            pipe.__exit__ = Mock(return_value=False)
+            pipe.writer_error = OSError('fixture pipe failure')
+            output = io.StringIO()
+            with patch.object(sys, 'argv', [str(HELPER), tmp]), \
+                 patch.object(helper, 'ConfigPipe', return_value=pipe), \
+                 patch.object(helper, 'run_debug', return_value=124), \
+                 contextlib.redirect_stderr(output):
+                with self.assertRaises(SystemExit) as error:
+                    helper.main()
+            self.assertEqual(error.exception.code, 1)
+            self.assertIn('fixture pipe failure', output.getvalue())
+
+    def test_windows_cleanup_failures_are_reported(self):
+        import ctypes
+        for failure in ('open', 'cancel', 'deadline'):
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as tmp:
+                helper = load_helper()
+                pipe = helper.ConfigPipe(Path(tmp), {})
+                pipe.writer_thread = Mock()
+                pipe.writer_thread.is_alive.return_value = True
+                pipe.writer_thread.native_id = 123
+                kernel = Mock()
+                kernel.OpenThread.return_value = 0 if failure == 'open' else 1
+                kernel.CancelSynchronousIo.return_value = failure != 'cancel'
+                output = io.StringIO()
+                with patch.object(helper.os, 'name', 'nt'), \
+                     patch.object(ctypes, 'WinDLL', return_value=kernel, create=True), \
+                     patch.object(ctypes, 'get_last_error', return_value=5, create=True), \
+                     patch.object(helper.time, 'monotonic', side_effect=[0, 0, 2]), \
+                     contextlib.redirect_stderr(output):
+                    pipe.__exit__(None, None, None)
+                self.assertIn('pipe may remain open', output.getvalue())
+                if failure == 'open':
+                    self.assertIn('OpenThread failed', output.getvalue())
+                elif failure == 'cancel':
+                    self.assertIn('CancelSynchronousIo failed', output.getvalue())
+                else:
+                    self.assertIn('cleanup deadline', output.getvalue())
+
     def test_exception_stops_process_tree(self):
         helper = load_helper()
         with tempfile.TemporaryDirectory() as tmp:
@@ -58,14 +112,34 @@ class LifecycleTests(unittest.TestCase):
             child = "import time; print('tester ready', flush=True); time.sleep(60)"
             parent = f"import subprocess,sys; subprocess.Popen([sys.executable, '-c', {child!r}])"
             driver = (
-                "import runpy,sys; from pathlib import Path; "
+                "import runpy,sys,subprocess; from pathlib import Path; "
                 f"h = runpy.run_path({str(HELPER)!r}); "
-                f"sys.exit(h['run_debug']([sys.executable, '-c', {parent!r}], Path('.'), 1))"
+                "\ntry:\n"
+                f" sys.exit(h['run_debug']([sys.executable, '-c', {parent!r}], Path('.'), 1))\n"
+                "except subprocess.TimeoutExpired:\n sys.exit(124)\n"
             )
             result = subprocess.run([sys.executable, "-c", driver], cwd=tmp,
                                     capture_output=True, text=True, timeout=8)
             self.assertEqual(result.returncode, 124, result.stdout + result.stderr)
             self.assertIn("tester ready", result.stdout)
+
+
+class ConfigurationTests(unittest.TestCase):
+    def test_both_loaders_reject_non_string_values_without_exposing_them(self):
+        for filename in ('run_connector.py', 'deploy_connector.py'):
+            spec = importlib.util.spec_from_file_location('config_fixture', HELPER.with_name(filename))
+            helper = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(helper)
+            with tempfile.TemporaryDirectory() as tmp:
+                config = Path(tmp) / 'configuration.json'
+                for value in ({'secret': 'private-value'}, ['private-value'], 42, True, None):
+                    with self.subTest(helper=filename, value=value):
+                        config.write_text(json.dumps({'setting': value}))
+                        with self.assertRaisesRegex(ValueError, 'must be a string') as error:
+                            helper.load_runtime_config(config)
+                        self.assertNotIn('private-value', str(error.exception))
+                config.write_text('{"setting":"42","empty":""}')
+                self.assertEqual(helper.load_runtime_config(config), {'setting': '42', 'empty': ''})
 
 
 @unittest.skipUnless(os.name == "posix", "Fake SDK executable uses a POSIX shebang")

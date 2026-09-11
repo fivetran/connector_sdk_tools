@@ -149,6 +149,12 @@ def load_runtime_config(config_path: Path) -> dict:
     if not isinstance(config, dict):
         raise ValueError(f"{config_path} must contain a JSON object.")
 
+    for field, value in config.items():
+        if not isinstance(value, str):
+            raise ValueError(
+                f"Configuration field {field!r} must be a string; "
+                "nested objects, arrays, numbers, booleans, and null are not supported."
+            )
     return decrypt_config_values(config)
 
 
