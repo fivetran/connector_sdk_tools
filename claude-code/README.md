@@ -202,7 +202,7 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
 | `tools/enter_configuration.py` | Optional local encryption of configuration values |
 | `tools/run_connector.py` | Run connector with runtime config via named pipe |
-| `tools/deploy_connector.py` | Deploy connector with runtime config via named pipe |
+| `tools/deploy_connector.py` | Redeploy with `--connection-id`, or deploy to an explicit `--destination` (with discovery as a fallback) |
 
 ## How It Works
 

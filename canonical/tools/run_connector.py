@@ -196,6 +196,11 @@ class ConfigPipe:
                         data = data[os.write(fd, data):]
                     except BlockingIOError:
                         self.cancelled.wait(0.05)
+                if fd is not None and data and self.cancelled.is_set():
+                    self.writer_error = RuntimeError(
+                        f"configuration write cancelled with {len(data)} byte(s) unsent; "
+                        "the connector may have received truncated configuration"
+                    )
             except Exception as exc:
                 if not self.cancelled.is_set():
                     self.writer_error = exc
@@ -316,7 +321,17 @@ class ConfigPipe:
                 kernel32.CancelSynchronousIo.argtypes = [wintypes.HANDLE]
                 kernel32.CancelSynchronousIo.restype = wintypes.BOOL
                 kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-                handle = kernel32.OpenThread(0x0001, False, self.writer_thread.native_id)
+                native_id = self.writer_thread.native_id
+                # native_id can be recycled once the thread exits; re-check aliveness
+                # right up to (and right after) the OpenThread call to shrink, though
+                # not eliminate, that race.
+                handle = kernel32.OpenThread(0x0001, False, native_id) if self.writer_thread.is_alive() else None
+                thread_already_done = not self.writer_thread.is_alive()
+                if handle and thread_already_done:
+                    # Thread finished between the is_alive() check and OpenThread;
+                    # the handle may reference an unrelated, recycled thread. Drop it.
+                    kernel32.CloseHandle(handle)
+                    handle = None
                 if handle:
                     try:
                         # Retry to cover cancellation between the writer's stop
@@ -332,7 +347,7 @@ class ConfigPipe:
                             self.writer_thread.join(0.05)
                     finally:
                         kernel32.CloseHandle(handle)
-                else:
+                elif not thread_already_done:
                     cleanup_error = "OpenThread failed; could not cancel the configuration writer"
             else:
                 self.writer_thread.join(timeout=1)
@@ -446,9 +461,16 @@ def run_debug(cmd, connector_dir, timeout_seconds):
     job = None
     timer = None
     timed_out = threading.Event()
+    # Guards the natural-finish vs. timeout race below: whichever of
+    # finished_naturally/timed_out is decided first under the lock wins.
+    finished_naturally = threading.Event()
+    outcome_lock = threading.Lock()
     previous_handlers = {}
 
     def stop_tree():
+        # Unconditional: on POSIX this must still killpg (reaping any orphaned
+        # descendant, e.g. a tester the SDK spawned) even after the immediate
+        # `process` has already exited on its own.
         if job is not None:
             job.close()
         if process is not None:
@@ -463,7 +485,10 @@ def run_debug(cmd, connector_dir, timeout_seconds):
                     pass
 
     def timeout_handler():
-        timed_out.set()
+        with outcome_lock:
+            if finished_naturally.is_set():
+                return
+            timed_out.set()
         stop_tree()
 
     def interrupted(signum, _frame):
@@ -499,6 +524,8 @@ def run_debug(cmd, connector_dir, timeout_seconds):
         for line in process.stdout:
             print(line, end='', flush=True)
         process.wait()
+        with outcome_lock:
+            finished_naturally.set()
     finally:
         # A second interrupt must not interrupt cleanup halfway through.
         for signum in previous_handlers:
@@ -523,12 +550,19 @@ def run_debug(cmd, connector_dir, timeout_seconds):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("connector_directory", type=Path)
+    # Optional at the argparse level so a missing directory keeps its own exit
+    # code (1) instead of argparse's usage-error code (2, shared with e.g. an
+    # out-of-range --timeout-seconds), matching the tool's pre-argparse behavior.
+    parser.add_argument("connector_directory", type=Path, nargs="?")
     parser.add_argument(
         "--timeout-seconds", type=int, default=120,
         help="Debug time limit in seconds (default: 120; maximum: 600).",
     )
     args = parser.parse_args()
+    if args.connector_directory is None:
+        parser.print_usage(sys.stderr)
+        print("Error: connector_directory is required.", file=sys.stderr)
+        sys.exit(1)
     if not 0 < args.timeout_seconds <= 600:
         parser.error("--timeout-seconds must be between 1 and 600")
 

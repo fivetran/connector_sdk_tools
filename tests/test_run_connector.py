@@ -141,6 +141,21 @@ class ConfigurationTests(unittest.TestCase):
                 config.write_text('{"setting":"42","empty":""}')
                 self.assertEqual(helper.load_runtime_config(config), {'setting': '42', 'empty': ''})
 
+    def test_both_loaders_reject_malformed_or_non_object_configuration(self):
+        for filename in ('run_connector.py', 'deploy_connector.py'):
+            spec = importlib.util.spec_from_file_location('config_fixture', HELPER.with_name(filename))
+            helper = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(helper)
+            with tempfile.TemporaryDirectory() as tmp:
+                config = Path(tmp) / 'configuration.json'
+                # Empty/whitespace-only, syntactically invalid, and validly-parsed
+                # but non-object JSON must all be rejected, not silently accepted.
+                for content in ('', '   ', 'not json', '[]', '"just a string"', '42', 'null'):
+                    with self.subTest(helper=filename, content=content):
+                        config.write_text(content)
+                        with self.assertRaises(ValueError):
+                            helper.load_runtime_config(config)
+
 
 @unittest.skipUnless(os.name == "posix", "Fake SDK executable uses a POSIX shebang")
 class RunTests(unittest.TestCase):

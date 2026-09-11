@@ -14,6 +14,7 @@ Usage:
     python deploy_connector.py --help
 """
 import argparse
+import errno
 import json
 import os
 import re
@@ -21,6 +22,7 @@ import shutil
 import subprocess
 import sys
 import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -40,6 +42,13 @@ FERNET_KEY_PREFIX = "FERNET_KEY:"
 
 class DecryptionFailed(Exception):
     """Raised when encrypted configuration cannot be decrypted."""
+
+
+class ApiError(Exception):
+    """Raised when a Fivetran REST API call fails."""
+    def __init__(self, message: str, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
 
 
 def get_fernet():
@@ -199,16 +208,15 @@ def fivetran_request(method: str, path: str, api_key: str, body: dict | None = N
             return json.loads(raw) if raw else {}
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8", errors="replace") if hasattr(e, "read") else ""
-        print(f"Error: Fivetran API {method} {path} returned {e.code}.")
+        lines = [f"Fivetran API {method} {path} returned {e.code}."]
         if e.code in (401, 403):
-            print("Your FIVETRAN_API_KEY is missing or lacks required permissions.")
-            print("It must be the base64-encoded '{key}:{secret}' string.")
+            lines.append("Your FIVETRAN_API_KEY is missing or lacks required permissions.")
+            lines.append("It must be the base64-encoded '{key}:{secret}' string.")
         if err_body:
-            print(f"Response: {err_body[:500]}")
-        sys.exit(1)
+            lines.append(f"Response: {err_body[:500]}")
+        raise ApiError("\n".join(lines), status_code=e.code) from e
     except urllib.error.URLError as e:
-        print(f"Error: Could not reach Fivetran API ({e.reason}).")
-        sys.exit(1)
+        raise ApiError(f"Could not reach Fivetran API ({e.reason}).") from e
 
 
 def fivetran_get(path: str, api_key: str) -> dict:
@@ -265,11 +273,16 @@ def discover_destination_name(api_key: str) -> str:
     return group["name"]
 
 
-def existing_connection_target(api_key: str, connection_id: str) -> tuple[str, str]:
-    """Resolve the authoritative connection name and destination for a redeployment."""
-    connection = fivetran_get(
-        f"/connections/{urllib.parse.quote(connection_id, safe='')}", api_key,
-    ).get("data", {})
+def existing_connection_target(api_key: str, connection_id: str) -> tuple[str, str, bool]:
+    """Resolve the authoritative connection name, destination, and paused state for a redeployment."""
+    try:
+        connection = fivetran_get(
+            f"/connections/{urllib.parse.quote(connection_id, safe='')}", api_key,
+        ).get("data", {})
+    except ApiError as exc:
+        if exc.status_code == 404:
+            raise ValueError(f"--connection-id {connection_id!r} was not found.") from exc
+        raise
     if connection.get("service") != "connector_sdk":
         raise ValueError("--connection-id must identify a Connector SDK connection.")
     group_id = connection.get("group_id")
@@ -282,7 +295,7 @@ def existing_connection_target(api_key: str, connection_id: str) -> tuple[str, s
     destination = group.get("name")
     if not isinstance(destination, str) or not destination:
         raise ValueError("Group details did not include its name; deployment stopped.")
-    return name, destination
+    return name, destination, bool(connection.get("paused"))
 
 
 def sanitize_connection_name(raw: str) -> str:
@@ -312,7 +325,10 @@ def unpause_connection(api_key: str, connection_id: str):
 
 
 class ConfigPipe:
-    """Named pipe for securely passing config to the SDK."""
+    """
+    Named pipe for securely passing config to the SDK.
+    Data never touches disk - stays in kernel/OS pipe buffers.
+    """
     def __init__(self, project_dir: Path, config: dict):
         self.config = config
         self.project_dir = project_dir
@@ -321,6 +337,7 @@ class ConfigPipe:
         self.write_complete = None
         self.writer_error = None
         self._windows_handle = None
+        self.cancelled = threading.Event()
 
     def __enter__(self):
         if os.name == "nt":
@@ -331,20 +348,43 @@ class ConfigPipe:
         self.pipe_path = self.project_dir / ".config_pipe"
         if self.pipe_path.exists():
             self.pipe_path.unlink()
+
         os.mkfifo(self.pipe_path, 0o600)
         self.write_complete = threading.Event()
 
         def write_config():
+            fd = None
             try:
-                with open(self.pipe_path, 'w') as f:
-                    json.dump(self.config, f)
+                while not self.cancelled.is_set():
+                    try:
+                        fd = os.open(self.pipe_path, os.O_WRONLY | os.O_NONBLOCK)
+                        break
+                    except OSError as exc:
+                        if exc.errno != errno.ENXIO:
+                            raise
+                        self.cancelled.wait(0.05)
+                data = memoryview(json.dumps(self.config).encode("utf-8"))
+                while fd is not None and data and not self.cancelled.is_set():
+                    try:
+                        data = data[os.write(fd, data):]
+                    except BlockingIOError:
+                        self.cancelled.wait(0.05)
+                if fd is not None and data and self.cancelled.is_set():
+                    self.writer_error = RuntimeError(
+                        f"configuration write cancelled with {len(data)} byte(s) unsent; "
+                        "the connector may have received truncated configuration"
+                    )
             except Exception as exc:
-                self.writer_error = exc
+                if not self.cancelled.is_set():
+                    self.writer_error = exc
             finally:
+                if fd is not None:
+                    os.close(fd)
                 self.write_complete.set()
 
         self.writer_thread = threading.Thread(target=write_config, daemon=True)
         self.writer_thread.start()
+
         return self.pipe_path
 
     def _enter_windows(self):
@@ -403,12 +443,16 @@ class ConfigPipe:
 
         def write_config():
             try:
+                if self.cancelled.is_set():
+                    return
                 connected = kernel32.ConnectNamedPipe(handle, None)
                 if not connected:
                     err = ctypes.get_last_error()
                     if err != error_pipe_connected:
                         raise OSError(err, "ConnectNamedPipe failed")
 
+                if self.cancelled.is_set():
+                    return
                 data = json.dumps(self.config).encode("utf-8")
                 buffer = ctypes.create_string_buffer(data)
                 written = wintypes.DWORD(0)
@@ -421,10 +465,13 @@ class ConfigPipe:
                 )
                 if not ok or written.value != len(data):
                     raise OSError(ctypes.get_last_error(), "WriteFile failed")
+                if self.cancelled.is_set():
+                    return
                 kernel32.FlushFileBuffers(handle)
                 kernel32.DisconnectNamedPipe(handle)
             except Exception as exc:
-                self.writer_error = exc
+                if not self.cancelled.is_set():
+                    self.writer_error = exc
             finally:
                 kernel32.CloseHandle(handle)
                 self._windows_handle = None
@@ -435,15 +482,52 @@ class ConfigPipe:
         return pipe_name
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.write_complete:
-            self.write_complete.wait(timeout=30)
-        if self._windows_handle is not None:
-            try:
+        self.cancelled.set()
+        cleanup_error = None
+        if self.writer_thread is not None:
+            if os.name == "nt" and self.writer_thread.is_alive():
                 import ctypes
-                ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle(self._windows_handle)
-            except Exception:
-                pass
-            self._windows_handle = None
+                from ctypes import wintypes
+                kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+                kernel32.OpenThread.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+                kernel32.OpenThread.restype = wintypes.HANDLE
+                kernel32.CancelSynchronousIo.argtypes = [wintypes.HANDLE]
+                kernel32.CancelSynchronousIo.restype = wintypes.BOOL
+                kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+                native_id = self.writer_thread.native_id
+                # native_id can be recycled once the thread exits; re-check aliveness
+                # right up to (and right after) the OpenThread call to shrink, though
+                # not eliminate, that race.
+                handle = kernel32.OpenThread(0x0001, False, native_id) if self.writer_thread.is_alive() else None
+                thread_already_done = not self.writer_thread.is_alive()
+                if handle and thread_already_done:
+                    # Thread finished between the is_alive() check and OpenThread;
+                    # the handle may reference an unrelated, recycled thread. Drop it.
+                    kernel32.CloseHandle(handle)
+                    handle = None
+                if handle:
+                    try:
+                        # Retry to cover cancellation between the writer's stop
+                        # check and its next blocking I/O call. The writer alone
+                        # owns/closes the pipe handle.
+                        deadline = time.monotonic() + 1
+                        while self.writer_thread.is_alive() and time.monotonic() < deadline:
+                            if not kernel32.CancelSynchronousIo(handle):
+                                error = ctypes.get_last_error()
+                                if error != 1168:  # ERROR_NOT_FOUND: no pending I/O yet
+                                    cleanup_error = f"CancelSynchronousIo failed (Windows error {error})"
+                                    break
+                            self.writer_thread.join(0.05)
+                    finally:
+                        kernel32.CloseHandle(handle)
+                elif not thread_already_done:
+                    cleanup_error = "OpenThread failed; could not cancel the configuration writer"
+            else:
+                self.writer_thread.join(timeout=1)
+            if self.writer_thread.is_alive():
+                detail = cleanup_error or "configuration writer did not stop within the cleanup deadline"
+                print(f"Warning: {detail}. Its pipe may remain open until this process exits.",
+                      file=sys.stderr)
         if self.pipe_path is not None:
             try:
                 if self.pipe_path.exists():
@@ -489,7 +573,11 @@ def main():
         if not args.connection_id:
             print("Error: --start-sync requires --connection-id <id>.", file=sys.stderr)
             sys.exit(1)
-        unpause_connection(load_api_key(), args.connection_id)
+        try:
+            unpause_connection(load_api_key(), args.connection_id)
+        except ApiError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
         sys.exit(0)
 
     connector_dir = Path(args.connector_directory).resolve()
@@ -512,14 +600,23 @@ def main():
         sys.exit(1)
 
     api_key = load_api_key()
+    # For a brand-new deployment there's no existing connection to check, so assume
+    # paused (new connections are created paused) and keep showing the guidance below.
+    connection_still_paused = True
     if args.connection_id:
         try:
-            connection_name, destination_name = existing_connection_target(api_key, args.connection_id)
-        except ValueError as exc:
+            connection_name, destination_name, connection_still_paused = existing_connection_target(
+                api_key, args.connection_id,
+            )
+        except (ValueError, ApiError) as exc:
             print(f"Error: {exc}", file=sys.stderr)
             sys.exit(1)
     else:
-        destination_name = args.destination or discover_destination_name(api_key)
+        try:
+            destination_name = args.destination or discover_destination_name(api_key)
+        except ApiError as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
         connection_name = args.connection or sanitize_connection_name(connector_dir.name)
     print(f"Destination: {destination_name}")
     print(f"Deploying as connection: {connection_name}")
@@ -568,7 +665,7 @@ def main():
             if connection_id:
                 print(f"Deployed. Connection ID: {connection_id}")
                 print(f"Dashboard: https://fivetran.com/dashboard/connections/{connection_id}/status")
-                if not args.connection_id:
+                if connection_still_paused:
                     print("If the connection is paused, start syncing (consumes MAR) only after")
                     print("confirming with the user:")
                     print(f'  python "{SCRIPT_DIR}/deploy_connector.py" "{connector_dir}" --start-sync --connection-id {connection_id}')

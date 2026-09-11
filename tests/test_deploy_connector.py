@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -166,6 +167,45 @@ class DeployTests(unittest.TestCase):
             self.assertEqual(unpause.call_args.args[1], "existing_id")
         self.assertFalse((self.project / "invocation.json").exists())
         self.assertEqual(self.requests, [])
+
+    def test_redeploy_of_paused_connection_keeps_sync_guidance(self):
+        self.connection = {"service": "connector_sdk", "schema": "original_name",
+                           "group_id": "original_group", "paused": True}
+        self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        self.assertIn("If the connection is paused, start syncing", self.output)
+
+    def test_redeploy_of_active_connection_hides_sync_guidance(self):
+        self.connection = {"service": "connector_sdk", "schema": "original_name",
+                           "group_id": "original_group", "paused": False}
+        self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        self.assertNotIn("If the connection is paused, start syncing", self.output)
+
+    def test_unknown_connection_id_gives_clear_error(self):
+        def not_found(path, _key):
+            self.requests.append(path)
+            raise self.helper.ApiError(f"Fivetran API GET {path} returned 404.", status_code=404)
+        self.get = not_found
+        self.assertEqual(self.run_main("--connection-id", "missing_id"), 1)
+        self.assertIn("was not found", self.output)
+        self.assertFalse((self.project / "invocation.json").exists())
+
+    def test_other_api_failures_still_exit_cleanly(self):
+        def server_error(path, _key):
+            self.requests.append(path)
+            raise self.helper.ApiError(f"Fivetran API GET {path} returned 500.\nResponse: boom", status_code=500)
+        self.get = server_error
+        self.assertEqual(self.run_main("--connection-id", "existing_id"), 1)
+        self.assertIn("returned 500", self.output)
+        self.assertFalse((self.project / "invocation.json").exists())
+
+    def test_unused_config_pipe_cancels_writer_promptly(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pipe = self.helper.ConfigPipe(Path(tmp), {"setting": "value"})
+            start = time.monotonic()
+            with pipe:
+                pass
+            self.assertLess(time.monotonic() - start, 3)
+            self.assertFalse(pipe.writer_thread.is_alive())
 
 
 if __name__ == "__main__":
