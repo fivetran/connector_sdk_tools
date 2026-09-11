@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -356,7 +357,11 @@ def main():
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             bufsize=1,
-            universal_newlines=True
+            universal_newlines=True,
+            # Keep the SDK and its Java tester separate from this wrapper so a
+            # timeout can terminate descendants holding stdout or config pipes.
+            start_new_session=(os.name != "nt"),
+            creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0),
         )
 
         timed_out = False
@@ -364,7 +369,19 @@ def main():
         def timeout_handler():
             nonlocal timed_out
             timed_out = True
-            process.kill()
+            if os.name == "nt":
+                # /T includes descendants; /F does not depend on console handlers.
+                subprocess.run(
+                    ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
+            else:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass  # The whole group already exited.
 
         timer = threading.Timer(args.timeout_seconds, timeout_handler)
         timer.start()
@@ -375,6 +392,8 @@ def main():
             process.wait()
         finally:
             timer.cancel()
+            timer.join()
+            process.stdout.close()
 
         if timed_out:
             print(f"\nError: Command timed out after {args.timeout_seconds} seconds")
