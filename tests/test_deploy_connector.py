@@ -58,6 +58,7 @@ class DeployTests(unittest.TestCase):
              contextlib.redirect_stdout(output), contextlib.redirect_stderr(output):
             with self.assertRaises(SystemExit) as error:
                 self.helper.main()
+        self.output = output.getvalue()
         return error.exception.code
 
     def invocation(self):
@@ -77,6 +78,21 @@ class DeployTests(unittest.TestCase):
         args = self.invocation()
         self.assertEqual(args[args.index("--destination") + 1], "Chosen Group")
         self.assertEqual(args[args.index("--connection") + 1], "new")
+
+    def test_new_deploy_without_connection_id_keeps_sync_guidance(self):
+        executable = self.project / ".venv/bin/fivetran"
+        executable.write_text(executable.read_text().replace(
+            "print('Connection ID: existing_id')", "print('Deployment succeeded')"))
+        with patch.object(self.helper, "unpause_connection") as unpause:
+            self.assertEqual(self.run_main("--destination", "Chosen Group"), 0)
+            unpause.assert_not_called()
+        self.assertEqual(self.requests, [])
+        self.assertIn("paused", self.output)
+        self.assertIn("initial sync (consumes MAR)", self.output)
+        self.assertIn("confirming with the user", self.output)
+        self.assertIn("dashboard", self.output)
+        self.assertIn('--start-sync --connection-id "<connection_id>"', self.output)
+        self.assertNotIn("Deployed. Connection ID:", self.output)
 
     def test_invalid_existing_target_never_deploys(self):
         for connection in ({"service": "postgres"}, {"service": "connector_sdk"}):

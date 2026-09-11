@@ -569,6 +569,10 @@ def main():
                     print(f'  python "{SCRIPT_DIR}/deploy_connector.py" "{connector_dir}" --start-sync --connection-id {connection_id}')
             else:
                 print("Deployed. Check connection status in the Fivetran dashboard.")
+                print("If the connection is paused, start the initial sync (consumes MAR) only after")
+                print("confirming with the user. Open the connection in the dashboard to start syncing,")
+                print("or copy its connection ID and run:")
+                print(f'  python "{SCRIPT_DIR}/deploy_connector.py" "{connector_dir}" --start-sync --connection-id "<connection_id>"')
 
         sys.exit(process.returncode)
 

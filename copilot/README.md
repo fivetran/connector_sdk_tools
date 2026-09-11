@@ -75,4 +75,4 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `agents/connector-fixer.md` | Agent for diagnosing and fixing errors |
 | `tools/enter_configuration.py` | Optional local encryption of configuration values |
 | `tools/run_connector.py` | Run connector with runtime config via named pipe |
-| `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
+| `tools/deploy_connector.py` | Redeploy with `--connection-id`, or deploy to an explicit `--destination` (with discovery as a fallback) |
