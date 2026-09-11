@@ -472,7 +472,11 @@ def run_debug(cmd, connector_dir, timeout_seconds):
         # descendant, e.g. a tester the SDK spawned) even after the immediate
         # `process` has already exited on its own.
         if job is not None:
-            job.close()
+            try:
+                job.close()
+            except OSError:
+                # Don't let a CloseHandle failure skip the process.kill() fallback below.
+                pass
         if process is not None:
             if os.name == "nt":
                 # Also handles failure to assign the gated launcher to the job.
