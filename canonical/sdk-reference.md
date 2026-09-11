@@ -231,7 +231,16 @@ invent production settings or require the user to re-enter values already suppli
 
 For a deployed connector with missing local values, attempt supported read-only
 configuration retrieval first. Keep recovered values out of tool output and logs;
-never treat a masked value as usable configuration.
+never treat a masked value as usable configuration. Check for masking/redaction
+before copying API values into a runnable or deployable file. Placeholders such as
+`******` mean the value is unavailable; a test using them does not establish that
+the production configuration is invalid.
+
+Preserve existing production configuration during code repairs unless the user
+authorizes a change. Discover supported update behavior from installed CLI help
+or documentation before concluding that unavailable values block deployment.
+Keep sample test inputs separate from production settings; success with sample
+values does not validate the actual production configuration.
 
 When values still need collecting, try the project's `fivetran configuration`.
 It uses the connector's setup form and saves ordinary JSON; it does not download
@@ -243,8 +252,11 @@ Otherwise fill `configuration.json` with supplied or retrievable values and ask
 only for unresolved fields. Do not require a setup form for a code repair.
 
 The SDK form is interactive. Use the harness's interactive terminal if available;
-otherwise give the user the command to run in the project directory in their own
-terminal. EOF, missing stdin, setup or test errors, or dependency failures do not prove
+otherwise give the user the command only if they have access to that project
+and a terminal. In a browser-hosted harness, perform workspace changes with the
+available tools and ask only for missing information or decisions. If sensitive
+values are required and no secure entry flow is available, explain that limitation
+rather than directing the user to an inaccessible server terminal. EOF, missing stdin, setup or test errors, or dependency failures do not prove
 that a setup form is absent. Report the actual error and resolve it appropriately.
 Do not ask users to paste secrets into chat; use the form or have the user enter
 secret values in `configuration.json` using their own local editor or terminal.
