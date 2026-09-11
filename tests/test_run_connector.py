@@ -1,6 +1,7 @@
 """Run a fake SDK with a tester child; no network or real connector required."""
 
 import os
+import importlib.util
 from pathlib import Path
 import signal
 import subprocess
@@ -8,9 +9,63 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 
 HELPER = Path(__file__).resolve().parents[1] / "canonical/tools/run_connector.py"
+
+
+def load_helper():
+    spec = importlib.util.spec_from_file_location("run_fixture", HELPER)
+    helper = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(helper)
+    return helper
+
+
+class LifecycleTests(unittest.TestCase):
+    def test_exception_stops_process_tree(self):
+        helper = load_helper()
+        with tempfile.TemporaryDirectory() as tmp:
+            heartbeat = Path(tmp) / "heartbeat"
+            worker = (
+                "import pathlib, time; "
+                "p = pathlib.Path('heartbeat'); p.write_text('started'); "
+                "print('ready', flush=True); "
+                "exec(\"while True:\\n p.write_text(str(time.time_ns())); time.sleep(0.02)\")"
+            )
+            with patch("builtins.print", side_effect=RuntimeError("output failed")):
+                with self.assertRaisesRegex(RuntimeError, "output failed"):
+                    helper.run_debug([sys.executable, "-c", worker], Path(tmp), 5)
+            value = heartbeat.read_text()
+            time.sleep(0.1)
+            self.assertEqual(heartbeat.read_text(), value)
+
+    def test_unused_config_pipe_cancels_writer_promptly(self):
+        helper = load_helper()
+        with tempfile.TemporaryDirectory() as tmp:
+            pipe = helper.ConfigPipe(Path(tmp), {"setting": "value"})
+            start = time.monotonic()
+            with pipe:
+                pass
+            self.assertLess(time.monotonic() - start, 3)
+            self.assertFalse(pipe.writer_thread.is_alive())
+
+    @unittest.skipUnless(os.name == "nt", "Requires native Windows Job Objects")
+    def test_windows_job_stops_tester_after_parent_exits(self):
+        # Run the wrapper in a separate process so a broken job implementation
+        # fails with a bounded timeout instead of hanging the test suite.
+        with tempfile.TemporaryDirectory() as tmp:
+            child = "import time; print('tester ready', flush=True); time.sleep(60)"
+            parent = f"import subprocess,sys; subprocess.Popen([sys.executable, '-c', {child!r}])"
+            driver = (
+                "import runpy,sys; from pathlib import Path; "
+                f"h = runpy.run_path({str(HELPER)!r}); "
+                f"sys.exit(h['run_debug']([sys.executable, '-c', {parent!r}], Path('.'), 1))"
+            )
+            result = subprocess.run([sys.executable, "-c", driver], cwd=tmp,
+                                    capture_output=True, text=True, timeout=8)
+            self.assertEqual(result.returncode, 124, result.stdout + result.stderr)
+            self.assertIn("tester ready", result.stdout)
 
 
 @unittest.skipUnless(os.name == "posix", "Fake SDK executable uses a POSIX shebang")
@@ -31,27 +86,48 @@ class RunTests(unittest.TestCase):
                 f"#!{sys.executable}\n"
                 "import json, os, pathlib, subprocess, sys, time\n"
                 "pathlib.Path('sdk_pid').write_text(str(os.getpid()))\n"
-                "with open(sys.argv[sys.argv.index('--configuration') + 1]) as stream:\n"
+                + ("time.sleep(60)\n" if mode == "unopened_pipe" else "")
+                + "with open(sys.argv[sys.argv.index('--configuration') + 1]) as stream:\n"
                 "    assert json.load(stream) == {'setting': 'value'}\n"
                 + ("print('debug completed', flush=True)\n" if mode == "success" else
                    f"subprocess.Popen([sys.executable, '-c', {child_code!r}])\n"
                    "print('tester started', flush=True)\n"
-                   + ("time.sleep(60)\n" if mode == "running_parent" else ""))
+                   + ("time.sleep(60)\n" if mode in ("running_parent", "interrupt", "terminate") else ""))
             )
             executable.chmod(0o700)
             try:
-                result = subprocess.run(
-                    [sys.executable, str(HELPER), str(project), "--timeout-seconds", "1"],
-                    capture_output=True, text=True, timeout=8,
-                )
+                cmd = [sys.executable, str(HELPER), str(project), "--timeout-seconds",
+                       "60" if mode in ("interrupt", "terminate") else "1"]
+                if mode in ("interrupt", "terminate"):
+                    with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                          text=True) as wrapper:
+                        try:
+                            deadline = time.monotonic() + 5
+                            while not (project / "heartbeat").exists():
+                                if time.monotonic() > deadline:
+                                    self.fail("tester did not start")
+                                time.sleep(0.02)
+                            signum = signal.SIGINT if mode == "interrupt" else signal.SIGTERM
+                            wrapper.send_signal(signum)
+                            stdout, stderr = wrapper.communicate(timeout=5)
+                            result = subprocess.CompletedProcess(cmd, wrapper.returncode, stdout, stderr)
+                        finally:
+                            if wrapper.poll() is None:
+                                wrapper.kill()
+                else:
+                    result = subprocess.run(cmd, capture_output=True, text=True, timeout=8)
                 if mode == "success":
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
                     self.assertIn("debug completed", result.stdout)
                     self.assertNotIn("timed out", result.stdout)
-                else:
+                elif mode == "unopened_pipe":
                     self.assertEqual(result.returncode, 124, result.stdout + result.stderr)
+                else:
+                    expected = 130 if mode == "interrupt" else 143 if mode == "terminate" else 124
+                    self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
                     self.assertIn("tester started", result.stdout)
-                    self.assertIn("timed out after 1 seconds", result.stdout)
+                    if expected == 124:
+                        self.assertIn("timed out after 1 seconds", result.stdout)
                     # The child inherited stdout. Returning promptly proves that
                     # handle closed; a stopped heartbeat also checks it stopped work.
                     heartbeat = (project / "heartbeat").read_text()
@@ -75,6 +151,15 @@ class RunTests(unittest.TestCase):
 
     def test_success_keeps_normal_exit_status(self):
         self.run_fixture("success")
+
+    def test_timeout_before_sdk_opens_config_pipe(self):
+        self.run_fixture("unopened_pipe")
+
+    def test_ctrl_c_stops_sdk_and_tester(self):
+        self.run_fixture("interrupt")
+
+    def test_sigterm_stops_sdk_and_tester(self):
+        self.run_fixture("terminate")
 
 
 if __name__ == "__main__":
