@@ -86,7 +86,7 @@ Edit the CSDK project files:
 
 ### `configuration.json`
 - Keep flat string key/value pairs only.
-- Include fields needed by the connector, using obvious placeholders only.
+- Include fields needed by the connector; preserve supplied values and use obvious placeholders for unresolved fields.
 - Do not include real credentials from the source Function connector.
 - Do not use arrays or nested objects.
 
@@ -98,7 +98,7 @@ Edit the CSDK project files:
 ### `README.md`
 - Explain that this connector was migrated from a Fivetran Functions connector.
 - Document configuration fields with placeholders only.
-- Direct users to `tools/enter_configuration.py` for secure configuration entry.
+- Follow **Configuration entry** in `sdk-reference.md`; use the SDK form or ordinary JSON values.
 
 ## Step 5: Validate the Migration
 
@@ -114,7 +114,7 @@ Check behavior before testing:
 
 Then follow the secure test flow from `test-connector`:
 - Run the secure runner, not `fivetran debug` directly.
-- If configuration values need to be entered or refreshed, direct the user to run `tools/enter_configuration.py` in their own terminal.
+- If configuration values are missing, follow **Configuration entry** in `sdk-reference.md`; preserve supplied and existing values.
 - Do not inspect or print configuration values.
 
 ## Step 6: Report Results

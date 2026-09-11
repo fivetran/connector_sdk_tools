@@ -64,46 +64,20 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - Docstrings on functions you add or change
 
 ### configuration.json
-- Flat string key/value pairs only
-- Configuration fields needed by the connector, with real values supplied later
-- Descriptive placeholder values only — never real credentials
-- Placeholder values must be obviously fake (for example, `YOUR_API_KEY_HERE`)
-- Do NOT ask for, accept, write, infer, or preserve real credential values
+- Flat string key/value pairs only; preserve existing local values.
+- Fill values supplied or authorized by the user, including non-sensitive settings.
+- Use obvious placeholders only for unresolved fields; never invent credentials.
 
 ### README.md
-- Connector purpose, setup instructions, configuration guide
-- Configuration instructions must direct users to enter values via `tools/enter_configuration.py`
-- Do NOT tell users to paste values in chat
-- Do NOT tell users to edit `configuration.json` manually
-- Do NOT present configuration-entry options; the encryption script is the only supported flow
+- Connector purpose, setup instructions, and configuration guide.
+- Describe the **Configuration entry** flow from `sdk-reference.md`: use the SDK
+  setup form when available, otherwise ordinary local JSON values.
+- Do not require the custom encryption script or ask users to paste secrets in chat.
 
-**CRITICAL**: Use `Edit` to modify the scaffolded files in place. Use `Write` only for a file the scaffold did not create. Do NOT just return text, and do NOT replace a working community-connector template with a from-scratch rewrite.
-
-## Credential Handling Policy
-
-Credential entry is outside the generator's job. The generator creates placeholder fields only. Real credentials must never appear in generated files, README instructions, progress updates, or chat.
-
-When documenting setup, use this exact flow:
-
-macOS/Linux:
-```bash
-cd "<connector_dir>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
-
-Windows PowerShell:
-```powershell
-cd "<connector_dir>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
-
-The script prompts for configuration values and encrypts every field value in place. If the local encryption secret file does not exist yet, the script creates it first. The AI must not see plaintext configuration values.
-
-**Hard failures:**
-- Do NOT ask the user how they want to enter credentials.
-- Do NOT offer "paste in chat", "edit configuration.json", "set values in README", or similar alternatives.
-- Do NOT generate plaintext example credentials beyond obvious placeholders.
-- Do NOT include real secrets if the user provided them earlier; replace them with placeholders and tell the parent workflow that credentials must be re-entered through the encryption script.
+Use `Edit` to customize existing files and `Write` only for missing files. Follow
+**Configuration entry** in `sdk-reference.md`; adding a setup form to an existing
+connector requires the user's agreement. Do not discard values already supplied
+just to ask the user to enter them again.
 
 ## BEST PRACTICES
 
@@ -194,8 +168,9 @@ op.checkpoint(state=state)
 ### 6. Configuration Files
 - **CRITICAL:** configuration.json must be flat, single-level key/value pairs
 - **String values only** - No lists or dictionaries
-- **Only sensitive fields** should be in configuration.json (e.g., api_key, client_id, client_secret, username, password)
-- **Placeholder values only** - No real credentials, tokens, passwords, API keys, or copied user-provided secrets
+- Source credentials and user-specific settings belong in configuration.json (e.g., api_key, username, zip_codes)
+- Preserve existing local values and fill values supplied or authorized by the user per **Configuration entry** in `sdk-reference.md`; use placeholders only for unresolved fields
+- Collect missing secrets through the SDK form or the user's local editor/terminal, never by asking for them in chat. Keep populated configuration out of tool output, responses, and version control
 - **Do NOT include** code configurations like pagination_type, page_size, rate_limit settings - hardcode these in connector.py
 
 ### 7. Additional Standards
@@ -299,15 +274,15 @@ Before completing the task, the subagent MUST validate its work:
 2. **Required Functions**: connector.py must contain both `update()` and `schema()` functions
 3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` keys are used; any declared column types are valid type names and used selectively (not every column)
 4. **Configuration Flatness**: Validate that configuration.json is flat (no nested objects/arrays) with string values only
-5. **Credential Safety**: Validate that configuration.json contains placeholders only and README points only to `enter_configuration.py` for credential entry
+5. **Configuration**: Preserve user-approved values; README follows SDK setup-form or plaintext configuration entry.
 6. **Documentation Completeness**: README must include setup instructions, testing procedures, and API documentation
 7. **Example Pattern Conformance**: Verify generated code follows the studied example patterns
 
 ### Success Criteria:
 - All 3 files present and adapted (community templates kept, not rewritten from scratch)
 - Code follows BEST PRACTICES (schema, logging, type hints, operations)
-- Configuration is flat with placeholder string values only (sensitive fields only)
-- README does not ask users to paste credentials in chat or edit `configuration.json` manually
+- Configuration is flat with string values; preserve supplied values and mark unresolved fields
+- README does not ask users to paste credentials in chat
 - Code validation requirements met (syntax check, import test)
 - Configuration matches example patterns studied
 - Documentation is comprehensive and clear
@@ -323,9 +298,9 @@ Before completing:
 - [ ] Every table declares a `primary_key`; column types (if any) are valid and selective, not exhaustive
 - [ ] `connector = Connector(...)` in global scope
 - [ ] No forbidden patterns (`Dict[str, Any]`, `Generator[...]`, `op.Operation` in type hints, `yield` with operations)
-- [ ] configuration.json is valid flat JSON with placeholder string values only
-- [ ] README uses `enter_configuration.py` as the only credential-entry flow
-- [ ] No generated file asks users to paste credentials in chat or edit `configuration.json` manually
+- [ ] configuration.json is valid flat JSON with string values; unresolved fields are explicit
+- [ ] README follows Configuration entry in sdk-reference.md
+- [ ] No generated file asks users to paste credentials in chat
 
 ## Handling Follow-Up Revisions
 

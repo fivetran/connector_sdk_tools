@@ -117,7 +117,7 @@ Edit the CSDK project files:
 
 ### `configuration.json`
 - Keep flat string key/value pairs only.
-- Include fields needed by the connector, using obvious placeholders only.
+- Include fields needed by the connector; preserve supplied values and use obvious placeholders for unresolved fields.
 - Convert nested Meltano settings to clear flat names, and document any rename.
 - Prefer separate connector deployments for multi-entity configs (see `sdk-reference.md`). Only when the source tap truly requires multi-item selection, represent Meltano arrays or objects as JSON-encoded string placeholders, such as `"repositories": "[\"owner/repo\"]"` or `"searches": "[{\"name\":\"example\",\"query\":\"repo:owner/repo\"}]"`, then parse and validate them with `json.loads()` in `connector.py`.
 - Do not include real credentials from `.env`, `config.json`, or Meltano config.
@@ -134,7 +134,7 @@ Edit the CSDK project files:
 - Document configuration fields with placeholders only.
 - Document any behavior changes, especially full-table replacement/truncate semantics, stream selection changes, and removed Meltano loader/transform/orchestration behavior.
 - Document any pipeline resources that were intentionally left out of connector code and should be handled with `fivetran-cli`, such as destination/connection setup, transformations, or transformation projects.
-- Direct users to `tools/enter_configuration.py` for secure configuration entry.
+- Follow **Configuration entry** in `sdk-reference.md`; use the SDK form or ordinary JSON values.
 
 ### `fivetran-cli` follow-up notes
 - If the Meltano pipeline includes loader/target configuration that maps to Fivetran destinations or connections, document the intended Fivetran CLI resource commands to run after connector migration.
@@ -158,7 +158,7 @@ Check behavior before testing:
 
 Then follow the secure test flow from `test-connector`:
 - Run the secure runner, not `fivetran debug` directly.
-- If configuration values need to be entered or refreshed, direct the user to run `tools/enter_configuration.py` in their own terminal.
+- If configuration values are missing, follow **Configuration entry** in `sdk-reference.md`; preserve supplied and existing values.
 - Do not inspect or print configuration values.
 
 ## Step 6: Report Results

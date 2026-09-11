@@ -32,7 +32,7 @@ claude plugin update fivetran-connector-sdk@fivetran-connector-sdk-ai
 
 ### Post-installation
 
-Install the tool dependencies:
+If using encrypted configuration, install the tool dependencies:
 
 macOS/Linux:
 ```bash
@@ -68,32 +68,16 @@ Claude will:
 4. Set up a Python virtual environment
 5. Ask you to enter your API credentials
 
-### Step 3: Enter Your API Credentials
-When prompted, open a **separate terminal** and run:
+### Step 3: Complete Configuration
 
-macOS/Linux:
-```bash
-cd ~/my-connectors/your_connector
-python -m pip install -r /path/to/claude-code/tools/requirements.txt
-python /path/to/claude-code/tools/enter_configuration.py configuration.json
-```
+Reuse existing values and supply only missing fields. If the connector has a setup
+form, run `fivetran configuration` in its directory using an interactive terminal.
+Otherwise fill in ordinary `configuration.json`; adding a setup form is optional.
+Keep secrets out of chat and configuration out of version control.
 
-Windows PowerShell:
-```powershell
-cd "C:\path\to\my-connectors\your_connector"
-python -m pip install -r "C:\path\to\claude-code\tools\requirements.txt"
-python "C:\path\to\claude-code\tools\enter_configuration.py" "configuration.json"
-```
-
-Enter configuration values when prompted. Every field value is encrypted immediately as an inline `ENCRYPTED:v1:<key_id>:local-fernet:` value in `configuration.json`. Claude never sees plaintext configuration values.
-
-The dependency install is temporary. Once secure configuration entry is available in the Fivetran Connector SDK CLI, this helper script flow will be replaced.
-
-**First time only:** The tool creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows) and uses it immediately. Claude never sees the secret or plaintext configuration values.
-
-Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret to decrypt configuration values at runtime. To start configuration entry over, run `enter_configuration.py` again.
-
-Go back to Claude Code and tell it you've entered your credentials.
+See [Configuration entry](sdk-reference.md#configuration-entry) for the shared
+workflow, including retrieving configuration during repairs. Encryption is
+[optional](../README.md#optional-encrypted-configuration).
 
 ### Step 4: Test the Connector
 
@@ -135,8 +119,9 @@ Claude: Got it. Let me generate the connector...
         [creates <your_connector>/ directory with connector.py, configuration.json, README.md]
         [sets up virtual environment]
 
-        Please enter your API credentials. In a separate terminal, run:
-          python .../enter_configuration.py configuration.json
+        [connector has a setup form]
+        Please enter the missing credentials using the setup form:
+          fivetran configuration
 
 You: Done, I've entered my credentials
 
@@ -169,14 +154,8 @@ This will:
 
 ### Entering Configuration Values
 
-After the connector is generated, you'll need to enter your API credentials. Run this in a **separate terminal**:
-
-```bash
-python -m pip install -r /path/to/claude-code/tools/requirements.txt
-python /path/to/claude-code/tools/enter_configuration.py configuration.json
-```
-
-On first run, it creates a local encryption secret under your user profile. This encrypts local configuration values so the AI cannot see them.
+Follow [Complete Configuration](#step-3-complete-configuration); existing values do
+not need to be entered again.
 
 ### Test a Connector
 ```
@@ -221,9 +200,9 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `agents/connector-validator.md` | Subagent for API research and requirements gathering |
 | `agents/connector-generator.md` | Subagent for generating connector code |
 | `agents/connector-fixer.md` | Subagent for diagnosing and fixing errors (invoked automatically on natural-language fix requests) |
-| `tools/enter_configuration.py` | Enter and encrypt API credentials |
+| `tools/enter_configuration.py` | Optional local encryption of configuration values |
 | `tools/run_connector.py` | Run connector with runtime config via named pipe |
-| `tools/deploy_connector.py` | Deploy connector with runtime config via named pipe |
+| `tools/deploy_connector.py` | Redeploy with `--connection-id`, or deploy to an explicit `--destination` (with discovery as a fallback) |
 
 ## How It Works
 

@@ -28,7 +28,7 @@
 
 **Note**: `fivetran init` without `--template` creates a complete, working connector — not empty boilerplate.
 
-**`fivetran deploy` arguments**: `--api-key` and `--connection` are required; `--destination` is optional only if your account has a single destination. The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `community_connectors`, `examples/<path>` from `connector_sdk`, and no flag uses the default `_template_connector`.
+**`fivetran deploy` arguments**: authentication is required via `--api-key` or the inherited `FIVETRAN_API_KEY` environment variable; `--connection` is required; `--destination` is optional only if your account has a single destination. The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `community_connectors`, `examples/<path>` from `connector_sdk`, and no flag uses the default `_template_connector`.
 
 ## Runtime Environment
 
@@ -124,7 +124,8 @@ Call operations directly.
 ### configuration.json Rules
 - **Flat key/value pairs only** — no nested objects or arrays
 - **All values must be strings**
-- **Only sensitive fields** (api_key, client_secret, password, etc.)
+- **Source credentials and user-specific settings** (api_key, client_secret, password, zip_codes, etc.)
+- Preserve authorized local values; keep populated configuration out of version control
 - **Do NOT include** code settings (pagination_type, page_size) — hardcode in connector.py
 - Multiple items (repos, accounts) = separate connector deployments, NOT array values
 
@@ -219,6 +220,55 @@ def update(configuration, state):
     state.pop("backfill", None)
     op.checkpoint(state=state)
 ```
+
+## Configuration entry
+
+Reuse existing local configuration; collect only missing values. Configuration is
+an ordinary flat `configuration.json` object with string values, not necessarily
+secrets. Preserve values supplied by the user, especially settings they explicitly
+identify as non-sensitive; the agent may fill them into the file directly. Do not
+invent production settings or require the user to re-enter values already supplied.
+
+For a deployed connector with missing local values, attempt supported read-only
+configuration retrieval first. Keep recovered values out of tool output and logs;
+never treat a masked value as usable configuration. Check for masking/redaction
+before copying API values into a runnable or deployable file. Placeholders such as
+`******` mean the value is unavailable; a test using them does not establish that
+the production configuration is invalid.
+
+Preserve existing production configuration during code repairs unless the user
+authorizes a change. Discover supported update behavior from installed CLI help
+or documentation before concluding that unavailable values block deployment.
+Keep sample test inputs separate from production settings; success with sample
+values does not validate the actual production configuration.
+
+When values still need collecting, try the project's `fivetran configuration`.
+It uses the connector's setup form and saves ordinary JSON; it does not download
+production configuration. Preserve existing files and respect overwrite prompts.
+If the CLI reports that no setup form is defined, ask whether the user wants to add
+one. Only implement that change with their agreement, using the installed SDK's
+configuration-form API and examples, then run `fivetran configuration` again.
+Otherwise fill `configuration.json` with supplied or retrievable values and ask
+only for unresolved fields. Do not require a setup form for a code repair.
+
+The SDK form is interactive. Use the harness's interactive terminal if available;
+otherwise give the user the command only if they have access to that project
+and a terminal. In a browser-hosted harness, perform workspace changes with the
+available tools and ask only for missing information or decisions. If sensitive
+values are required and no secure entry flow is available, explain that limitation
+rather than directing the user to an inaccessible server terminal. EOF, missing stdin, setup or test errors, or dependency failures do not prove
+that a setup form is absent. Report the actual error and resolve it appropriately.
+Do not ask users to paste secrets into chat; use the form or have the user enter
+secret values in `configuration.json` using their own local editor or terminal.
+User-supplied values may be written as requested without repeating
+them in the response. Keep configuration out of version control and avoid printing
+populated configuration during inspection or debugging.
+
+Custom encryption and `csdk_master_secret` are not prerequisites. Do not send users
+to `enter_configuration.py` as the default flow or replace their existing key.
+The existing runner also accepts previously encrypted fields; if those cannot be
+decrypted, explain the limitation and obtain replacement values through the flow
+above rather than silently changing keys or discarding usable local values.
 
 ## Gotchas
 

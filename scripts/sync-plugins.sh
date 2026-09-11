@@ -172,7 +172,7 @@ EOF
 ---
 name: connector-fixer
 description: Debug and fix errors in a Fivetran connector. Use when tests fail or the user reports connector issues.
-tools: Read, Edit, WebFetch, Grep, Glob
+tools: Read, Edit, Bash, WebFetch, Grep, Glob
 model: sonnet
 maxTurns: 15
 permissionMode: acceptEdits
