@@ -104,11 +104,8 @@ When user asks to add features or make improvements (not fixing errors):
 - Determine scope (single function, multiple files, architectural)
 
 ### 2. Pattern Research
-Use WebFetch to study relevant examples:
-- **Adding authentication:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/authentication/
-- **Adding pagination:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
-- **Adding incremental sync:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
-- **Performance improvements:** Fetch parallel fetching example
+Follow **Example discovery** in `sdk-reference.md` for the requested feature,
+such as authentication, pagination, incremental sync, or performance.
 
 ### 3. Plan Changes
 - Determine which files need modification
@@ -181,27 +178,11 @@ op.delete(table, keys)
 | Non-string config values | Convert all to strings |
 | `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |
 
-## EXAMPLE CATEGORIZATION GUIDE
+## Relevant examples
 
-### Authentication Examples:
-- **API Key:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-- **OAuth 2.0:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-- **HTTP Basic:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-- **HTTP Bearer:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
-
-### Data Handling Examples:
-- **Pagination:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
-- **Cursors:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/cursors/
-- **Incremental Sync:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
-- **Large Datasets:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
-
-### Community Connectors:
-- Browse: https://github.com/fivetran/community_connectors/tree/main/
-- Useful for finding connectors with similar auth methods, pagination, or sync strategies
-
-### Foundation Examples:
-- **Basic Structure:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/hello/connector.py`
-- **Configuration:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/configuration/connector.py`
+Follow **Example discovery** in `sdk-reference.md`, choosing patterns that help
+explain the failure or requested change: authentication, connector structure,
+configuration, pagination, incremental state, or large-volume processing.
 
 ## CODE VALIDATION REQUIREMENTS
 
@@ -222,14 +203,8 @@ op.delete(table, keys)
    - Categorize error type: authentication, network, syntax, logic, or configuration
 
 2. **PATTERN RESEARCH PHASE**:
-   - Use `Glob pattern="examples/**/*.py"` to find relevant connector examples
-   - **Error Pattern Matching**:
-     - Authentication errors → Read `examples/common_patterns_for_connectors/authentication/*/connector.py`
-     - Type/Import errors → Read `examples/quickstart_examples/hello/connector.py`
-     - Configuration errors → Read `examples/quickstart_examples/configuration/connector.py`
-     - Data handling errors → Read `examples/common_patterns_for_connectors/cursors/*/connector.py`
-   - **Community Connectors**: Check connectors with same auth/pagination/sync patterns
-   - **Document findings**: "Based on examples studied: [list paths and key patterns]"
+   - Use the relevant-example guidance above to inspect patterns tied to the observed error.
+   - Record the discovered paths and what they establish about the problem.
 
 3. **ROOT CAUSE IDENTIFICATION**:
    - Compare current code with working example patterns
@@ -252,19 +227,19 @@ op.delete(table, keys)
 When adding new capabilities to a working connector:
 
 ### Adding Authentication
-- Study: `examples/common_patterns_for_connectors/authentication/`
+- Study: authentication examples located through **Example discovery** in `sdk-reference.md`
 - Pattern: Follow example structure for credential handling
 
 ### Adding Pagination
-- Study: `examples/common_patterns_for_connectors/pagination/` (offset, keyset, page_number, next_url)
+- Study: pagination examples matching the source (offset, keyset, page number, or next URL)
 - Pattern: Study pagination loop structures and state management
 
 ### Adding Incremental Sync
-- Study: `examples/common_patterns_for_connectors/incremental_sync_strategies/`
+- Study: incremental sync and checkpoint examples
 - Pattern: Follow checkpoint and cursor management patterns
 
 ### Performance Improvements
-- Study: `examples/common_patterns_for_connectors/parallel_fetching_from_source/`
+- Study: parallel fetching and large-volume processing examples
 - Pattern: Study parallel processing and rate limiting
 
 ## Required Output Format
