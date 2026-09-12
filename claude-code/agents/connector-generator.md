@@ -182,49 +182,12 @@ op.checkpoint(state=state)
 - **Docstrings:** Include detailed docstrings for all functions
 - **NO BACKWARDS COMPATIBILITY:** Do NOT implement backwards compatibility unless explicitly requested
 
-## EXAMPLE CATEGORIZATION GUIDE
+## Relevant examples
 
-**Note:** Use local paths with Glob/Read when available. For WebFetch alternative, append path to GitHub base URL.
-
-### Authentication Examples:
-- **API Key**:
-  - Local: `examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-- **OAuth 2.0**:
-  - Local: `examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-- **HTTP Basic**:
-  - Local: `examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-- **HTTP Bearer**:
-  - Local: `examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
-
-### Data Handling Examples:
-- **Pagination**:
-  - Local: `examples/common_patterns_for_connectors/pagination/` (keyset, offset, page_number, next_page_url)
-  - WebFetch: Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/ then fetch specific pattern
-- **Cursors**:
-  - Local: `examples/common_patterns_for_connectors/cursors/` (time_window, multiple_tables)
-  - WebFetch: Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/cursors/ then fetch specific pattern
-- **Incremental Sync**:
-  - Local: `examples/common_patterns_for_connectors/incremental_sync_strategies/`
-  - WebFetch: Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/ then fetch specific strategy
-- **Large Datasets**:
-  - Local: `examples/quickstart_examples/large_data_set/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
-
-### Community Connectors (Source-specific examples):
-- Databases/APIs: Browse https://github.com/fivetran/community_connectors/tree/main/ and use WebFetch for real-world connector examples
-- Raw file: `https://raw.githubusercontent.com/fivetran/community_connectors/main/<name>/connector.py`
-
-### Foundation Examples (ALWAYS study these):
-- **Basic Structure**:
-  - Local: `examples/quickstart_examples/hello/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/hello/connector.py`
-- **Configuration**:
-  - Local: `examples/quickstart_examples/configuration/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/configuration/connector.py`
+Follow **Example discovery** in `sdk-reference.md`. Start with connector structure
+and configuration, then inspect patterns matching the source's authentication,
+pagination, incremental state, and data volume. Reuse the validator's researched
+examples and recommendations.
 
 ## MANDATORY EXAMPLE ANALYSIS WORKFLOW
 
@@ -234,9 +197,9 @@ op.checkpoint(state=state)
    - Data structure and schema requirements
    - Any specific API endpoints or data sources to connect to
 
-2. **Example Pattern Matching**: Use the categorization guide above to identify 2-4 relevant examples to study
+2. **Example Pattern Matching**: Identify the examples needed for the implementation using the guidance above
 
-3. **Concrete Example Study**: Use Glob and Read tools to examine the identified examples, focusing on:
+3. **Concrete Example Study**: Use the available file or HTTP tools to examine the identified examples, focusing on:
    - Import statements and function signatures
    - Authentication implementation patterns
    - Data fetching and processing logic
