@@ -49,7 +49,7 @@ Identify:
 
 ### Step 2: Search Community Connectors
 Follow **Example discovery** in `sdk-reference.md` to find an existing connector
-for the source or a closely related API/database. Read its documentation and code
+for the source or a closely related source or platform. Read its documentation and code
 to establish whether it is a suitable starting point.
 
 ### Step 3: Identify Relevant Common Patterns

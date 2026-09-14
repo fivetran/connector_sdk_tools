@@ -15,7 +15,7 @@ permissionMode: acceptEdits
 
 # Fivetran Connector Debugging, Fixing & Revising
 
-**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
+**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
 **Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
@@ -85,7 +85,7 @@ Reference: https://fivetran.com/docs/developer-resources/rest-api/api-reference
 - Identify specific line numbers and functions
 
 ### 2. Research
-- Use WebFetch to study relevant SDK examples (see urls in sdk-reference.md)
+- Follow **Example discovery** in `sdk-reference.md` to locate and study relevant SDK examples using available file or HTTP tools
 - Compare current code with working patterns
 - Identify specific differences causing the error
 

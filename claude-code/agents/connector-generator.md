@@ -15,7 +15,7 @@ permissionMode: acceptEdits
 
 # Fivetran Connector Code Generation
 
-**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
+**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
 **Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
@@ -38,15 +38,17 @@ Use `Write` only for a file the scaffold did not create.
 
 ## Mandatory Example Analysis
 
-Before writing code, use WebFetch to study 2-4 relevant SDK examples (see example URLs in sdk-reference.md):
+Before writing code, follow **Example discovery** in `sdk-reference.md` to locate
+and study relevant SDK examples. Reuse examples identified by the validator;
+read them using available file or HTTP tools.
 
-1. Always fetch the hello world example for basic structure
-2. Fetch the authentication example matching the API's auth method
-3. Fetch pagination example if needed
+1. Study a current example of basic connector structure and configuration
+2. Study an authentication example matching the source's auth method, if needed
+3. Study pagination examples if needed
 4. Document what you learned before coding:
    ```
    Examples studied:
-   - [URL]: [key pattern learned]
+   - [discovered path or URL]: [key pattern learned]
    Implementation approach:
    - Authentication: [method] following [example]
    - Pagination: [type] based on [example]
