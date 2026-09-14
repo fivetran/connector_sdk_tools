@@ -288,7 +288,7 @@ There are **two source repositories** — always consider both before building f
 
 | Repository | Use for | `--template` prefix |
 |------------|---------|---------------------|
-| **Examples** — https://github.com/fivetran/connector_sdk/tree/main/ | Quickstart examples (`examples/quickstart_examples/`) and reusable building blocks (`examples/common_patterns_for_connectors/`) — auth, pagination, sync strategy, error handling | `examples/<path>` |
+| **Examples** — [SDK examples](https://github.com/fivetran/connector_sdk/tree/main/examples) | Foundational connector structure and reusable patterns for auth, pagination, sync strategy, and error handling | `examples/<path>` |
 | **Community connectors** — https://github.com/fivetran/community_connectors/ | Source-specific, ready-to-use connectors for real APIs and databases | `connectors/<name>` |
 
 Before building a new connector:
@@ -296,33 +296,19 @@ Before building a new connector:
 2. Identify which **examples** (common patterns) apply based on auth, pagination, and sync style — these apply to every connector regardless of source.
 3. Start from the best match with `fivetran init --template <prefix>` (`connectors/<name>` resolves to `community_connectors`; `examples/<path>` resolves to `connector_sdk`; no flag uses the default `_template_connector`).
 
-## SDK Example URLs
+## Example discovery
 
-All example URLs below live in the **examples** repo (`fivetran/connector_sdk`).
-Community connectors live in `fivetran/community_connectors`
-(raw: `https://raw.githubusercontent.com/fivetran/community_connectors/main/<name>/connector.py`).
+Use the repositories in **Connector Discovery** above. Read their current README
+or directory listing to locate relevant examples; use an existing local checkout
+when available, otherwise the repository's web listing or contents API. Follow
+paths you discover rather than guessing filenames or assuming an older layout.
 
-### Authentication
-- API Key: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-- OAuth2: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-- HTTP Basic: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-- HTTP Bearer: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
-- Session Token: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/session_token/connector.py`
-- Certificate: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/certificate/connector.py`
-
-### Pagination
-- Browse: `https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/`
-
-### Incremental Sync
-- Browse: `https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/`
-
-### Cursors
-- Browse: `https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/cursors/`
-
-### Foundation
-- Hello World: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/hello/connector.py`
-- Configuration: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/configuration/connector.py`
-- Large Dataset: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
+Choose examples by the behavior needed: connector structure and configuration,
+authentication, pagination, incremental cursors/checkpoints, or large-volume
+processing. Community connectors can supply source-specific implementations.
+Read the relevant source and accompanying documentation before adapting a pattern;
+reuse examples already identified in this task. If a path is missing, return to
+the current listing to resolve it instead of trying URL variations.
 
 ## Reference Documentation
 - [Connector SDK Overview](https://fivetran.com/docs/connector-sdk)
