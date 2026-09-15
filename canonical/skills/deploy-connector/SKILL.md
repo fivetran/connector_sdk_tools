@@ -15,56 +15,63 @@ Package and deploy the connector in the current directory.
 
 Verify the connector is ready:
 
-1. **Files exist**: `connector.py`, `configuration.json`, `requirements.txt`, `README.md`
+1. **Files exist**: `connector.py`, `requirements.txt`, `README.md`; `configuration.json` when supplying configuration.
 2. **Code quality**: Read `connector.py` and check for:
    - Both `schema()` and `update()` functions present
    - `connector = Connector(update=update, schema=schema)` in global scope
    - `if __name__ == "__main__": connector.debug()` entry point
    - No forbidden patterns (`Dict[str, Any]`, `Generator[op.Operation, ...]`, `op.Operation` in type hints)
-3. **Configuration**: `configuration.json` is JSON. `enter_configuration.py` encrypts every field by default using inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, but user-chosen plaintext values are also accepted. Do not read, print, copy, or deploy plaintext configuration values in chat.
+3. **Configuration**: `configuration.json` is JSON. Plaintext string values are supported; do not require custom encryption. Do not read, print, copy, or deploy plaintext configuration values in chat.
 
 ## Step 2: Run Final Test
 
 Use the secure runner:
 
 ```bash
-python <plugin>/tools/run_connector.py <connector_directory>
+python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
 ```
+
+The runner defaults to 120 seconds and accepts up to 600. Use 600 for debug
+runs because the first run downloads and starts the Java tester. Set the
+harness command timeout to 600 seconds as well.
+
 
 If the test fails, classify the error (INFRA / FIRST_RUN / CODE) and — for CODE errors — apply the fixer workflow (see `workflows/fixer.md` in the plugin, or — in plugins that support subagents — invoke the `connector-fixer` subagent).
 
 ## Step 3: Deploy
 
-The deploy tool auto-discovers the destination via the Fivetran REST API — you only need to run:
+For an existing connection, use its ID so the tool reuses its current name and
+destination without listing destinations or prompting:
 
 ```bash
-python <plugin>/tools/deploy_connector.py <connector_directory>
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection-id "<id>"
 ```
 
-The tool:
-1. Reads `FIVETRAN_API_KEY` from the environment.
-2. Calls `GET /v1/groups` to discover the destination (group) name, picking the single one automatically or prompting if more than one exists.
-3. Derives the connection name from the connector directory name (sanitized to Fivetran rules). To set it explicitly, pass `--connection <name>` (must begin with `_` or a lowercase letter; only `_`, lowercase, digits).
-4. Invokes `fivetran deploy --destination <name> --connection <name> --force` with the runtime configuration passed via named pipe after decrypting configuration values in memory. `--force` auto-answers the overwrite prompts so redeploys don't hang.
-5. Captures and prints the Connection ID from the deploy log.
+For a new connection, supply the destination (group) name and optionally a
+connection name; otherwise the connection name is derived from the directory:
 
-If deploy fails because an encrypted value cannot be decrypted, direct the user to run:
-
-macOS/Linux:
 ```bash
-cd "<connector_directory>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --destination "<name>" --connection "<name>"
 ```
 
-Windows PowerShell:
-```powershell
-cd "<connector_directory>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
+The tool reads `FIVETRAN_API_KEY`, passes local configuration through a named
+pipe when present, and invokes `fivetran deploy --destination <name> --connection <name> --force`.
+For an existing connection it reads connection details and then that connection's
+group details. Do not combine `--connection-id` with name or destination overrides.
 
-Then re-run deploy after the user confirms configuration values have been refreshed.
+If no destination is supplied for a new connection, a single available destination
+is selected automatically. Multiple destinations require a selection on stdin or an explicit argument.
+Harnesses without an input channel should pass the target explicitly. Closed
+input ends the command; do not retry without providing the target.
 
-If the local encryption secret file does not exist yet, `enter_configuration.py` creates it before encrypting configuration values.
+A missing local configuration file is allowed; the SDK may still use environment
+configuration. Preserve production settings during code repairs and verify the
+installed SDK's configuration behavior before deploying. Do not confuse local
+test inputs with the production configuration.
+
+For required configuration or unusable encrypted values, follow **Configuration
+entry** in `sdk-reference.md`. Plaintext values are supported without a key; do
+not require re-entry or encryption of user-supplied values.
 
 ### Prerequisite: `FIVETRAN_API_KEY`
 
@@ -99,14 +106,18 @@ After a successful deploy, surface the Connection ID and dashboard link the tool
 Only if the user explicitly confirms, unpause the connection:
 
 ```bash
-python <plugin>/tools/deploy_connector.py <connector_directory> --start-sync --connection-id <id>
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --start-sync --connection-id "<id>"
 ```
 
 This calls `PATCH /v1/connections/{id}` with `{"paused": false}`; Fivetran then begins the initial sync. If the user declines, tell them they can start it anytime from the dashboard link or by re-running the command above.
 
 ## Redeploying (updating an existing connection)
 
-To update a deployed connection, redeploy with the **same connection name and destination** (the tool derives the same name from the directory, or pass `--connection <name>`). The tool's `--force` flag auto-answers the "update connection code / overwrite configuration.json" prompts. Redeploying replaces the connection's code; the wrapper decrypts local encrypted values in memory and passes runtime configuration to `fivetran deploy`, replacing the connection's stored configuration values. A redeploy does not pause an already-running connection — the in-progress sync finishes on the old code, and the next sync uses the new code.
+To update a deployed connection, use `--connection-id <id>`. This preserves its
+name and destination even when the recovered project directory has a different
+name. Redeployment replaces code and supplied configuration; it does not itself
+unpause the connection. Verify connection health after deployment and use the
+explicit start-sync path only when authorized.
 
 ## Alternative: Manual Packaging
 

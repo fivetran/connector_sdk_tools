@@ -6,7 +6,7 @@
 
 # Fivetran Connector Code Generation
 
-**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
+**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
 **Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
@@ -29,15 +29,17 @@ Use `Write` only for a file the scaffold did not create.
 
 ## Mandatory Example Analysis
 
-Before writing code, use WebFetch to study 2-4 relevant SDK examples (see example URLs in sdk-reference.md):
+Before writing code, follow **Example discovery** in `sdk-reference.md` to locate
+and study relevant SDK examples. Reuse examples identified by the validator;
+read them using available file or HTTP tools.
 
-1. Always fetch the hello world example for basic structure
-2. Fetch the authentication example matching the API's auth method
-3. Fetch pagination example if needed
+1. Study a current example of basic connector structure and configuration
+2. Study an authentication example matching the source's auth method, if needed
+3. Study pagination examples if needed
 4. Document what you learned before coding:
    ```
    Examples studied:
-   - [URL]: [key pattern learned]
+   - [discovered path or URL]: [key pattern learned]
    Implementation approach:
    - Authentication: [method] following [example]
    - Pagination: [type] based on [example]
@@ -59,46 +61,20 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - Docstrings on functions you add or change
 
 ### configuration.json
-- Flat string key/value pairs only
-- Configuration fields needed by the connector, with real values supplied later
-- Descriptive placeholder values only — never real credentials
-- Placeholder values must be obviously fake (for example, `YOUR_API_KEY_HERE`)
-- Do NOT ask for, accept, write, infer, or preserve real credential values
+- Flat string key/value pairs only; preserve existing local values.
+- Fill values supplied or authorized by the user, including non-sensitive settings.
+- Use obvious placeholders only for unresolved fields; never invent credentials.
 
 ### README.md
-- Connector purpose, setup instructions, configuration guide
-- Configuration instructions must direct users to enter values via `tools/enter_configuration.py`
-- Do NOT tell users to paste values in chat
-- Do NOT tell users to edit `configuration.json` manually
-- Do NOT present configuration-entry options; the encryption script is the only supported flow
+- Connector purpose, setup instructions, and configuration guide.
+- Describe the **Configuration entry** flow from `sdk-reference.md`: use the SDK
+  setup form when available, otherwise ordinary local JSON values.
+- Do not require the custom encryption script or ask users to paste secrets in chat.
 
-**CRITICAL**: Use `Edit` to modify the scaffolded files in place. Use `Write` only for a file the scaffold did not create. Do NOT just return text, and do NOT replace a working community-connector template with a from-scratch rewrite.
-
-## Credential Handling Policy
-
-Credential entry is outside the generator's job. The generator creates placeholder fields only. Real credentials must never appear in generated files, README instructions, progress updates, or chat.
-
-When documenting setup, use this exact flow:
-
-macOS/Linux:
-```bash
-cd "<connector_dir>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
-
-Windows PowerShell:
-```powershell
-cd "<connector_dir>"
-python "<plugin>/tools/enter_configuration.py" "configuration.json"
-```
-
-The script prompts for configuration values and encrypts every field value in place. If the local encryption secret file does not exist yet, the script creates it first. The AI must not see plaintext configuration values.
-
-**Hard failures:**
-- Do NOT ask the user how they want to enter credentials.
-- Do NOT offer "paste in chat", "edit configuration.json", "set values in README", or similar alternatives.
-- Do NOT generate plaintext example credentials beyond obvious placeholders.
-- Do NOT include real secrets if the user provided them earlier; replace them with placeholders and tell the parent workflow that credentials must be re-entered through the encryption script.
+Use `Edit` to customize existing files and `Write` only for missing files. Follow
+**Configuration entry** in `sdk-reference.md`; adding a setup form to an existing
+connector requires the user's agreement. Do not discard values already supplied
+just to ask the user to enter them again.
 
 ## BEST PRACTICES
 
@@ -189,8 +165,9 @@ op.checkpoint(state=state)
 ### 6. Configuration Files
 - **CRITICAL:** configuration.json must be flat, single-level key/value pairs
 - **String values only** - No lists or dictionaries
-- **Only sensitive fields** should be in configuration.json (e.g., api_key, client_id, client_secret, username, password)
-- **Placeholder values only** - No real credentials, tokens, passwords, API keys, or copied user-provided secrets
+- Source credentials and user-specific settings belong in configuration.json (e.g., api_key, username, zip_codes)
+- Preserve existing local values and fill values supplied or authorized by the user per **Configuration entry** in `sdk-reference.md`; use placeholders only for unresolved fields
+- Collect missing secrets through the SDK form or the user's local editor/terminal, never by asking for them in chat. Keep populated configuration out of tool output, responses, and version control
 - **Do NOT include** code configurations like pagination_type, page_size, rate_limit settings - hardcode these in connector.py
 
 ### 7. Additional Standards
@@ -198,49 +175,12 @@ op.checkpoint(state=state)
 - **Docstrings:** Include detailed docstrings for all functions
 - **NO BACKWARDS COMPATIBILITY:** Do NOT implement backwards compatibility unless explicitly requested
 
-## EXAMPLE CATEGORIZATION GUIDE
+## Relevant examples
 
-**Note:** Use local paths with Glob/Read when available. For WebFetch alternative, append path to GitHub base URL.
-
-### Authentication Examples:
-- **API Key**:
-  - Local: `examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-- **OAuth 2.0**:
-  - Local: `examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-- **HTTP Basic**:
-  - Local: `examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-- **HTTP Bearer**:
-  - Local: `examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
-
-### Data Handling Examples:
-- **Pagination**:
-  - Local: `examples/common_patterns_for_connectors/pagination/` (keyset, offset, page_number, next_page_url)
-  - WebFetch: Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/ then fetch specific pattern
-- **Cursors**:
-  - Local: `examples/common_patterns_for_connectors/cursors/` (time_window, multiple_tables)
-  - WebFetch: Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/cursors/ then fetch specific pattern
-- **Incremental Sync**:
-  - Local: `examples/common_patterns_for_connectors/incremental_sync_strategies/`
-  - WebFetch: Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/ then fetch specific strategy
-- **Large Datasets**:
-  - Local: `examples/quickstart_examples/large_data_set/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
-
-### Community Connectors (Source-specific examples):
-- Databases/APIs: Browse https://github.com/fivetran/community_connectors/tree/main/ and use WebFetch for real-world connector examples
-- Raw file: `https://raw.githubusercontent.com/fivetran/community_connectors/main/<name>/connector.py`
-
-### Foundation Examples (ALWAYS study these):
-- **Basic Structure**:
-  - Local: `examples/quickstart_examples/hello/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/hello/connector.py`
-- **Configuration**:
-  - Local: `examples/quickstart_examples/configuration/connector.py`
-  - WebFetch: `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/configuration/connector.py`
+Follow **Example discovery** in `sdk-reference.md`. Start with connector structure
+and configuration, then inspect patterns matching the source's authentication,
+pagination, incremental state, and data volume. Reuse the validator's researched
+examples and recommendations.
 
 ## MANDATORY EXAMPLE ANALYSIS WORKFLOW
 
@@ -250,9 +190,9 @@ op.checkpoint(state=state)
    - Data structure and schema requirements
    - Any specific API endpoints or data sources to connect to
 
-2. **Example Pattern Matching**: Use the categorization guide above to identify 2-4 relevant examples to study
+2. **Example Pattern Matching**: Identify the examples needed for the implementation using the guidance above
 
-3. **Concrete Example Study**: Use Glob and Read tools to examine the identified examples, focusing on:
+3. **Concrete Example Study**: Use the available file or HTTP tools to examine the identified examples, focusing on:
    - Import statements and function signatures
    - Authentication implementation patterns
    - Data fetching and processing logic
@@ -294,15 +234,15 @@ Before completing the task, the subagent MUST validate its work:
 2. **Required Functions**: connector.py must contain both `update()` and `schema()` functions
 3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` keys are used; any declared column types are valid type names and used selectively (not every column)
 4. **Configuration Flatness**: Validate that configuration.json is flat (no nested objects/arrays) with string values only
-5. **Credential Safety**: Validate that configuration.json contains placeholders only and README points only to `enter_configuration.py` for credential entry
+5. **Configuration**: Preserve user-approved values; README follows SDK setup-form or plaintext configuration entry.
 6. **Documentation Completeness**: README must include setup instructions, testing procedures, and API documentation
 7. **Example Pattern Conformance**: Verify generated code follows the studied example patterns
 
 ### Success Criteria:
 - All 3 files present and adapted (community templates kept, not rewritten from scratch)
 - Code follows BEST PRACTICES (schema, logging, type hints, operations)
-- Configuration is flat with placeholder string values only (sensitive fields only)
-- README does not ask users to paste credentials in chat or edit `configuration.json` manually
+- Configuration is flat with string values; preserve supplied values and mark unresolved fields
+- README does not ask users to paste credentials in chat
 - Code validation requirements met (syntax check, import test)
 - Configuration matches example patterns studied
 - Documentation is comprehensive and clear
@@ -318,9 +258,9 @@ Before completing:
 - [ ] Every table declares a `primary_key`; column types (if any) are valid and selective, not exhaustive
 - [ ] `connector = Connector(...)` in global scope
 - [ ] No forbidden patterns (`Dict[str, Any]`, `Generator[...]`, `op.Operation` in type hints, `yield` with operations)
-- [ ] configuration.json is valid flat JSON with placeholder string values only
-- [ ] README uses `enter_configuration.py` as the only credential-entry flow
-- [ ] No generated file asks users to paste credentials in chat or edit `configuration.json` manually
+- [ ] configuration.json is valid flat JSON with string values; unresolved fields are explicit
+- [ ] README follows Configuration entry in sdk-reference.md
+- [ ] No generated file asks users to paste credentials in chat
 
 ## Handling Follow-Up Revisions
 

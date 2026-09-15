@@ -24,7 +24,7 @@ To update:
 copilot plugin update fivetran-connector-sdk@fivetran-connector-sdk-ai
 ```
 
-Install the tool dependencies:
+If using encrypted configuration, install the tool dependencies:
 
 macOS/Linux:
 ```bash
@@ -36,11 +36,14 @@ Windows PowerShell:
 python -m pip install -r "C:\path\to\copilot\tools\requirements.txt"
 ```
 
-This dependency install is temporary. Until secure configuration entry is available directly in the Fivetran Connector SDK CLI, the plugin uses `tools/enter_configuration.py` to encrypt configuration values in `configuration.json`.
+## Configuration
 
-On first run, `enter_configuration.py` creates a local encryption secret under your user profile (`~/.fivetran/csdk_master_secret` on macOS/Linux, `%USERPROFILE%\.fivetran\csdk_master_secret` on Windows). It uses that secret to write inline `ENCRYPTED:v1:<key_id>:local-fernet:` values for every field. The AI does not see plaintext configuration values.
-
-Only `enter_configuration.py` creates the secret. The test and deploy tools require the existing secret to decrypt configuration values at runtime. To start configuration entry over, run `enter_configuration.py` again.
+Reuse existing configuration and collect only missing values. Use the project's
+`fivetran configuration` setup form when available, or ordinary `configuration.json`
+otherwise. Keep secrets out of chat. See
+[Configuration entry](sdk-reference.md#configuration-entry) for the shared workflow
+and the [optional encryption documentation](../README.md#optional-encrypted-configuration)
+if you use encrypted fields.
 
 ## Usage
 
@@ -70,6 +73,6 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `agents/connector-validator.md` | Agent for API research and requirements gathering |
 | `agents/connector-generator.md` | Agent for generating connector code |
 | `agents/connector-fixer.md` | Agent for diagnosing and fixing errors |
-| `tools/enter_configuration.py` | Enter and encrypt API credentials |
+| `tools/enter_configuration.py` | Optional local encryption of configuration values |
 | `tools/run_connector.py` | Run connector with runtime config via named pipe |
-| `tools/deploy_connector.py` | Deploy connector with auto-discovered destination |
+| `tools/deploy_connector.py` | Redeploy with `--connection-id`, or deploy to an explicit `--destination` (with discovery as a fallback) |

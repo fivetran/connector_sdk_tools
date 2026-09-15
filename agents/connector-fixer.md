@@ -11,7 +11,7 @@ description: Debug and fix errors in a Fivetran connector. Use when tests fail o
 
 # Fivetran Connector Debugging, Fixing & Revising
 
-**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and example URLs.
+**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
 **Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
@@ -30,13 +30,48 @@ You MUST classify every error as one of:
 
 **ERROR_TYPE: FIRST_RUN**
 - Connector has never succeeded — likely credentials/config issue
-- Do NOT attempt code changes
-- Guide user to verify config (invalid API keys, wrong endpoints, missing permissions)
+- Verify config first (invalid API keys, wrong endpoints, missing permissions)
 - Common signs: "All values must be STRING", auth errors, 404s on first run
+- A defect visible in the source is still CODE on a first run — for example
+  `state["cursor"]` read from the empty initial state, which raises `KeyError`
+  before any request is made. Classify by evidence, not by run count.
 
 **ERROR_TYPE: CODE**
 - Connector worked before or has clear code bugs (syntax, logic, SDK misuse)
 - Proceed to fix using the systematic approach below
+
+## Locate the Source and the Failure (REQUIRED when the code is not local)
+
+A deployed Connector SDK connection can be diagnosed without the project on disk.
+Do not stop and ask for the source until these steps have been tried.
+
+1. **Identify the connection.** `fivetran beta connection get <connection-id>` or
+   `GET /v1/connections/{connection_id}`. Confirm `service` is `connector_sdk`;
+   Fivetran-managed connectors cannot be run or patched with the SDK.
+2. **Get the failure reason.** The connection's `status.tasks` gives an error class
+   such as `python_code_throwing_error` and often no details. Sync history carries
+   a per-sync `reason` and `sync_id`:
+   `GET /v1/connections/{connection_id}/sync-history?start_time=...&end_time=...`
+   Query the failure's time window rather than the whole history.
+3. **Recover the deployed source.** The connection's JSON record names its package
+   in `config.package_id`. The package list (`GET /v1/connector-sdk/packages`,
+   keyed by `connection_id`) is needed only when that field is absent.
+   Download the archive with
+   `GET /v1/connector-sdk/packages/{package_id}/download` with
+   `Authorization: Basic <base64>` where `<base64>` encodes `{key}:{secret}`
+   using the Fivetran API key and secret. Inspect the archive listing, then
+   extract into a fresh directory; do not overwrite existing files.
+   The archive can include generated artifacts such
+   as `configuration_form.pb`; `fivetran deploy` regenerates them, so remove the
+   downloaded copy before redeploying or the upload fails on a duplicate entry.
+4. **Reproduce locally.** Follow `skills/test-connector/SKILL.md` from the plugin
+   directory for environment setup and configuration handling. Run the connector
+   through `python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600`,
+   which accepts plaintext configuration and invokes `fivetran debug`. A local
+   failure is evidence to compare with production, not proof of a shared cause;
+   note any state or environment differences.
+
+Reference: https://fivetran.com/docs/developer-resources/rest-api/api-reference
 
 ## Systematic Debugging (for CODE errors)
 
@@ -46,7 +81,7 @@ You MUST classify every error as one of:
 - Identify specific line numbers and functions
 
 ### 2. Research
-- Use WebFetch to study relevant SDK examples (see urls in sdk-reference.md)
+- Follow **Example discovery** in `sdk-reference.md` to locate and study relevant SDK examples using available file or HTTP tools
 - Compare current code with working patterns
 - Identify specific differences causing the error
 
@@ -69,11 +104,8 @@ When user asks to add features or make improvements (not fixing errors):
 - Determine scope (single function, multiple files, architectural)
 
 ### 2. Pattern Research
-Use WebFetch to study relevant examples:
-- **Adding authentication:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/authentication/
-- **Adding pagination:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
-- **Adding incremental sync:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
-- **Performance improvements:** Fetch parallel fetching example
+Follow **Example discovery** in `sdk-reference.md` for the requested feature,
+such as authentication, pagination, incremental sync, or performance.
 
 ### 3. Plan Changes
 - Determine which files need modification
@@ -128,7 +160,8 @@ op.delete(table, keys)
 
 ### Configuration Files
 - Flat structure, string values only
-- Only sensitive fields (api_key, password)
+- Source credentials and user-specific settings (api_key, password, zip_codes)
+- Preserve authorized local values; keep populated configuration out of chat and version control
 - Hardcode code configs in connector.py
 
 ## Common Error Patterns
@@ -143,28 +176,13 @@ op.delete(table, keys)
 | Invalid schema key or type name | Use only `table`/`primary_key`/`columns` keys and valid SDK type names |
 | `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
+| `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |
 
-## EXAMPLE CATEGORIZATION GUIDE
+## Relevant examples
 
-### Authentication Examples:
-- **API Key:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/api_key/connector.py`
-- **OAuth 2.0:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/oauth2_with_token_refresh/connector.py`
-- **HTTP Basic:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_basic/connector.py`
-- **HTTP Bearer:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/common_patterns_for_connectors/authentication/http_bearer/connector.py`
-
-### Data Handling Examples:
-- **Pagination:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/pagination/
-- **Cursors:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/cursors/
-- **Incremental Sync:** Browse https://github.com/fivetran/connector_sdk/tree/main/examples/common_patterns_for_connectors/incremental_sync_strategies/
-- **Large Datasets:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/large_data_set/connector.py`
-
-### Community Connectors:
-- Browse: https://github.com/fivetran/community_connectors/tree/main/
-- Useful for finding connectors with similar auth methods, pagination, or sync strategies
-
-### Foundation Examples:
-- **Basic Structure:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/hello/connector.py`
-- **Configuration:** `https://raw.githubusercontent.com/fivetran/connector_sdk/main/examples/quickstart_examples/configuration/connector.py`
+Follow **Example discovery** in `sdk-reference.md`, choosing patterns that help
+explain the failure or requested change: authentication, connector structure,
+configuration, pagination, incremental state, or large-volume processing.
 
 ## CODE VALIDATION REQUIREMENTS
 
@@ -185,14 +203,8 @@ op.delete(table, keys)
    - Categorize error type: authentication, network, syntax, logic, or configuration
 
 2. **PATTERN RESEARCH PHASE**:
-   - Use `Glob pattern="examples/**/*.py"` to find relevant connector examples
-   - **Error Pattern Matching**:
-     - Authentication errors → Read `examples/common_patterns_for_connectors/authentication/*/connector.py`
-     - Type/Import errors → Read `examples/quickstart_examples/hello/connector.py`
-     - Configuration errors → Read `examples/quickstart_examples/configuration/connector.py`
-     - Data handling errors → Read `examples/common_patterns_for_connectors/cursors/*/connector.py`
-   - **Community Connectors**: Check connectors with same auth/pagination/sync patterns
-   - **Document findings**: "Based on examples studied: [list paths and key patterns]"
+   - Use the relevant-example guidance above to inspect patterns tied to the observed error.
+   - Record the discovered paths and what they establish about the problem.
 
 3. **ROOT CAUSE IDENTIFICATION**:
    - Compare current code with working example patterns
@@ -215,19 +227,19 @@ op.delete(table, keys)
 When adding new capabilities to a working connector:
 
 ### Adding Authentication
-- Study: `examples/common_patterns_for_connectors/authentication/`
+- Study: authentication examples located through **Example discovery** in `sdk-reference.md`
 - Pattern: Follow example structure for credential handling
 
 ### Adding Pagination
-- Study: `examples/common_patterns_for_connectors/pagination/` (offset, keyset, page_number, next_url)
+- Study: pagination examples matching the source (offset, keyset, page number, or next URL)
 - Pattern: Study pagination loop structures and state management
 
 ### Adding Incremental Sync
-- Study: `examples/common_patterns_for_connectors/incremental_sync_strategies/`
+- Study: incremental sync and checkpoint examples
 - Pattern: Follow checkpoint and cursor management patterns
 
 ### Performance Improvements
-- Study: `examples/common_patterns_for_connectors/parallel_fetching_from_source/`
+- Study: parallel fetching and large-volume processing examples
 - Pattern: Study parallel processing and rate limiting
 
 ## Required Output Format
@@ -251,5 +263,10 @@ EXAMPLES STUDIED:
 **IMPORTANT:**
 - Never modify plugin tools (anything under the plugin directory). Only fix user connector code.
 - If config fields contain inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal — do NOT try to "fix" it.
-- Legacy configs that start with `ENCRYPTED:` may exist, but the current tools expect `configuration.json` to be a JSON object; recreate the file with the correct fields and rerun `enter_configuration.py` to rewrite values.
+- Follow **Configuration entry** in `sdk-reference.md`: reuse local values first, recover missing deployed values when available, then use the SDK form or supplied plaintext values. Offer to add a setup form only with user agreement. Do not require encryption or key replacement.
 - For fundamental design issues, recommend using the validator to find a better starting point.
+
+When deploying a repair, follow the deploy skill and pass the existing
+`--connection-id` to `tools/deploy_connector.py`. The helper resolves the
+connection's name and destination; do not rediscover a target from the account's
+full destination list or infer it from the recovered directory name.
