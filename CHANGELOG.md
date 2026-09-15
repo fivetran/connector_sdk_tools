@@ -8,7 +8,7 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 - Centralized example discovery in sdk-reference.md to eliminate duplication across agent and workflow documentation.
 - Replaced hardcoded URLs and file paths in connector-fixer, connector-generator, and connector-validator agents with topic-based guidance that defers to a single source of truth.
-- Removed redundant "EXAMPLE CATEGORIZATION GUIDE" sections from agents and workflows, streamlining maintenance and reducing outdated reference links.
+- Removed redundant sections from agents and workflows, streamlining maintenance and reducing outdated reference links.
 
 ## July 2026
 
