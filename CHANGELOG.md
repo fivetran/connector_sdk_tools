@@ -4,6 +4,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## September 2026
 
+### fivetran-connector-sdk-tools 2026.9.17.2
+
+- Put repair outcome verification in the fixer workflow rather than the deployment skill.
+- Validate against evidence from after the change, pursue required validation through approval, and distinguish pending outcomes from failures.
+
 ### fivetran-connector-sdk-tools 2026.9.12.1
 
 - Centralized example discovery in sdk-reference.md to eliminate duplication across agent and workflow documentation.
