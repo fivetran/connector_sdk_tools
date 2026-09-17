@@ -135,33 +135,13 @@ unpause the connection.
 - Base further diagnosis on observed evidence and accessible sources. Do not
   infer a new cause or assume access to additional data without checking.
 
-Deploying with `--configuration configuration.json` stores those values securely and can
-pre-populate or update the connection's configuration — including values entered through a setup
-form (see **Setup Form** in `sdk-reference.md`). This applies to a code-only redeploy too:
-`deploy_connector.py` automatically passes the local `configuration.json` (via a named pipe)
-whenever that file exists in the project directory, unless `--no-configuration` is passed (see
-below).
-
-Before redeploying an existing connection, ask the user whether the local `configuration.json`
-holds any values that only belong in their local/test setup and shouldn't overwrite the
-connection's production configuration. Do not read or print the file's contents yourself to check
-— that risks exposing secrets. If the user confirms local-only values are present and wants a
-code-only redeploy, pass `--no-configuration` so the connection's existing stored configuration is
-left untouched:
-
-```bash
-python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection-id "<id>" --no-configuration
-```
-
 ## Alternative: Manual Packaging
 
-If the user prefers manual deployment (e.g., wants to inspect the package before upload), or the
-connector uses **Proxy Agent** (see `sdk-reference.md`) — `deploy_connector.py` doesn't forward
-`--proxy-id`/`--proxy-host-config-key`, so call `fivetran deploy` directly instead:
+If the user prefers manual deployment (e.g., wants to inspect the package before upload):
 
 1. Build the deployable archive:
    ```bash
    fivetran package
    ```
    This produces a ZIP containing `connector.py`, `configuration.json`, `requirements.txt` (or `pyproject.toml`), `README.md`, and any additional source files, respecting `.gitignore`.
-2. Upload via the Fivetran dashboard, or deploy directly with `fivetran deploy --destination <name> --connection <name> [--proxy-id <id> [--proxy-host-config-key <key>]]`.
+2. Upload via the Fivetran dashboard.

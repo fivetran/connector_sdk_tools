@@ -274,3 +274,18 @@ When deploying a repair, follow the deploy skill and pass the existing
 `--connection-id` to `tools/deploy_connector.py`. The helper resolves the
 connection's name and destination; do not rediscover a target from the account's
 full destination list or infer it from the recovered directory name.
+
+## Verify a deployed repair
+
+When the requested repair includes deployment, use the deployment skill and then
+verify the repair outcome. A local-only repair does not authorize deployment.
+
+- Verify the outcome, not just deployment acceptance. Use evidence from work
+  that ran after the change took effect; distinguish failure from an outcome
+  that is not yet verified.
+- Carry validation through to a result. If another action is needed, propose it
+  and obtain the required approval rather than waiting for the user to suggest
+  it. Monitor existing work with bounded waits instead of duplicating it; if
+  validation cannot finish, report it as pending.
+- Base further diagnosis on observed evidence and accessible sources. Do not
+  infer a new cause or assume access to additional data without checking.
