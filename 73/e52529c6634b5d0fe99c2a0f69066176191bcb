@@ -1,0 +1,23 @@
+CHANGELOG.md
+  26a6d6d5f13cd188 5-6,8-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "73e52529c6634b5d0fe99c2a0f69066176191bcb",
+  "prompts": {
+    "26a6d6d5f13cd188": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "95a8eef4-9fc3-413a-99c9-f92271172a22",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "unknown",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 12,
+      "accepted_lines": 6,
+      "overriden_lines": 1
+    }
+  }
+}
