@@ -269,8 +269,11 @@ Each connection runs in a container with a memory limit; accumulating data in Py
 causes: collecting all pages/rows before upserting, reading a full file into memory,
 `cursor.fetchall()` on a large query, or caching whole API responses.
 
-**Fix:** fetch a small chunk → process/upsert it immediately → checkpoint → repeat. Never
-accumulate the full dataset before the first `op.upsert()` call.
+**Fix:** fetch a small chunk → process/upsert it immediately → repeat, checkpointing on the
+usual time/state cadence (see **State Management** below — no more than once a minute), not
+after every chunk. Fast pagination can produce many small chunks per minute; checkpointing on
+every one causes excessive flushes. Never accumulate the full dataset before the first
+`op.upsert()` call.
 
 To measure locally: `fivetran debug` reports peak memory at the end of the run. To pinpoint the
 allocating line, use `tracemalloc` (built in — take snapshots before/after suspect operations,

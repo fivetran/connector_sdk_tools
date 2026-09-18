@@ -181,8 +181,11 @@ op.delete(table, keys)
 ```
 
 **Never accumulate the full result set before the first `op.upsert()` call** — fetch a chunk,
-upsert it, checkpoint, then fetch the next chunk. This applies to paginated API responses, file
-reads, and database queries (use a batched fetch like `cursor.fetchmany()`, not `fetchall()`).
+upsert it, then fetch the next chunk. This applies to paginated API responses, file reads, and
+database queries (use a batched fetch like `cursor.fetchmany()`, not `fetchall()`). Keep
+checkpointing on the usual time/state cadence (see State Management below — no more than once a
+minute), not after every chunk; fast pagination can produce many chunks per minute, and
+checkpointing on every one causes excessive flushes.
 
 **Error handling — pick the response based on the failure, not a blanket try/except:**
 
@@ -198,8 +201,8 @@ logging) whenever the user needs to see the issue on the dashboard, not just in 
 catch an exception and continue without either logging it or calling `op.warning()`.
 
 ### 5. State Management and Checkpointing
-- Implement checkpoint logic after each batch of operations
-- Don't make batches too big, checkpoint often
+- Checkpoint on a time/state cadence — roughly every 10 minutes for long operations, and no
+  more than once per minute — not after every batch or chunk of operations
 - Store cursor values or sync state in checkpoint
 
 ```python
