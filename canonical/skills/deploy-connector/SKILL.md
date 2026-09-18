@@ -128,8 +128,8 @@ Deploying with `--configuration configuration.json` stores those values securely
 pre-populate or update the connection's configuration — including values entered through a setup
 form (see **Setup Form** in `sdk-reference.md`). This applies to a code-only redeploy too:
 `deploy_connector.py` automatically passes the local `configuration.json` (via a named pipe)
-whenever that file exists in the project directory — there is no flag to skip this while the file
-is present.
+whenever that file exists in the project directory, unless `--no-configuration` is passed (see
+below).
 
 Before redeploying an existing connection, ask the user whether the local `configuration.json`
 holds any values that only belong in their local/test setup and shouldn't overwrite the

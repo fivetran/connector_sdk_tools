@@ -283,8 +283,10 @@ network, so no inbound firewall ports need to open. Not supported with Hybrid De
   `"hosts": "db-primary.internal.com:5432,db-replica.internal.com:5432"`) — both are
   auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time.
 - Deploy with `fivetran deploy --proxy-id <PROXY_AGENT_ID> [--proxy-host-config-key <key>] ...`.
-- `fivetran debug` does not route through the Proxy Agent — it can't validate end-to-end
-  connectivity locally; a setup-form `add_test()` connectivity check only runs from the dashboard.
+- `fivetran debug` and `fivetran configuration --test` don't route through the Proxy Agent —
+  neither can validate end-to-end connectivity locally, even though `add_test()` setup tests
+  otherwise run fine locally (see **Setup Form** above). A Proxy Agent connectivity check in
+  `add_test()` only exercises the real route when triggered from the dashboard's **Save & Test**.
 - Full reference: https://fivetran.com/docs/connector-sdk/building-connectors/connection-options/proxy-agent
 
 ### Custom Database Drivers (Private Preview)
@@ -449,7 +451,7 @@ above rather than silently changing keys or discarding usable local values.
 - **Never use `exit()`** — use `raise RuntimeError(...)` instead
 - **`connector = Connector(...)`** must be in global scope, NOT under `if __name__`
 - **Encrypted configuration values** — if configuration.json contains inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal; decryption happens at runtime.
-- **Table/column names are transformed for the destination** (lowercase snake_case; non-letter/digit/underscore chars become `_`; camelCase splits) — `schema()` and `op.upsert()`/`op.update()`/`op.delete()`/`op.truncate()` must use **identical** identifiers, or a spelling/case/delimiter mismatch (e.g. `forecast` vs. `forcast`, or `user_data` vs. `user-data`) silently creates a duplicate or wrongly-merged destination table with no error.
+- **Table/column names are transformed for the destination** (lowercase snake_case; non-letter/digit/underscore chars become `_`; camelCase splits) — `schema()` and `op.upsert()`/`op.update()`/`op.delete()`/`op.truncate()` must produce **identical normalized** identifiers for the same table, or a mismatch (e.g. `forecast` vs. `forcast`, or `fore-cast` vs. `forecast` — the latter normalizes to `fore_cast`, which doesn't match `forecast`) silently creates a duplicate destination table with no error. Different raw spellings that normalize to the *same* identifier (e.g. `user_data` and `user-data`) are fine for the same table — they collapse into one.
 
 ## Connector Discovery
 

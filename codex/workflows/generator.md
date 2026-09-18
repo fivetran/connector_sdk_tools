@@ -106,11 +106,13 @@ def schema(configuration: dict):
     ]
 ```
 
-**Use the exact same `table`/column spelling, case, and delimiters in every `op.upsert()`,
-`op.update()`, `op.delete()`, and `op.truncate()` call as in `schema()`.** Fivetran transforms
-names for the destination (lowercase snake_case, non-alphanumeric → `_`) independently wherever
-they appear — a mismatch like `forecast` vs. `forcast`, or `user_data` vs. `user-data`, silently
-produces a duplicate or wrongly-merged destination table with no error.
+**Use table/column identifiers in `op.upsert()`, `op.update()`, `op.delete()`, and
+`op.truncate()` that normalize to the same destination name as in `schema()`.** Fivetran
+transforms names for the destination (lowercase snake_case, non-alphanumeric → `_`)
+independently wherever they appear — a mismatch that normalizes *differently* (e.g. `forecast`
+vs. `forcast`, or `fore-cast` → `fore_cast` vs. `forecast`) silently produces a duplicate
+destination table with no error. Different spellings that normalize to the *same* identifier
+(e.g. `user_data` and `user-data`, both → `user_data`) are fine — that's not a mismatch.
 
 ### 2. Logging - Use EXACT method names
 - **Preferred (Python-style):** `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()`

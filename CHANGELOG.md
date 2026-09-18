@@ -8,7 +8,7 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 - Documented the Connector SDK setup form (`configuration_form`, `ConfigurationForm`, `form_field.TextField|DropdownField|ToggleField`, `ConfigurationForm.add_test`/`Test`) in sdk-reference.md, closing an awareness gap inherited by every downstream skill and agent.
 - connector-generator now offers to add a setup form when the connector needs credentials or dashboard-configurable settings, and only adds one with the user's agreement.
-- evaluate-connector flags a missing `configuration_form()` as a good-to-have "Configurability" finding when `configuration.json` holds credentials or connection-specific settings.
+- evaluate-connector flags a missing `configuration_form()` as a good-to-have "Configurability" finding when `connector.py` reads credential- or connection-specific-looking keys from the `configuration` dict (never based on `configuration.json`'s actual contents, which the evaluator does not read).
 - deploy-connector now warns that redeploying with a local `configuration.json` updates the connection's stored configuration (not just the code), so local-only values should be checked before a routine redeploy.
 - build-connector now confirms the project/connector name with the user before scaffolding, instead of silently deriving it from the current path.
 - test-connector adds guidance for diagnosing a slow or stuck local sync with py-spy CPU profiling.
