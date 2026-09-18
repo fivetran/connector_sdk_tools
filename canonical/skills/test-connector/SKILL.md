@@ -148,27 +148,31 @@ Report which tables were synced and how many rows each.
 
 If a local run takes a long time with no visible progress, don't assume it's hung — profile it
 rather than guessing. Install py-spy into the connector's existing `.venv` (not supported on
-Python 3.14 — use a lower version if that's what the `.venv` was created with) and run it from
-the connector directory using that same venv's `fivetran`, so it profiles the correct environment
-and configuration:
+Python 3.14 — use a lower version if that's what the `.venv` was created with), and profile
+through `run_connector.py` rather than calling `fivetran debug` directly — `run_connector.py`
+decrypts any `ENCRYPTED:v1:...` values in `configuration.json` before passing them through;
+calling `fivetran debug` directly would pass that ciphertext as-is and can fail. Pass
+`--subprocesses` so py-spy also samples the `fivetran` process `run_connector.py` launches, where
+the connector code actually runs:
 
 macOS/Linux:
 ```bash
 cd "<connector_directory>"
 uv pip install --python .venv/bin/python py-spy
-.venv/bin/fivetran reset --force
-.venv/bin/py-spy record -o cpu_profile.svg -- .venv/bin/fivetran debug --configuration configuration.json
+.venv/bin/py-spy record -o cpu_profile.svg --subprocesses -- python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
 ```
 
 Windows PowerShell:
 ```powershell
 cd "<connector_directory>"
 uv pip install --python .\.venv\Scripts\python.exe py-spy
-.\.venv\Scripts\fivetran.exe reset --force
-.\.venv\Scripts\py-spy.exe record -o cpu_profile.svg -- .\.venv\Scripts\fivetran.exe debug --configuration configuration.json
+.\.venv\Scripts\py-spy.exe record -o cpu_profile.svg --subprocesses -- python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
 ```
 
-`fivetran reset --force` clears prior state first so the profile covers a full initial sync. This produces a flamegraph
+Leave existing state alone by default, so the profile matches the actual slow run being
+diagnosed. Only reset first (`.venv/bin/fivetran reset --force`, or the Windows equivalent) if
+you specifically want to profile a full initial sync instead of the current incremental
+workload — resetting replaces the workload being profiled, not just the state. This produces a flamegraph
 SVG of CPU time; read it directly rather than asking the user to open it in a viewer — it's a
 plain-text XML file. Each stack frame is a `<title>` element formatted roughly as
 `function_name (file.py:line) (N samples, X.XX%)`; read the file and look at the widest boxes
