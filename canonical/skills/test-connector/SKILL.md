@@ -147,14 +147,28 @@ Report which tables were synced and how many rows each.
 ## Diagnosing a slow or stuck sync
 
 If a local run takes a long time with no visible progress, don't assume it's hung — profile it
-rather than guessing:
+rather than guessing. Install py-spy into the connector's existing `.venv` (not supported on
+Python 3.14 — use a lower version if that's what the `.venv` was created with) and run it from
+the connector directory using that same venv's `fivetran`, so it profiles the correct environment
+and configuration:
 
+macOS/Linux:
 ```bash
-pip install py-spy   # not supported on Python 3.14; use a lower version if needed
-py-spy record -o cpu_profile.svg -- fivetran debug --configuration configuration.json
+cd "<connector_directory>"
+uv pip install --python .venv/bin/python py-spy
+.venv/bin/fivetran reset --force
+.venv/bin/py-spy record -o cpu_profile.svg -- .venv/bin/fivetran debug --configuration configuration.json
 ```
 
-Run `fivetran reset --force` first to profile a full initial sync. This produces a flamegraph
+Windows PowerShell:
+```powershell
+cd "<connector_directory>"
+uv pip install --python .\.venv\Scripts\python.exe py-spy
+.\.venv\Scripts\fivetran.exe reset --force
+.\.venv\Scripts\py-spy.exe record -o cpu_profile.svg -- .\.venv\Scripts\fivetran.exe debug --configuration configuration.json
+```
+
+`fivetran reset --force` clears prior state first so the profile covers a full initial sync. This produces a flamegraph
 SVG of CPU time; read it directly rather than asking the user to open it in a viewer — it's a
 plain-text XML file. Each stack frame is a `<title>` element formatted roughly as
 `function_name (file.py:line) (N samples, X.XX%)`; read the file and look at the widest boxes

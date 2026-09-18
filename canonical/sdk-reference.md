@@ -277,9 +277,11 @@ Full reference: https://fivetran.com/docs/connector-sdk/testing/connector-memory
 Lets a connector reach a data source behind your firewall through an agent installed in your
 network, so no inbound firewall ports need to open. Not supported with Hybrid Deployment.
 
-- `configuration.json` must hold the source's `host:port` endpoint(s) under the key `host`
-  (single) or `hosts` (list) — auto-detected — or any custom key name passed via
-  `--proxy-host-config-key` at deploy time.
+- `configuration.json` must hold the source's `host:port` endpoint(s) as a **string** value —
+  this repo's configuration.json contract is flat strings only, so use a single `host:port` under
+  the key `host`, or multiple endpoints as one comma-separated string under the key `hosts` (e.g.
+  `"hosts": "db-primary.internal.com:5432,db-replica.internal.com:5432"`) — both are
+  auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time.
 - Deploy with `fivetran deploy --proxy-id <PROXY_AGENT_ID> [--proxy-host-config-key <key>] ...`.
 - `fivetran debug` does not route through the Proxy Agent — it can't validate end-to-end
   connectivity locally; a setup-form `add_test()` connectivity check only runs from the dashboard.

@@ -126,12 +126,17 @@ explicit start-sync path only when authorized.
 
 Deploying with `--configuration configuration.json` stores those values securely and can
 pre-populate or update the connection's configuration — including values entered through a setup
-form (see **Setup Form** in `sdk-reference.md`). This applies to a code-only redeploy too: if a
-local `configuration.json` is passed, its values update the connection's stored configuration,
-not just the code. Before redeploying an existing connection, check the local `configuration.json`
-for values that only belong in your local/test setup and shouldn't overwrite the connection's
-production configuration; omitting `--configuration` for that redeploy keeps the existing stored
-values instead.
+form (see **Setup Form** in `sdk-reference.md`). This applies to a code-only redeploy too:
+`deploy_connector.py` automatically passes the local `configuration.json` (via a named pipe)
+whenever that file exists in the project directory — there is no flag to skip this while the file
+is present.
+
+Before redeploying an existing connection, ask the user whether the local `configuration.json`
+holds any values that only belong in their local/test setup and shouldn't overwrite the
+connection's production configuration. Do not read or print the file's contents yourself to check
+— that risks exposing secrets. If the user confirms local-only values are present and wants a
+code-only redeploy, have them temporarily move the file aside (e.g. `mv configuration.json
+configuration.json.bak`) before running `deploy_connector.py`, then restore it afterward.
 
 ## Alternative: Manual Packaging
 

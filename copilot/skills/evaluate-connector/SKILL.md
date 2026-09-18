@@ -86,7 +86,7 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Cursor/state updated **before** processing the record (should be after):
   - WRONG: `cursor = data['updated_at']` then `op.upsert(...)`
   - CORRECT: `op.upsert(...)` then `cursor = data['updated_at']`
-- A table name declared in `schema()` doesn't exactly match (same spelling, case, delimiters) the `table` argument used in `op.upsert()`/`op.update()`/`op.delete()`/`op.truncate()` calls for the same table — this silently creates a duplicate or empty destination table, since Fivetran transforms both independently and a mismatch (e.g. `forecast` vs. `forcast`, `user_data` vs. `user-data`) produces different transformed identifiers
+- A table name declared in `schema()` and the `table` argument used for the same logical table in `op.upsert()`/`op.update()`/`op.delete()`/`op.truncate()` calls normalize to **different** destination identifiers (lowercase snake_case; non-letter/digit/underscore → `_`; camelCase splits) — this silently creates a duplicate/empty destination table with no error. Compare the *normalized* forms, not the raw strings: `forecast` vs. `forcast` normalize differently (flag it); `user_data` vs. `user-data` both normalize to `user_data` (do NOT flag — same destination table, no bug). Only flag when normalization produces distinct identifiers for what should be the same table.
 
 **5. Exception Handling**
 - Missing error handling around network, file, or database operations
@@ -113,7 +113,7 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - `log.fine()` or `log.severe()` used — these are deprecated Java-style aliases; prefer `log.debug()` and `log.error()` respectively
 
 **3. Configurability**
-- No `configuration_form` passed to `Connector(...)` while `configuration.json` holds credentials or connection-specific settings — a setup form lets users provide those values through the Fivetran dashboard instead of a manually created `configuration.json`, and `fivetran configuration` requires one to generate `configuration.json` interactively. The setup form is optional: `debug`/`run`/`package`/`deploy` all work fine without it.
+- No `configuration_form` passed to `Connector(...)` while `connector.py` reads credential- or connection-specific-looking keys from the `configuration` dict (e.g. `configuration.get("api_key")`, `configuration["password"]`, tokens, hosts, URLs) — a setup form lets users provide those values through the Fivetran dashboard instead of a manually created `configuration.json`, and `fivetran configuration` requires one to generate `configuration.json` interactively. Base this on keys read/validated in source code, never on `configuration.json`'s contents. The setup form is optional: `debug`/`run`/`package`/`deploy` all work fine without it.
 
 **4. Reliability**
 - Retries without exponential backoff
