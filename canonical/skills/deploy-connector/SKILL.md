@@ -135,8 +135,12 @@ Before redeploying an existing connection, ask the user whether the local `confi
 holds any values that only belong in their local/test setup and shouldn't overwrite the
 connection's production configuration. Do not read or print the file's contents yourself to check
 — that risks exposing secrets. If the user confirms local-only values are present and wants a
-code-only redeploy, have them temporarily move the file aside (e.g. `mv configuration.json
-configuration.json.bak`) before running `deploy_connector.py`, then restore it afterward.
+code-only redeploy, pass `--no-configuration` so the connection's existing stored configuration is
+left untouched:
+
+```bash
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection-id "<id>" --no-configuration
+```
 
 ## Alternative: Manual Packaging
 

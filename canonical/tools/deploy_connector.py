@@ -562,6 +562,10 @@ def main():
     parser.add_argument("--start-sync", action="store_true",
                         help="Unpause an already-deployed connection to start syncing (use with --connection-id)")
     parser.add_argument("--connection-id", help="Existing connection ID to redeploy, or unpause with --start-sync")
+    parser.add_argument("--no-configuration", action="store_true",
+                        help="Deploy code only; do not pass local configuration.json even if it exists. "
+                             "Use for a routine redeploy when the connection's existing stored configuration "
+                             "should be left untouched.")
     args = parser.parse_args()
     if args.connection_id and (args.connection or args.destination):
         parser.error("--connection-id cannot be combined with --connection or --destination; "
@@ -587,7 +591,7 @@ def main():
 
     config_path = connector_dir / "configuration.json"
     try:
-        config = load_runtime_config(config_path) if config_path.exists() else None
+        config = load_runtime_config(config_path) if config_path.exists() and not args.no_configuration else None
     except DecryptionFailed as exc:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
         if str(exc):
