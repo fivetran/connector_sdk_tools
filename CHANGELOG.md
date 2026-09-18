@@ -4,6 +4,21 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## September 2026
 
+### fivetran-connector-sdk-tools 2026.9.18.1
+
+- Documented the Connector SDK setup form (`configuration_form`, `ConfigurationForm`, `form_field.TextField|DropdownField|ToggleField`, `ConfigurationForm.add_test`/`Test`) in sdk-reference.md, closing an awareness gap inherited by every downstream skill and agent.
+- connector-generator now offers to add a setup form when the connector needs credentials or dashboard-configurable settings, and only adds one with the user's agreement.
+- evaluate-connector flags a missing `configuration_form()` as a good-to-have "Configurability" finding when `connector.py` reads credential- or connection-specific-looking keys from the `configuration` dict (never based on `configuration.json`'s actual contents, which the evaluator does not read).
+- deploy-connector now warns that redeploying with a local `configuration.json` updates the connection's stored configuration (not just the code), so local-only values should be checked before a routine redeploy.
+- build-connector now confirms the project/connector name with the user before scaffolding, instead of silently deriving it from the current path.
+- test-connector adds guidance for diagnosing a slow or stuck local sync with py-spy CPU profiling.
+- sdk-reference.md and the generator workflow now give concrete logging-milestone guidance (by record count, by entity/table, or by elapsed time) so long-running syncs don't go silent long enough to look hung.
+- Documented `op.error()`/`op.warning()` in sdk-reference.md's operations table, including the distinction from `log.error()`/`log.warning()` (log-only, no dashboard alert) and a retry/warn-and-continue/fail-fast response table; mirrored into the generator workflow and evaluate-connector's checklist.
+- Documented Unstructured File Uploads (`FileUpload`, `op.upsert(..., file=...)`), Connector Memory Management (common causes, fetch-process-checkpoint pattern, `tracemalloc`/`psutil` local measurement), Proxy Agent, and Custom Database Drivers in sdk-reference.md.
+- test-connector adds guidance for diagnosing high local memory usage (`tracemalloc`/`psutil`), alongside the existing py-spy profiling guidance.
+- Documented destination table/column name normalization in sdk-reference.md and the generator workflow, and added an evaluate-connector check for schema/upsert table-name mismatches that silently create duplicate or wrongly-merged destination tables.
+- Added a `--no-configuration` flag to `deploy_connector.py` so a code-only redeploy can skip pushing the local `configuration.json` — it also strips an inherited `FIVETRAN_CONFIGURATION` environment variable from the deploy subprocess, so that can't silently override the connection's stored configuration either. Documented in deploy-connector as the safe way to redeploy without overwriting production configuration.
+
 ### fivetran-connector-sdk-tools 2026.9.12.1
 
 - Centralized example discovery in sdk-reference.md to eliminate duplication across agent and workflow documentation.

@@ -81,7 +81,13 @@ Apply the validator workflow — read `workflows/validator.md` in the plugin dir
 
 ## Phase 2: Scaffold the Project with `fivetran init`
 
-`fivetran init` is the canonical scaffolding path — it produces a complete, runnable connector with the correct structure (`validate_configuration()`, docstrings, the `__main__` block). **Always scaffold with `fivetran init`; never hand-write the project from scratch.** Pick the command from the Phase 1 discovery result. The project directory is the connector name (lowercase, underscores).
+`fivetran init` is the canonical scaffolding path — it produces a complete, runnable connector with the correct structure (`validate_configuration()`, docstrings, the `__main__` block). **Always scaffold with `fivetran init`; never hand-write the project from scratch.** Pick the command from the Phase 1 discovery result.
+
+**Confirm the project/connector name before scaffolding.** Propose a directory name (lowercase,
+underscores) based on the source, tell the user what it will be, and let them override it before
+running `fivetran init`. Do not silently derive it from the current path or proceed without
+confirmation — this name becomes the project directory and, by default, the connection name at
+deploy time (see **deploy-connector**).
 
 - **EXACT MATCH / FUZZY MATCH** — start from the community connector:
   ```bash

@@ -149,3 +149,59 @@ Report which tables were synced and how many rows each.
 → Ask: "This looks like a code issue. Would you like me to fix it?"
 
 **If the user wants a fix:** apply the fixer workflow (see `workflows/fixer.md` in the plugin, or — in plugins that support subagents — invoke the `connector-fixer` subagent). After fixing, re-run the test to verify.
+
+## Diagnosing a slow or stuck sync
+
+If a local run takes a long time with no visible progress, don't assume it's hung — profile it
+rather than guessing. Install py-spy into the connector's existing `.venv` (not supported on
+Python 3.14 — use a lower version if that's what the `.venv` was created with), and profile
+through `run_connector.py` rather than calling `fivetran debug` directly — `run_connector.py`
+decrypts any `ENCRYPTED:v1:...` values in `configuration.json` before passing them through;
+calling `fivetran debug` directly would pass that ciphertext as-is and can fail. Pass
+`--subprocesses` so py-spy also samples the `fivetran` process `run_connector.py` launches, where
+the connector code actually runs:
+
+macOS/Linux:
+```bash
+cd "<connector_directory>"
+uv pip install --python .venv/bin/python py-spy
+.venv/bin/py-spy record -o cpu_profile.svg --subprocesses -- python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
+```
+
+Windows PowerShell:
+```powershell
+cd "<connector_directory>"
+uv pip install --python .\.venv\Scripts\python.exe py-spy
+.\.venv\Scripts\py-spy.exe record -o cpu_profile.svg --subprocesses -- python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
+```
+
+Leave existing state alone by default, so the profile matches the actual slow run being
+diagnosed. Only reset first (`.venv/bin/fivetran reset --force`, or the Windows equivalent) if
+you specifically want to profile a full initial sync instead of the current incremental
+workload — resetting replaces the workload being profiled, not just the state. This produces a flamegraph
+SVG of CPU time; read it directly rather than asking the user to open it in a viewer — it's a
+plain-text XML file. Each stack frame is a `<title>` element formatted roughly as
+`function_name (file.py:line) (N samples, X.XX%)`; read the file and look at the widest boxes
+(highest percentages) under `run_update` — that's the connector's own code. Ignore frames outside
+`run_update`, they're SDK/tester framework overhead, not something to optimize.
+
+Full reference, including how to read the flamegraph, common bottleneck patterns (sequential API
+calls, row-by-row processing, repeated JSON parsing), and how production profiling differs from
+local: https://fivetran.com/docs/connector-sdk/testing/connector-performance-analysis
+
+## Diagnosing high memory usage
+
+`fivetran debug` reports peak memory at the end of the run (e.g. `peak memory used by the debug
+process: 0.06 GB`) and enforces a memory limit locally. If a run is close to or exceeds that
+limit, the most common cause is accumulating data in memory before delivering it — collecting
+all pages/rows into a list, reading a full file into a DataFrame, or `cursor.fetchall()` on a
+large query. The fix is always the same shape: fetch a small chunk, upsert it, repeat — but keep
+checkpointing on the usual time/state cadence (no more than once a minute; see **State
+Management** in `sdk-reference.md`), not after every chunk.
+
+To pinpoint which line is responsible rather than guessing, add a temporary `tracemalloc`
+snapshot before/after the suspect operation (built into Python, no install needed) — this
+reports the exact allocating line, object count, and average size. For a coarser check, use
+`psutil` (`process.memory_info().rss`) at a few key points. Remove both before deploying.
+
+Full reference, including code for both helpers: https://fivetran.com/docs/connector-sdk/testing/connector-memory-management

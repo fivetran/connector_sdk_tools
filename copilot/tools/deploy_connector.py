@@ -562,6 +562,10 @@ def main():
     parser.add_argument("--start-sync", action="store_true",
                         help="Unpause an already-deployed connection to start syncing (use with --connection-id)")
     parser.add_argument("--connection-id", help="Existing connection ID to redeploy, or unpause with --start-sync")
+    parser.add_argument("--no-configuration", action="store_true",
+                        help="Deploy code only; do not pass local configuration.json even if it exists. "
+                             "Use for a routine redeploy when the connection's existing stored configuration "
+                             "should be left untouched.")
     args = parser.parse_args()
     if args.connection_id and (args.connection or args.destination):
         parser.error("--connection-id cannot be combined with --connection or --destination; "
@@ -587,7 +591,7 @@ def main():
 
     config_path = connector_dir / "configuration.json"
     try:
-        config = load_runtime_config(config_path) if config_path.exists() else None
+        config = load_runtime_config(config_path) if config_path.exists() and not args.no_configuration else None
     except DecryptionFailed as exc:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
         if str(exc):
@@ -621,9 +625,18 @@ def main():
     print(f"Destination: {destination_name}")
     print(f"Deploying as connection: {connection_name}")
 
-    # Without a local file, leave configuration resolution to the SDK, including
-    # FIVETRAN_CONFIGURATION. No supplied configuration preserves existing values.
     config_pipe = ConfigPipe(connector_dir, config) if config is not None else None
+    subprocess_env = os.environ.copy()
+    if args.no_configuration:
+        # --no-configuration promises the connection's stored configuration is left
+        # untouched; an inherited FIVETRAN_CONFIGURATION would let the SDK submit
+        # configuration anyway, breaking that promise, so strip it for this run only.
+        subprocess_env.pop("FIVETRAN_CONFIGURATION", None)
+    elif config is None:
+        # No local file and --no-configuration wasn't requested: leave configuration
+        # resolution to the SDK, including any FIVETRAN_CONFIGURATION the caller set.
+        # No supplied configuration preserves existing values.
+        pass
     with config_pipe if config_pipe is not None else nullcontext() as pipe_path:
         cmd = [
             find_fivetran_executable(connector_dir),
@@ -644,6 +657,7 @@ def main():
         process = subprocess.Popen(
             cmd,
             cwd=connector_dir,
+            env=subprocess_env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             bufsize=1,
