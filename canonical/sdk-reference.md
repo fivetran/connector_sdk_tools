@@ -272,7 +272,7 @@ compare with `snapshot.statistics("lineno")`) or `psutil` (`process.memory_info(
 coarser process-level reading at key checkpoints. Remove these calls before deploying.
 Full reference: https://fivetran.com/docs/connector-sdk/testing/connector-memory-management
 
-### Proxy Agent {% badge text="Private Preview" /%}
+### Proxy Agent (Private Preview)
 
 Lets a connector reach a data source behind your firewall through an agent installed in your
 network, so no inbound firewall ports need to open. Not supported with Hybrid Deployment.
@@ -285,7 +285,7 @@ network, so no inbound firewall ports need to open. Not supported with Hybrid De
   connectivity locally; a setup-form `add_test()` connectivity check only runs from the dashboard.
 - Full reference: https://fivetran.com/docs/connector-sdk/building-connectors/connection-options/proxy-agent
 
-### Custom Database Drivers {% badge text="Private Preview" /%}
+### Custom Database Drivers (Private Preview)
 
 If a connector needs a database driver not pre-installed in the runtime container, package the
 installation steps alongside the connector:
