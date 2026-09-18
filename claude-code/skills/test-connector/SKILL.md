@@ -149,3 +149,39 @@ Report which tables were synced and how many rows each.
 → Ask: "This looks like a code issue. Would you like me to fix it?"
 
 **If the user wants a fix:** apply the fixer workflow (see `workflows/fixer.md` in the plugin, or — in plugins that support subagents — invoke the `connector-fixer` subagent). After fixing, re-run the test to verify.
+
+## Diagnosing a slow or stuck sync
+
+If a local run takes a long time with no visible progress, don't assume it's hung — profile it
+rather than guessing:
+
+```bash
+pip install py-spy   # not supported on Python 3.14; use a lower version if needed
+py-spy record -o cpu_profile.svg -- fivetran debug --configuration configuration.json
+```
+
+Run `fivetran reset --force` first to profile a full initial sync. This produces a flamegraph
+SVG of CPU time; read it directly rather than asking the user to open it in a viewer — it's a
+plain-text XML file. Each stack frame is a `<title>` element formatted roughly as
+`function_name (file.py:line) (N samples, X.XX%)`; read the file and look at the widest boxes
+(highest percentages) under `run_update` — that's the connector's own code. Ignore frames outside
+`run_update`, they're SDK/tester framework overhead, not something to optimize.
+
+Full reference, including how to read the flamegraph, common bottleneck patterns (sequential API
+calls, row-by-row processing, repeated JSON parsing), and how production profiling differs from
+local: https://fivetran.com/docs/connector-sdk/testing/connector-performance-analysis
+
+## Diagnosing high memory usage
+
+`fivetran debug` reports peak memory at the end of the run (e.g. `peak memory used by the debug
+process: 0.06 GB`) and enforces a memory limit locally. If a run is close to or exceeds that
+limit, the most common cause is accumulating data in memory before delivering it — collecting
+all pages/rows into a list, reading a full file into a DataFrame, or `cursor.fetchall()` on a
+large query. The fix is always the same shape: fetch a small chunk, upsert it, checkpoint, repeat.
+
+To pinpoint which line is responsible rather than guessing, add a temporary `tracemalloc`
+snapshot before/after the suspect operation (built into Python, no install needed) — this
+reports the exact allocating line, object count, and average size. For a coarser check, use
+`psutil` (`process.memory_info().rss`) at a few key points. Remove both before deploying.
+
+Full reference, including code for both helpers: https://fivetran.com/docs/connector-sdk/testing/connector-memory-management

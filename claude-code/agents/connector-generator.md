@@ -73,6 +73,12 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - Flat string key/value pairs only; preserve existing local values.
 - Fill values supplied or authorized by the user, including non-sensitive settings.
 - Use obvious placeholders only for unresolved fields; never invent credentials.
+- If the connector needs users to provide credentials or connection-specific settings during
+  connection setup, tell the user a **setup form** (`configuration_form`, see `sdk-reference.md`)
+  is available so those values can be entered in the Fivetran dashboard instead of a manually
+  created `configuration.json`, and offer to add one. The setup form is optional — connectors
+  without one continue to work with a manually created `configuration.json`; add it only with
+  the user's agreement.
 
 ### README.md
 - Connector purpose, setup instructions, and configuration guide.
@@ -109,6 +115,12 @@ def schema(configuration: dict):
     ]
 ```
 
+**Use the exact same `table`/column spelling, case, and delimiters in every `op.upsert()`,
+`op.update()`, `op.delete()`, and `op.truncate()` call as in `schema()`.** Fivetran transforms
+names for the destination (lowercase snake_case, non-alphanumeric → `_`) independently wherever
+they appear — a mismatch like `forecast` vs. `forcast`, or `user_data` vs. `user-data`, silently
+produces a duplicate or wrongly-merged destination table with no error.
+
 ### 2. Logging - Use EXACT method names
 - **Preferred (Python-style):** `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()`
 - **Deprecated (Java-style):** `log.fine()`, `log.severe()` — still work for backward compatibility, but new code should use Python-style
@@ -129,6 +141,18 @@ log.error(f"Error details: {error_details}")
 # CRITICAL - Critical failures
 log.critical(f"Critical failure: {details}")
 ```
+
+**Never log per-record.** Pick a progress milestone based on what this connector actually syncs,
+so a long sync never goes silent long enough to look stuck — a user with no visible progress for
+several minutes will assume the connector has hung even when it hasn't:
+- **By record count** for high-volume single-entity syncs (e.g., every 250K records).
+- **By entity/table** for multi-entity syncs — log when starting and finishing each
+  table/entity/account, not only once at the very end.
+- **By elapsed time** for slow or unpredictable-volume calls (paginated API calls, large file
+  downloads) — log progress at least every minute or two even if no record/entity boundary has
+  been hit yet.
+
+Combine these where useful (e.g., `log.info(f"{table}: {count} records synced, {remaining} tables remaining")`).
 
 ### 3. Type Hints - CRITICAL: Use simple built-in types only
 - **CORRECT:** `def update(configuration: dict, state: dict):`
@@ -153,6 +177,23 @@ op.update(table, modified)
 # Marking records as deleted
 op.delete(table, keys)
 ```
+
+**Never accumulate the full result set before the first `op.upsert()` call** — fetch a chunk,
+upsert it, checkpoint, then fetch the next chunk. This applies to paginated API responses, file
+reads, and database queries (use a batched fetch like `cursor.fetchmany()`, not `fetchall()`).
+
+**Error handling — pick the response based on the failure, not a blanket try/except:**
+
+| Pattern | When | How |
+|---------|------|-----|
+| Retry | Rate limits (429), transient 5xx, network timeouts | Exponential backoff; honor `Retry-After` |
+| Warn and continue | Part of the sync fails but the rest still delivers useful, correct data | `op.warning("what was skipped and why")`, then continue |
+| Fail fast | Invalid credentials, bad request (4xx other than 429), missing/invalid config, source data breaking required assumptions | `raise RuntimeError(...)` or `op.error(message, trace=...)` for a custom dashboard message |
+
+`op.error()`/`op.warning()` create dashboard-visible alerts; `log.error()`/`log.warning()` do
+not — they only write to sync logs. Use `op.warning()`/`op.error()` (optionally alongside
+logging) whenever the user needs to see the issue on the dashboard, not just in logs. Never
+catch an exception and continue without either logging it or calling `op.warning()`.
 
 ### 5. State Management and Checkpointing
 - Implement checkpoint logic after each batch of operations

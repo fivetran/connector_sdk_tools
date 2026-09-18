@@ -54,7 +54,7 @@ Analyze the code against the criteria below. Be deterministic and conservative �
 Flag as `required` only when the code clearly demonstrates the problem.
 
 **1. Memory & Resource Management**
-- Entire dataset loaded into memory before processing (e.g., accumulating all records in a list before iterating)
+- Entire dataset loaded into memory before processing (e.g., accumulating all records in a list before iterating, reading a full file into a DataFrame, or calling `cursor.fetchall()` on a large query instead of a batched/paginated fetch)
 - Files or connections opened without a context manager and without explicit `.close()`
 - Unbounded data structures that grow without limits
 
@@ -86,10 +86,14 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Cursor/state updated **before** processing the record (should be after):
   - WRONG: `cursor = data['updated_at']` then `op.upsert(...)`
   - CORRECT: `op.upsert(...)` then `cursor = data['updated_at']`
+- A table name declared in `schema()` doesn't exactly match (same spelling, case, delimiters) the `table` argument used in `op.upsert()`/`op.update()`/`op.delete()`/`op.truncate()` calls for the same table — this silently creates a duplicate or empty destination table, since Fivetran transforms both independently and a mismatch (e.g. `forecast` vs. `forcast`, `user_data` vs. `user-data`) produces different transformed identifiers
 
 **5. Exception Handling**
 - Missing error handling around network, file, or database operations
 - Exceptions caught but silently ignored (`except Exception: pass`)
+- A partial failure that only continues processing without any user-visible signal — no
+  `op.warning()` call and no logging of what was skipped. Skipping bad rows/endpoints is fine;
+  doing so silently is not.
 
 ---
 
@@ -108,10 +112,14 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - No `primary_key` declared for a table — Fivetran will create a surrogate `_fivetran_id` key; declaring an explicit primary key is recommended
 - `log.fine()` or `log.severe()` used — these are deprecated Java-style aliases; prefer `log.debug()` and `log.error()` respectively
 
-**3. Reliability**
+**3. Configurability**
+- No `configuration_form` passed to `Connector(...)` while `configuration.json` holds credentials or connection-specific settings — a setup form lets users provide those values through the Fivetran dashboard instead of a manually created `configuration.json`, and `fivetran configuration` requires one to generate `configuration.json` interactively. The setup form is optional: `debug`/`run`/`package`/`deploy` all work fine without it.
+
+**4. Reliability**
 - Retries without exponential backoff
 - String timestamp comparison without datetime parsing (can fail across timezones)
 - Pagination logic that could silently skip records
+- A fatal error only raised as a bare/generic exception with no actionable message, where `op.error(message, trace=...)` would give the user a clear, dashboard-visible reason instead of a raw stack trace. Do NOT flag a plain `raise RuntimeError("clear message")` — that is also a correct fail-fast pattern.
 
 ---
 
