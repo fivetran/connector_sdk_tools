@@ -625,9 +625,16 @@ def main():
     print(f"Destination: {destination_name}")
     print(f"Deploying as connection: {connection_name}")
 
-    # Without a local file, leave configuration resolution to the SDK, including
-    # FIVETRAN_CONFIGURATION. No supplied configuration preserves existing values.
+    # Without a local file (and without --no-configuration), leave configuration resolution
+    # to the SDK, including FIVETRAN_CONFIGURATION. No supplied configuration preserves
+    # existing values.
     config_pipe = ConfigPipe(connector_dir, config) if config is not None else None
+    subprocess_env = os.environ.copy()
+    if args.no_configuration:
+        # --no-configuration promises the connection's stored configuration is left
+        # untouched; an inherited FIVETRAN_CONFIGURATION would let the SDK submit
+        # configuration anyway, breaking that promise.
+        subprocess_env.pop("FIVETRAN_CONFIGURATION", None)
     with config_pipe if config_pipe is not None else nullcontext() as pipe_path:
         cmd = [
             find_fivetran_executable(connector_dir),
@@ -648,6 +655,7 @@ def main():
         process = subprocess.Popen(
             cmd,
             cwd=connector_dir,
+            env=subprocess_env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             bufsize=1,

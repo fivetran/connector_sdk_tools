@@ -101,6 +101,14 @@ class DeployTests(unittest.TestCase):
         self.assertFalse((self.project / ".config_pipe").exists())
         self.assertEqual((self.project / "configuration.json").read_text(), original_contents)
 
+    def test_no_configuration_also_strips_inherited_environment_variable(self):
+        with patch.dict(os.environ, {"FIVETRAN_CONFIGURATION": '{"zip_codes":"10001"}'}):
+            self.assertEqual(
+                self.run_main("--connection-id", "existing_id", "--no-configuration"), 0)
+        self.assertNotIn("--configuration", self.invocation())
+        self.assertFalse((self.project / "submitted-config.json").exists())
+        self.assertEqual(json.loads((self.project / "environment-config.json").read_text()), None)
+
     def test_explicit_new_destination_needs_no_discovery(self):
         self.assertEqual(self.run_main("--destination", "Chosen Group", "--connection", "new"), 0)
         self.assertEqual(self.requests, [])
