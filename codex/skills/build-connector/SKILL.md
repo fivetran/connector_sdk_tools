@@ -97,18 +97,21 @@ deploy time (see **deploy-connector**).
 
 - **EXACT MATCH / FUZZY MATCH** — start from the community connector:
   ```bash
-  printf '\n' | fivetran init "<connector_dir>" --template connectors/<name> --force
+  fivetran init "<connector_dir>" --template connectors/<name> --yes
   ```
 - **BUILD ON TEMPLATE** — start from the default template:
   ```bash
-  printf '\n' | fivetran init "<connector_dir>" --force
+  fivetran init "<connector_dir>" --yes
   ```
 
-Windows PowerShell: replace `printf '\n' |` with `"" |`.
+**Why `--yes`:** `fivetran init` normally prompts to confirm overwriting an existing directory and
+to pick a coding agent to install the plugin for; `--yes` auto-confirms both — overwrites an
+existing project directory (unlike `--non-interactive`, which keeps existing files untouched and
+silently skips setup) and skips the agent-setup prompt (logs `skipping AI agent setup` and exits
+0) since the plugin is already installed. No input piping needed. Prefer `--yes` over `--force`,
+which is deprecated for this purpose (still works, but the CLI warns to migrate).
 
-**Why the piped newline and `--force`:** `fivetran init` always runs an interactive "which coding agent shall we install the plugin for?" prompt, and there is no flag to skip it. `--force` auto-confirms project creation and file overwrites; the piped empty line answers the agent prompt with an invalid choice, so it logs `invalid choice; skipping agent setup` (this is **expected and benign** — the plugin is already installed) and continues.
-
-**Verify success by checking that `<connector_dir>/connector.py` exists**, not by the exit code — an exhausted input pipe can make `init` exit non-zero even after the files download correctly. `connectors/<name>` resolves to the `community_connectors` repo; `examples/<path>` resolves to `connector_sdk`.
+**Verify success by checking that `<connector_dir>/connector.py` exists** and the exit code is 0. `connectors/<name>` resolves to the `community_connectors` repo; `examples/<path>` resolves to `connector_sdk`.
 
 ## Phase 3: Customize the Scaffolded Files
 
