@@ -17,7 +17,7 @@ Changes for the Fivetran AI coding agent tools in this repository.
 - Documented Unstructured File Uploads (`FileUpload`, `op.upsert(..., file=...)`), Connector Memory Management (common causes, fetch-process-checkpoint pattern, `tracemalloc`/`psutil` local measurement), Proxy Agent, and Custom Database Drivers in sdk-reference.md.
 - test-connector adds guidance for diagnosing high local memory usage (`tracemalloc`/`psutil`), alongside the existing py-spy profiling guidance.
 - Documented destination table/column name normalization in sdk-reference.md and the generator workflow, and added an evaluate-connector check for schema/upsert table-name mismatches that silently create duplicate or wrongly-merged destination tables.
-- Added a `--no-configuration` flag to `deploy_connector.py` so a code-only redeploy can skip pushing the local `configuration.json` — it also strips an inherited `FIVETRAN_CONFIGURATION` environment variable from the deploy subprocess, so that can't silently override the connection's stored configuration either. Documented in deploy-connector as the safe way to redeploy without overwriting production configuration.
+- Added a `--no-configuration` flag to `deploy_connector.py` so a code-only redeploy can skip pushing the local `configuration.json` — it strips an inherited `FIVETRAN_CONFIGURATION` environment variable, and temporarily moves the local `configuration.json` out of the project directory for the deploy subprocess (since `fivetran deploy` auto-loads it from its working directory even without `--configuration`), restoring it afterward. Documented in deploy-connector as the safe way to redeploy without overwriting production configuration.
 
 ### fivetran-connector-sdk-tools 2026.9.12.1
 

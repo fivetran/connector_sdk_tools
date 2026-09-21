@@ -21,6 +21,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -322,6 +323,36 @@ def unpause_connection(api_key: str, connection_id: str):
     )
     print(f"Connection {connection_id} unpaused — the initial sync will begin.")
     print(f"Dashboard: https://fivetran.com/dashboard/connections/{connection_id}/status")
+
+
+class HiddenConfigurationFile:
+    """
+    Temporarily moves configuration.json out of the project directory while active.
+
+    Omitting --configuration and any FIVETRAN_CONFIGURATION env var is not enough to keep
+    a connector's local configuration.json from being submitted: `fivetran deploy` itself
+    falls back to reading configuration.json from its working directory (here, the project
+    directory) whenever neither the flag nor the env var is set. --no-configuration must hide
+    the file from that fallback too, or a routine redeploy would still submit it.
+    """
+    def __init__(self, config_path: Path, active: bool):
+        self.config_path = config_path
+        self.active = active
+        self._temp_path = None
+
+    def __enter__(self):
+        if self.active and self.config_path.exists():
+            fd, temp_name = tempfile.mkstemp(prefix="fivetran-hidden-configuration-", suffix=".json")
+            os.close(fd)
+            self._temp_path = Path(temp_name)
+            shutil.move(str(self.config_path), str(self._temp_path))
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        if self._temp_path is not None:
+            shutil.move(str(self._temp_path), str(self.config_path))
+            self._temp_path = None
+        return False
 
 
 class ConfigPipe:
@@ -637,7 +668,8 @@ def main():
         # resolution to the SDK, including any FIVETRAN_CONFIGURATION the caller set.
         # No supplied configuration preserves existing values.
         pass
-    with config_pipe if config_pipe is not None else nullcontext() as pipe_path:
+    with HiddenConfigurationFile(config_path, args.no_configuration), \
+         config_pipe if config_pipe is not None else nullcontext() as pipe_path:
         cmd = [
             find_fivetran_executable(connector_dir),
             "deploy",
