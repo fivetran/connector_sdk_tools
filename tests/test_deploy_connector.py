@@ -112,6 +112,37 @@ class DeployTests(unittest.TestCase):
         self.assertFalse((self.project / "submitted-config.json").exists())
         self.assertEqual(json.loads((self.project / "environment-config.json").read_text()), None)
 
+    def test_no_configuration_leaves_no_stray_file_and_preserves_permissions(self):
+        config_path = self.project / "configuration.json"
+        os.chmod(config_path, 0o600)
+        original_mode = config_path.stat().st_mode
+        self.assertEqual(
+            self.run_main("--connection-id", "existing_id", "--no-configuration"), 0)
+        self.assertFalse((self.project / "configuration.json.hidden-by-deploy").exists())
+        self.assertEqual(config_path.stat().st_mode, original_mode)
+
+    def test_hidden_configuration_file_is_recoverable_after_simulated_crash(self):
+        config_path = self.project / "configuration.json"
+        original_contents = config_path.read_text()
+        hidden_path = self.project / "configuration.json.hidden-by-deploy"
+
+        hidden = self.helper.HiddenConfigurationFile(config_path, active=True)
+        hidden.__enter__()
+        try:
+            # Simulate the process dying before __exit__ runs: the hidden copy must sit
+            # right next to the original, under an obvious name, not lost in a system temp
+            # directory the user has no reason to look in.
+            self.assertTrue(hidden_path.exists())
+            self.assertFalse(config_path.exists())
+        finally:
+            # The atexit/SIGTERM safety net calls this; simulate it firing instead of a
+            # real signal, to verify recovery without actually killing the test process.
+            self.helper._restore_hidden_configuration_files()
+
+        self.assertTrue(config_path.exists())
+        self.assertEqual(config_path.read_text(), original_contents)
+        self.assertFalse(hidden_path.exists())
+
     def test_explicit_new_destination_needs_no_discovery(self):
         self.assertEqual(self.run_main("--destination", "Chosen Group", "--connection", "new"), 0)
         self.assertEqual(self.requests, [])

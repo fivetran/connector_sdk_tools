@@ -14,14 +14,15 @@ Usage:
     python deploy_connector.py --help
 """
 import argparse
+import atexit
 import errno
 import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 import urllib.error
@@ -327,32 +328,62 @@ def unpause_connection(api_key: str, connection_id: str):
 
 class HiddenConfigurationFile:
     """
-    Temporarily moves configuration.json out of the project directory while active.
+    Temporarily renames configuration.json out of the way, in the same directory, while active.
 
-    Omitting --configuration and any FIVETRAN_CONFIGURATION env var is not enough to keep
-    a connector's local configuration.json from being submitted: `fivetran deploy` itself
-    falls back to reading configuration.json from its working directory (here, the project
-    directory) whenever neither the flag nor the env var is set. --no-configuration must hide
-    the file from that fallback too, or a routine redeploy would still submit it.
+    Omitting --configuration and any FIVETRAN_CONFIGURATION env var is not enough to keep a
+    connector's local configuration.json from being submitted: `fivetran deploy` itself falls
+    back to reading configuration.json from its working directory (here, the project directory)
+    whenever neither the flag nor the env var is set. --no-configuration must hide the file from
+    that fallback too, or a routine redeploy would still submit it.
+
+    The renamed copy stays in the project directory rather than a shared system temp
+    directory, for two reasons: an `os.rename` within the same filesystem never falls back to a
+    copy that could change file permissions (a cross-device move can, exposing a
+    credential-bearing file to other users on that system), and if this process is killed by a
+    signal that skips __exit__ (SIGKILL — not something any process can intercept), the
+    original file is left right next to where it was, under an obvious name, not lost in a
+    system temp directory the user has no reason to look in.
     """
+    _active_instances = []
+
     def __init__(self, config_path: Path, active: bool):
         self.config_path = config_path
         self.active = active
-        self._temp_path = None
+        self.hidden_path = config_path.with_name(config_path.name + ".hidden-by-deploy")
+
+    def _restore(self):
+        if self.hidden_path.exists() and not self.config_path.exists():
+            os.rename(self.hidden_path, self.config_path)
+        try:
+            HiddenConfigurationFile._active_instances.remove(self)
+        except ValueError:
+            pass
 
     def __enter__(self):
         if self.active and self.config_path.exists():
-            fd, temp_name = tempfile.mkstemp(prefix="fivetran-hidden-configuration-", suffix=".json")
-            os.close(fd)
-            self._temp_path = Path(temp_name)
-            shutil.move(str(self.config_path), str(self._temp_path))
+            os.rename(self.config_path, self.hidden_path)
+            HiddenConfigurationFile._active_instances.append(self)
         return self
 
     def __exit__(self, exc_type, exc, tb):
-        if self._temp_path is not None:
-            shutil.move(str(self._temp_path), str(self.config_path))
-            self._temp_path = None
+        self._restore()
         return False
+
+
+def _restore_hidden_configuration_files(*_args):
+    # Best-effort safety net for SIGTERM and normal interpreter exit; __exit__ already
+    # covers the ordinary exception/success paths. SIGKILL cannot be intercepted by any
+    # process, so it is not something this (or any) cleanup handler can guard against.
+    for instance in list(HiddenConfigurationFile._active_instances):
+        instance._restore()
+
+
+def _register_hidden_configuration_cleanup():
+    # Registered from main(), not at module import time, so importing this file (e.g. in
+    # tests) never mutates the importing process's signal handlers as a side effect.
+    atexit.register(_restore_hidden_configuration_files)
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, lambda signum, frame: (_restore_hidden_configuration_files(), sys.exit(1)))
 
 
 class ConfigPipe:
@@ -601,6 +632,9 @@ def main():
     if args.connection_id and (args.connection or args.destination):
         parser.error("--connection-id cannot be combined with --connection or --destination; "
                      "the existing connection determines both.")
+
+    if args.no_configuration:
+        _register_hidden_configuration_cleanup()
 
     # Opt-in unpause path: start the initial sync of an already-deployed connection.
     # The build/deploy skill calls this only after the user explicitly confirms.

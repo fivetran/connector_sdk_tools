@@ -186,8 +186,12 @@ workload — resetting replaces the workload being profiled, not just the state.
 SVG of CPU time; read it directly rather than asking the user to open it in a viewer — it's a
 plain-text XML file. Each stack frame is a `<title>` element formatted roughly as
 `function_name (file.py:line) (N samples, X.XX%)`; read the file and look at the widest boxes
-(highest percentages) under `run_update` — that's the connector's own code. Ignore frames outside
-`run_update`, they're SDK/tester framework overhead, not something to optimize.
+(highest percentages). Frames under `run_update` are the connector's own code — the primary
+target. Also check stacks that reference the connector's own source files (`connector.py` or
+other project files) with no `run_update` ancestor — these come from work the connector itself
+handed to a thread or subprocess (e.g. `ThreadPoolExecutor`), and are still the connector's code,
+not overhead. Only frames confined to SDK/tester files with no connector-file frame anywhere in
+the stack are pure framework overhead — those aren't worth optimizing.
 
 Full reference, including how to read the flamegraph, common bottleneck patterns (sequential API
 calls, row-by-row processing, repeated JSON parsing), and how production profiling differs from
