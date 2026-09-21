@@ -187,15 +187,5 @@ local: https://fivetran.com/docs/connector-sdk/testing/connector-performance-ana
 
 `fivetran debug` reports peak memory at the end of the run (e.g. `peak memory used by the debug
 process: 0.06 GB`) and enforces a memory limit locally. If a run is close to or exceeds that
-limit, the most common cause is accumulating data in memory before delivering it — collecting
-all pages/rows into a list, reading a full file into a DataFrame, or `cursor.fetchall()` on a
-large query. The fix is always the same shape: fetch a small chunk, upsert it, repeat — but keep
-checkpointing on the usual time/state cadence (no more than once a minute; see **State
-Management** in `sdk-reference.md`), not after every chunk.
-
-To pinpoint which line is responsible rather than guessing, add a temporary `tracemalloc`
-snapshot before/after the suspect operation (built into Python, no install needed) — this
-reports the exact allocating line, object count, and average size. For a coarser check, use
-`psutil` (`process.memory_info().rss`) at a few key points. Remove both before deploying.
-
-Full reference, including code for both helpers: https://fivetran.com/docs/connector-sdk/testing/connector-memory-management
+limit, follow **Memory Management** in `sdk-reference.md` for common causes, the fetch-chunk-
+upsert-repeat fix, and how to pinpoint the allocating line with `tracemalloc`/`psutil`.
