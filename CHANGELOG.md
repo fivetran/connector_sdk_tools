@@ -6,6 +6,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ### fivetran-connector-sdk-tools 2026.9.18.1
 
+- Corrected runtime facts in sdk-reference.md against the current SDK source/CLI: production and local-debug memory limit is 4 GB (was documented as 1 GB in production), the default deploy Python version is 3.14 (was documented as 3.13), and dropped an unverified "0.5 vCPUs" claim not found in any current source.
+- Broadened the `exit()` gotcha to also cover `sys.exit()` and `os._exit()` — the SDK's own static check in `connector.py` flags all three, not just bare `exit()`.
+- Documented that the `Connector(...)` instance must be assigned to a module-level variable named exactly `connector` — the SDK looks for that name specifically; any other name is a SEVERE error even for an otherwise-valid object. Added as a required check in evaluate-connector.
+
 - Documented the Connector SDK setup form (`configuration_form`, `ConfigurationForm`, `form_field.TextField|DropdownField|ToggleField`, `ConfigurationForm.add_test`/`Test`) in sdk-reference.md, closing an awareness gap inherited by every downstream skill and agent.
 - connector-generator now offers to add a setup form when the connector needs credentials or dashboard-configurable settings, and only adds one with the user's agreement.
 - evaluate-connector flags a missing `configuration_form()` as a good-to-have "Configurability" finding when `connector.py` reads credential- or connection-specific-looking keys from the `configuration` dict (never based on `configuration.json`'s actual contents, which the evaluator does not read).

@@ -65,8 +65,11 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Declaring `columns` with valid types is **correct and supported** — do NOT flag it as an issue. Declaring a `primary_key` for each table is recommended.
 - Logging: preferred methods are `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()` — flag `print()`, `logging.*`, `logger.*` as required issues
 - Type hints: `Generator[op.Operation, None, None]` or any use of `op.Operation` in type hints is invalid — use plain `dict` and `list` only; never import from `typing` for SDK function signatures
-- `exit()` must never be used — use `raise RuntimeError(...)` instead
-- `connector = Connector(...)` must be at module (global) scope, not inside `if __name__ == "__main__"` or any function
+- `exit()`, `sys.exit()`, or `os._exit()` must never be used — use `raise RuntimeError(...)` instead
+- `Connector(...)` must be assigned to a module (global) scope variable named exactly
+  `connector` (lowercase) — not inside `if __name__ == "__main__"` or any function, and not
+  under any other name. The SDK looks specifically for a module-level `connector`; any other
+  name is a SEVERE error even though the object itself is valid.
 
 **3. Security**
 - Credentials, tokens, or secrets stored in the `state` dict (state is persisted to disk unencrypted)

@@ -25,7 +25,7 @@
 | `fivetran debug` | Test locally, produces `warehouse.db` (DuckDB) |
 | `fivetran package` | Build a deployable ZIP without uploading |
 | `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
-| `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.13) |
+| `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.14) |
 | `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent |
 | `fivetran reset --force` | Reset local state (clear warehouse.db) |
 | `fivetran version` | Print the installed SDK version |
@@ -38,9 +38,9 @@
 
 ## Runtime Environment
 
-- **Memory:** 1 GB RAM
-- **CPU:** 0.5 vCPUs
-- **Python Versions:** 3.10.18, 3.11.13, 3.12.11, **3.13.7 (default)**, 3.14.0
+- **Memory:** 4 GB RAM in production; local `fivetran debug` enforces the same 4 GB limit (see
+  **Memory Management** below)
+- **Python Versions:** 3.10, 3.11, 3.12, 3.13, **3.14 (default)**
   - Specify a non-default version with `fivetran deploy --python <version>`
   - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
 - **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`
@@ -461,8 +461,12 @@ above rather than silently changing keys or discarding usable local values.
 - **`warehouse.db` is DuckDB, not SQLite** — use `duckdb.connect('files/warehouse.db')`, tables are in the `tester` schema
 - **`fivetran reset` prompts for confirmation** — use `--force` in scripts/agents
 - **Datetime fields** — always use UTC, format as `'%Y-%m-%dT%H:%M:%SZ'`
-- **Never use `exit()`** — use `raise RuntimeError(...)` instead
-- **`connector = Connector(...)`** must be in global scope, NOT under `if __name__`
+- **Never use `exit()`, `sys.exit()`, or `os._exit()`** — the SDK statically scans `connector.py`
+  for all three and warns that they can hang the connector; `raise RuntimeError(...)` instead
+- **`connector = Connector(...)`** must be in global scope, NOT under `if __name__` — and the
+  variable must be named exactly `connector` (lowercase). The SDK loads `connector.py` and looks
+  for a module-level `Connector` instance named `connector` specifically; any other name is a
+  SEVERE error even though the object itself is valid.
 - **Encrypted configuration values** — if configuration.json contains inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal; decryption happens at runtime.
 - **Table/column names are transformed for the destination** (lowercase snake_case; non-letter/digit/underscore chars become `_`; camelCase splits) — `schema()` and `op.upsert()`/`op.update()`/`op.delete()`/`op.truncate()` must produce **identical normalized** identifiers for the same table, or a mismatch (e.g. `forecast` vs. `forcast`, or `fore-cast` vs. `forecast` — the latter normalizes to `fore_cast`, which doesn't match `forecast`) silently creates a duplicate destination table with no error. Different raw spellings that normalize to the *same* identifier (e.g. `user_data` and `user-data`) are fine for the same table — they collapse into one.
 
