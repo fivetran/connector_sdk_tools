@@ -54,7 +54,7 @@ Analyze the code against the criteria below. Be deterministic and conservative �
 Flag as `required` only when the code clearly demonstrates the problem.
 
 **1. Memory & Resource Management**
-- Entire dataset loaded into memory before processing (e.g., accumulating all records in a list before iterating)
+- Entire dataset loaded into memory before processing (e.g., accumulating all records in a list before iterating, reading a full file into a DataFrame, or calling `cursor.fetchall()` on a large query instead of a batched/paginated fetch)
 - Files or connections opened without a context manager and without explicit `.close()`
 - Unbounded data structures that grow without limits
 
@@ -71,8 +71,11 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Declaring `columns` with valid types is **correct and supported** — do NOT flag it as an issue. Declaring a `primary_key` for each table is recommended.
 - Logging: preferred methods are `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()` — flag `print()`, `logging.*`, `logger.*` as required issues
 - Type hints: `Generator[op.Operation, None, None]` or any use of `op.Operation` in type hints is invalid — use plain `dict` and `list` only; never import from `typing` for SDK function signatures
-- `exit()` must never be used — use `raise RuntimeError(...)` instead
-- `connector = Connector(...)` must be at module (global) scope, not inside `if __name__ == "__main__"` or any function
+- `exit()`, `sys.exit()`, or `os._exit()` must never be used — use `raise RuntimeError(...)` instead
+- `Connector(...)` must be assigned to a module (global) scope variable named exactly
+  `connector` (lowercase) — not inside `if __name__ == "__main__"` or any function, and not
+  under any other name. The SDK looks specifically for a module-level `connector`; any other
+  name is a SEVERE error even though the object itself is valid.
 
 **3. Security**
 - Credentials, tokens, or secrets stored in the `state` dict (state is persisted to disk unencrypted)
@@ -86,10 +89,16 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Cursor/state updated **before** processing the record (should be after):
   - WRONG: `cursor = data['updated_at']` then `op.upsert(...)`
   - CORRECT: `op.upsert(...)` then `cursor = data['updated_at']`
+- Two naming failure modes from destination name normalization (see the naming Gotcha in `sdk-reference.md` for the normalization rules): (1) the same logical table/column uses raw names in `schema()` and `op.*()` calls that normalize to **different** identifiers — flag it, this silently creates a duplicate/empty table; (2) two **distinct** logical tables or columns use raw names that normalize to the **same** identifier — flag it as a collision, this silently merges their data. Always compare *normalized* forms, not raw strings — aliases of the same entity that normalize identically are not a bug.
 
 **5. Exception Handling**
 - Missing error handling around network, file, or database operations
 - Exceptions caught but silently ignored (`except Exception: pass`)
+- A partial failure (skipped rows/endpoints, degraded data) that continues processing without
+  calling `op.warning()` — flag this even if the code logs the skip. `log.*()` never creates a
+  dashboard alert (see **Error Handling** in `sdk-reference.md`); only `op.warning()` does, and
+  logging is an optional supplement, not a substitute. Skipping bad rows/endpoints is fine — doing
+  so without `op.warning()` is not.
 
 ---
 
@@ -108,10 +117,14 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - No `primary_key` declared for a table — Fivetran will create a surrogate `_fivetran_id` key; declaring an explicit primary key is recommended
 - `log.fine()` or `log.severe()` used — these are deprecated Java-style aliases; prefer `log.debug()` and `log.error()` respectively
 
-**3. Reliability**
+**3. Configurability**
+- No `configuration_form` passed to `Connector(...)` while `connector.py` reads credential- or connection-specific-looking keys from the `configuration` dict (e.g. `configuration.get("api_key")`, `configuration["password"]`, tokens, hosts, URLs) — a setup form lets users provide those values through the Fivetran dashboard instead of a manually created `configuration.json`, and `fivetran configuration` requires one to generate `configuration.json` interactively. Base this on keys read/validated in source code, never on `configuration.json`'s contents. The setup form is optional: `debug`/`run`/`package`/`deploy` all work fine without it.
+
+**4. Reliability**
 - Retries without exponential backoff
 - String timestamp comparison without datetime parsing (can fail across timezones)
 - Pagination logic that could silently skip records
+- A fatal error only raised as a bare/generic exception with no actionable message, where `op.error(message, trace=...)` would give the user a clear, dashboard-visible reason instead of a raw stack trace. Do NOT flag a plain `raise RuntimeError("clear message")` — that is also a correct fail-fast pattern.
 
 ---
 

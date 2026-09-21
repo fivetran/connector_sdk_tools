@@ -5,6 +5,8 @@ import importlib.util
 import io
 import json
 import os
+import signal
+import subprocess
 import sys
 import tempfile
 import time
@@ -37,6 +39,9 @@ class DeployTests(unittest.TestCase):
             "assert os.environ['FIVETRAN_API_KEY'] == 'Zml4dHVyZTpmaXh0dXJl'\n"
             "if '--configuration' in sys.argv:\n"
             "    with open(sys.argv[sys.argv.index('--configuration')+1]) as stream:\n"
+            "        pathlib.Path('submitted-config.json').write_text(json.dumps(json.load(stream)))\n"
+            "elif not os.getenv('FIVETRAN_CONFIGURATION') and pathlib.Path('configuration.json').exists():\n"
+            "    with open('configuration.json') as stream:\n"
             "        pathlib.Path('submitted-config.json').write_text(json.dumps(json.load(stream)))\n"
             "pathlib.Path('environment-config.json').write_text(json.dumps(os.getenv('FIVETRAN_CONFIGURATION')))\n"
             "pathlib.Path('invocation.json').write_text(json.dumps(sys.argv[1:]))\n"
@@ -91,6 +96,77 @@ class DeployTests(unittest.TestCase):
                 self.assertFalse((self.project / "configuration.json").exists())
                 self.assertFalse((self.project / "submitted-config.json").exists())
                 self.assertEqual(json.loads((self.project / "environment-config.json").read_text()), value)
+
+    def test_no_configuration_skips_local_file_and_leaves_it_untouched(self):
+        original_contents = (self.project / "configuration.json").read_text()
+        self.assertEqual(
+            self.run_main("--connection-id", "existing_id", "--no-configuration"), 0)
+        self.assertNotIn("--configuration", self.invocation())
+        self.assertFalse((self.project / "submitted-config.json").exists())
+        self.assertFalse((self.project / ".config_pipe").exists())
+        self.assertEqual((self.project / "configuration.json").read_text(), original_contents)
+
+    def test_no_configuration_also_strips_inherited_environment_variable(self):
+        with patch.dict(os.environ, {"FIVETRAN_CONFIGURATION": '{"zip_codes":"10001"}'}):
+            self.assertEqual(
+                self.run_main("--connection-id", "existing_id", "--no-configuration"), 0)
+        self.assertNotIn("--configuration", self.invocation())
+        self.assertFalse((self.project / "submitted-config.json").exists())
+        self.assertEqual(json.loads((self.project / "environment-config.json").read_text()), None)
+
+    def test_no_configuration_leaves_no_stray_file_and_preserves_permissions(self):
+        config_path = self.project / "configuration.json"
+        os.chmod(config_path, 0o600)
+        original_mode = config_path.stat().st_mode
+        self.assertEqual(
+            self.run_main("--connection-id", "existing_id", "--no-configuration"), 0)
+        self.assertFalse((self.project / "configuration.json.hidden-by-deploy").exists())
+        self.assertEqual(config_path.stat().st_mode, original_mode)
+
+    def test_hidden_configuration_file_is_recoverable_after_simulated_crash(self):
+        config_path = self.project / "configuration.json"
+        original_contents = config_path.read_text()
+        hidden_path = self.project / "configuration.json.hidden-by-deploy"
+
+        hidden = self.helper.HiddenConfigurationFile(config_path, active=True)
+        hidden.__enter__()
+        try:
+            # Simulate the process dying before __exit__ runs: the hidden copy must sit
+            # right next to the original, under an obvious name, not lost in a system temp
+            # directory the user has no reason to look in.
+            self.assertTrue(hidden_path.exists())
+            self.assertFalse(config_path.exists())
+        finally:
+            # The atexit/SIGTERM safety net calls this; simulate it firing instead of a
+            # real signal, to verify recovery without actually killing the test process.
+            self.helper._restore_hidden_configuration_files()
+
+        self.assertTrue(config_path.exists())
+        self.assertEqual(config_path.read_text(), original_contents)
+        self.assertFalse(hidden_path.exists())
+
+    def test_sigterm_handler_terminates_child_before_restoring_configuration(self):
+        config_path = self.project / "configuration.json"
+        original_contents = config_path.read_text()
+
+        # A real, slow child process — standing in for `fivetran deploy` — to prove the
+        # handler actually waits for it to die rather than abandoning it as an orphan.
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        self.helper._active_deploy_subprocess = child
+
+        hidden = self.helper.HiddenConfigurationFile(config_path, active=True)
+        hidden.__enter__()
+        try:
+            with self.assertRaises(SystemExit):
+                self.helper._handle_sigterm(signal.SIGTERM, None)
+            self.assertIsNotNone(child.poll(), "child process was left running")
+            self.assertTrue(config_path.exists())
+            self.assertEqual(config_path.read_text(), original_contents)
+        finally:
+            self.helper._active_deploy_subprocess = None
+            if child.poll() is None:
+                child.kill()
+                child.wait()
 
     def test_explicit_new_destination_needs_no_discovery(self):
         self.assertEqual(self.run_main("--destination", "Chosen Group", "--connection", "new"), 0)

@@ -87,22 +87,38 @@ Apply the validator workflow — read `workflows/validator.md` in the plugin dir
 
 ## Phase 2: Scaffold the Project with `fivetran init`
 
-`fivetran init` is the canonical scaffolding path — it produces a complete, runnable connector with the correct structure (`validate_configuration()`, docstrings, the `__main__` block). **Always scaffold with `fivetran init`; never hand-write the project from scratch.** Pick the command from the Phase 1 discovery result. The project directory is the connector name (lowercase, underscores).
+`fivetran init` is the canonical scaffolding path — it produces a complete, runnable connector with the correct structure (`validate_configuration()`, docstrings, the `__main__` block). **Always scaffold with `fivetran init`; never hand-write the project from scratch.** Pick the command from the Phase 1 discovery result.
+
+**Confirm the project/connector name before scaffolding.** Propose a directory name (lowercase,
+underscores) based on the source, tell the user what it will be, and let them override it before
+running `fivetran init`. Do not silently derive it from the current path or proceed without
+confirmation — this name becomes the project directory and, by default, the connection name at
+deploy time (see **deploy-connector**).
+
+**Before running `fivetran init`, check whether `<connector_dir>` already exists and has
+contents.** Confirming the *name* is not the same as confirming an *overwrite* — the proposed
+name could collide with an unrelated existing directory (a different project, someone else's
+connector). If it exists and isn't empty, stop and ask the user to explicitly confirm overwriting
+it, or pick a different directory name; only pass `--yes` once the target is confirmed empty/new
+or the user has explicitly authorized overwriting it.
 
 - **EXACT MATCH / FUZZY MATCH** — start from the community connector:
   ```bash
-  printf '\n' | fivetran init "<connector_dir>" --template connectors/<name> --force
+  fivetran init "<connector_dir>" --template connectors/<name> --yes
   ```
 - **BUILD ON TEMPLATE** — start from the default template:
   ```bash
-  printf '\n' | fivetran init "<connector_dir>" --force
+  fivetran init "<connector_dir>" --yes
   ```
 
-Windows PowerShell: replace `printf '\n' |` with `"" |`.
+**Why `--yes`:** `fivetran init` normally prompts to confirm overwriting an existing directory and
+to pick a coding agent to install the plugin for; `--yes` auto-confirms both — overwrites an
+existing project directory (unlike `--non-interactive`, which keeps existing files untouched and
+silently skips setup) and skips the agent-setup prompt (logs `skipping AI agent setup` and exits
+0) since the plugin is already installed. No input piping needed. Prefer `--yes` over `--force`,
+which is deprecated for this purpose (still works, but the CLI warns to migrate).
 
-**Why the piped newline and `--force`:** `fivetran init` always runs an interactive "which coding agent shall we install the plugin for?" prompt, and there is no flag to skip it. `--force` auto-confirms project creation and file overwrites; the piped empty line answers the agent prompt with an invalid choice, so it logs `invalid choice; skipping agent setup` (this is **expected and benign** — the plugin is already installed) and continues.
-
-**Verify success by checking that `<connector_dir>/connector.py` exists**, not by the exit code — an exhausted input pipe can make `init` exit non-zero even after the files download correctly. `connectors/<name>` resolves to the `community_connectors` repo; `examples/<path>` resolves to `connector_sdk`.
+**Verify success by checking that `<connector_dir>/connector.py` exists** and the exit code is 0. `connectors/<name>` resolves to the `community_connectors` repo; `examples/<path>` resolves to `connector_sdk`.
 
 ## Phase 3: Customize the Scaffolded Files
 

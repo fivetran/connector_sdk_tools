@@ -19,7 +19,7 @@
 | `fivetran debug` | Test locally, produces `warehouse.db` (DuckDB) |
 | `fivetran package` | Build a deployable ZIP without uploading |
 | `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
-| `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.13) |
+| `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.14) |
 | `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent |
 | `fivetran reset --force` | Reset local state (clear warehouse.db) |
 | `fivetran version` | Print the installed SDK version |
@@ -32,9 +32,9 @@
 
 ## Runtime Environment
 
-- **Memory:** 1 GB RAM
-- **CPU:** 0.5 vCPUs
-- **Python Versions:** 3.10.18, 3.11.13, 3.12.11, **3.13.7 (default)**, 3.14.0
+- **Memory:** 4 GB RAM in production; local `fivetran debug` enforces the same 4 GB limit (see
+  **Memory Management** below)
+- **Python Versions:** 3.10, 3.11, 3.12, 3.13, **3.14 (default)**
   - Specify a non-default version with `fivetran deploy --python <version>`
   - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
 - **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`
@@ -76,7 +76,16 @@ if __name__ == "__main__":
 | `log.error()` | Errors before raising | Always emitted |
 | `log.critical()` | Critical failures | Always emitted |
 
-Never log per-record. Log at milestones (per table, every 250K records).
+Never log per-record — pick a milestone that fits what the connector is actually syncing, so a
+long sync never goes silent long enough to look stuck:
+- **By record count**, for high-volume single-entity syncs: e.g., every 250K records.
+- **By entity/table**, for multi-entity syncs: log when starting and finishing each
+  table/entity/account, not only at the very end.
+- **By elapsed time**, for slow or unpredictable-volume calls (e.g., paginated API calls, large
+  file downloads): log progress at least every minute or two of a long-running operation, even
+  if no natural record/entity boundary has been hit yet.
+
+Combine these where useful (e.g., "table X: 250K records synced, 3 tables remaining").
 
 ### Type Hints — Simple Built-in Types Only
 - **CORRECT:** `def update(configuration: dict, state: dict):`
@@ -120,6 +129,24 @@ Call operations directly.
 | `op.delete(table="t", keys={"id": "123"})` | Soft-delete a record (`_fivetran_deleted = TRUE`) |
 | `op.truncate(table="t")` | Soft-delete all rows synced before this call; flushed at the next checkpoint |
 | `op.checkpoint(state=state)` | Save sync progress (and flush buffered data to the destination) |
+| `op.error(message="...", trace=None)` | Fail the sync immediately with a custom, dashboard-visible message (title: **Connector SDK Code Error**). Only one per sync — code stops running after the call. |
+| `op.warning(message="...")` | Surface a non-critical, dashboard-visible warning without stopping the sync. Max 10 per sync; extras are dropped. |
+
+**`op.error()`/`op.warning()` vs. `log.error()`/`log.warning()`:** logging methods write to sync
+logs only — they do **not** create a dashboard alert or affect the sync outcome. Use
+`op.error()`/`op.warning()` (optionally alongside logging) whenever the issue should be visible
+to the user on the Fivetran dashboard, not just in logs.
+
+### Error Handling — Choose the Right Response
+
+| Pattern | When | How |
+|---------|------|-----|
+| **Retry** | Rate limits (HTTP 429), transient 5xx errors, network timeouts | Exponential backoff; honor `Retry-After` if present |
+| **Warn and continue** | Part of the sync fails but the rest still delivers useful, correct data (one endpoint down, a few malformed rows, optional enrichment unavailable) | Call `op.warning(message)` so users know data was skipped, then continue |
+| **Fail fast** | Invalid credentials (401/403), bad request (4xx other than 429), missing/invalid configuration, source data that breaks required assumptions | `raise RuntimeError(...)` (dashboard title: **Python code throwing error**) or call `op.error(message, trace=...)` for a custom dashboard message |
+
+Fail fast for configuration problems **before** making source calls, inside `update()`. Never
+silently drop data that should have failed or warned the user.
 
 ### configuration.json Rules
 - **Flat key/value pairs only** — no nested objects or arrays
@@ -134,6 +161,158 @@ Call operations directly.
 - Explicit versions for all dependencies
 - Do NOT include `requests` or `fivetran_connector_sdk` (pre-installed)
 - Use `.gitignore` to exclude files from deployment (replaces the older `.ftignore`)
+
+### Setup Form (`configuration_form`)
+
+Use a setup form to collect configuration values in the Fivetran dashboard instead of requiring
+users to provide all values through `configuration.json`. Field values are stored securely and
+passed to `schema(configuration)` and `update(configuration, state)` at runtime through the
+`configuration` dictionary, same as manually created `configuration.json` values.
+
+The setup form is optional — connectors that don't define one can continue to use a manually
+created `configuration.json` file. Define one when your connector needs users to provide
+credentials or connection-specific settings during connection setup, want defined field
+labels/descriptions/required fields/placeholders/options, want custom setup tests run before
+users save and test the connection, or want to generate a local `configuration.json` from the
+same fields for testing.
+
+```python
+from fivetran_connector_sdk import Connector, ConfigurationForm, Test, form_field
+
+def configuration_form():
+    form = ConfigurationForm()
+    form.add_field(form_field.TextField(
+        name="api_key",            # written to configuration.json; passed via `configuration` dict
+        label="API Key",
+        field_type=form_field.TextField.password,  # or .plain_text (default)
+        required=True,
+    ))
+    form.add_test(label="Test connection", func=connection_test)
+    return form
+
+def connection_test(configuration: dict):
+    test = Test()
+    if not configuration.get("api_key"):
+        return test.failure("API key is required.")
+    return test.success()
+
+connector = Connector(
+    update=update,  # required; add schema=schema if you define a schema
+    configuration_form=configuration_form,
+)
+```
+
+- **Field types:** `form_field.TextField` (`field_type=form_field.TextField.plain_text` for
+  visible input such as host names/URLs/usernames/IDs, or `.password` for secrets — masked),
+  `form_field.DropdownField` (fixed list of `form_field.DropdownFieldParam(value=..., label=...,
+  description=...)` options; values are converted to strings and stored as such),
+  `form_field.ToggleField` (boolean on/off settings). Values collected by `fivetran configuration`
+  are written to `configuration.json` as strings (e.g. toggles as `"true"`/`"false"`).
+- **Setup tests:** register with `form.add_test(label=..., func=...)`; the function takes one
+  `configuration: dict` argument and returns `Test().success()` or `Test().failure("message")`.
+  Fivetran runs registered setup tests when users save and test the connection; run them locally
+  with `fivetran configuration --test`.
+- **`fivetran configuration`** interactively collects values from the setup form fields and
+  writes them to `configuration.json` (project directory by default; overwrites an existing file
+  only after confirmation). Requires a connector that defines `configuration_form` — otherwise the
+  command exits without generating `configuration.json`. Password field values are stored
+  encrypted by default (`fivetran_encrypted:` prefix, decrypted automatically by Fivetran); use
+  `--disable-encryption` to store them as plaintext instead — not recommended when working with
+  AI or in shared environments. `--test` always attempts to decrypt encrypted values regardless
+  of `--disable-encryption`, and warns if it finds unencrypted password values.
+- **Deployment:** packaging/deploying a connector includes the serialized setup form metadata in
+  the package so Fivetran can render the form for the connection. You can still deploy with
+  `--configuration configuration.json`; those values are stored securely and can pre-populate or
+  update the connection's configuration — for an existing connection, omitting `--configuration`
+  keeps the existing stored values.
+- Full reference: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-setup-form
+
+### Unstructured File Uploads
+
+Send PDFs, images, archives, or other binary content to the destination alongside a metadata row,
+via an optional `file` parameter on `op.upsert()`/`op.update()`. Supported only for destinations
+with unstructured file replication enabled, and not supported in Hybrid Deployment.
+
+```python
+from fivetran_connector_sdk import FileUpload, Operations as op
+
+op.upsert(
+    table="invoices",
+    data={"id": invoice_id, "updated_at": updated_at},
+    file=FileUpload(path=f"invoices/{invoice_id}.pdf", stream=response.raw, expected_bytes=size),
+)
+```
+
+- `FileUpload(path, stream, expected_bytes=None)`: `path` is the destination path within the
+  table's namespace (stored in the auto-created `_fivetran_file_path` column — never set that
+  column manually); `stream` is any object with `read(size) -> bytes` (`io.BytesIO`, a file
+  handle, `requests.raw`); `expected_bytes` optionally verifies the upload wasn't truncated.
+- Fivetran uploads the file first, then the metadata row; a failed sync retries both from the
+  last checkpoint.
+- If the source response is compressed, decode it first — e.g. set `response.raw.decode_content
+  = True` before passing `response.raw`, or the uploaded file will be corrupted.
+- To update a file, call `upsert()`/`update()` again with the same primary key and a new
+  `FileUpload`. To delete, use `op.delete()` on the metadata row — this does not remove the
+  staged file.
+- Full reference: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-file-uploads
+
+### Memory Management
+
+Each connection runs in a container with a memory limit; accumulating data in Python objects
+(`lists`, `DataFrames`, `dicts`) before delivering it scales memory with dataset size. Common
+causes: collecting all pages/rows before upserting, reading a full file into memory,
+`cursor.fetchall()` on a large query, or caching whole API responses.
+
+**Fix:** fetch a small chunk → process/upsert it immediately → repeat, checkpointing on the
+usual time/state cadence (see **State Management** below — no more than once a minute), not
+after every chunk. Fast pagination can produce many small chunks per minute; checkpointing on
+every one causes excessive flushes. Never accumulate the full dataset before the first
+`op.upsert()` call.
+
+To measure locally: `fivetran debug` reports peak memory at the end of the run. To pinpoint the
+allocating line, use `tracemalloc` (built in — take snapshots before/after suspect operations,
+compare with `snapshot.statistics("lineno")`) or `psutil` (`process.memory_info().rss`) for a
+coarser process-level reading at key checkpoints. Remove these calls before deploying.
+Full reference: https://fivetran.com/docs/connector-sdk/testing/connector-memory-management
+
+### Proxy Agent (Private Preview)
+
+Lets a connector reach a data source behind your firewall through an agent installed in your
+network, so no inbound firewall ports need to open. Not supported with Hybrid Deployment.
+
+- `configuration.json` must hold the source's `host:port` endpoint(s) as a **string** value —
+  this repo's configuration.json contract is flat strings only, so use a single `host:port` under
+  the key `host`, or multiple endpoints as one comma-separated string under the key `hosts` (e.g.
+  `"hosts": "db-primary.internal.com:5432,db-replica.internal.com:5432"`) — both are
+  auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time.
+- Deploy with `fivetran deploy --proxy-id <PROXY_AGENT_ID> [--proxy-host-config-key <key>] ...`
+  — a real, working flag on the installed SDK (hidden from `--help`, not unsupported). This
+  plugin's `deploy_connector.py` wrapper doesn't forward `--proxy-id`/`--proxy-host-config-key`;
+  for a Proxy Agent connection, call `fivetran deploy` directly instead of the wrapper (see
+  **Alternative: Manual Packaging** in deploy-connector).
+- `fivetran debug` and `fivetran configuration --test` don't route through the Proxy Agent —
+  neither can validate end-to-end connectivity locally, even though `add_test()` setup tests
+  otherwise run fine locally (see **Setup Form** above). A Proxy Agent connectivity check in
+  `add_test()` only exercises the real route when triggered from the dashboard's **Save & Test**.
+- Full reference: https://fivetran.com/docs/connector-sdk/building-connectors/connection-options/proxy-agent
+
+### Custom Database Drivers (Private Preview)
+
+If a connector needs a database driver not pre-installed in the runtime container, package the
+installation steps alongside the connector:
+
+```text
+my_connector/
+├── connector.py
+├── configuration.json
+└── drivers/
+    └── installation.sh
+```
+
+Every file under `drivers/` is packaged on deploy — include only what belongs in the deployment.
+Inside `installation.sh`, each `configuration.json` key is available as an env var prefixed
+`configuration_` (e.g. `db_name` → `$configuration_db_name`).
+Full reference: https://fivetran.com/docs/connector-sdk/building-connectors/custom-database-drivers
 
 ## Advanced Patterns
 
@@ -276,9 +455,14 @@ above rather than silently changing keys or discarding usable local values.
 - **`warehouse.db` is DuckDB, not SQLite** — use `duckdb.connect('files/warehouse.db')`, tables are in the `tester` schema
 - **`fivetran reset` prompts for confirmation** — use `--force` in scripts/agents
 - **Datetime fields** — always use UTC, format as `'%Y-%m-%dT%H:%M:%SZ'`
-- **Never use `exit()`** — use `raise RuntimeError(...)` instead
-- **`connector = Connector(...)`** must be in global scope, NOT under `if __name__`
+- **Never use `exit()`, `sys.exit()`, or `os._exit()`** — the SDK statically scans `connector.py`
+  for all three and warns that they can hang the connector; `raise RuntimeError(...)` instead
+- **`connector = Connector(...)`** must be in global scope, NOT under `if __name__` — and the
+  variable must be named exactly `connector` (lowercase). The SDK loads `connector.py` and looks
+  for a module-level `Connector` instance named `connector` specifically; any other name is a
+  SEVERE error even though the object itself is valid.
 - **Encrypted configuration values** — if configuration.json contains inline `ENCRYPTED:v1:<key_id>:local-fernet:` values, this is normal; decryption happens at runtime.
+- **Table/column names are transformed for the destination** (lowercase snake_case; non-letter/digit/underscore chars become `_`; camelCase splits) — `schema()` and `op.upsert()`/`op.update()`/`op.delete()`/`op.truncate()` must produce **identical normalized** identifiers for the same table, or a mismatch (e.g. `forecast` vs. `forcast`, or `fore-cast` vs. `forecast` — the latter normalizes to `fore_cast`, which doesn't match `forecast`) silently creates a duplicate destination table with no error. Different raw spellings that normalize to the *same* identifier (e.g. `user_data` and `user-data`) are fine for the same table — they collapse into one.
 
 ## Connector Discovery
 

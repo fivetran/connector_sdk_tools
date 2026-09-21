@@ -47,12 +47,17 @@ destination without listing destinations or prompting:
 python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection-id "<id>"
 ```
 
-For a new connection, supply the destination (group) name and optionally a
-connection name; otherwise the connection name is derived from the directory:
+For a new connection, confirm the connection name with the user before deploying — do not
+silently derive it from the directory name and deploy. Tell the user what name will be used
+(the directory name, if that's the default you're about to pass) and let them override it.
+Supply the destination (group) name and the confirmed connection name:
 
 ```bash
 python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --destination "<name>" --connection "<name>"
 ```
+
+If the harness has no way to ask (no input channel), state the name you're about to use and
+give the user a chance to stop you before the deploy call runs.
 
 The tool reads `FIVETRAN_API_KEY`, passes local configuration through a named
 pipe when present, and invokes `fivetran deploy --destination <name> --connection <name> --force`.
@@ -119,13 +124,33 @@ name. Redeployment replaces code and supplied configuration; it does not itself
 unpause the connection. Verify connection health after deployment and use the
 explicit start-sync path only when authorized.
 
+Deploying with `--configuration configuration.json` stores those values securely and can
+pre-populate or update the connection's configuration — including values entered through a setup
+form (see **Setup Form** in `sdk-reference.md`). This applies to a code-only redeploy too:
+`deploy_connector.py` automatically passes the local `configuration.json` (via a named pipe)
+whenever that file exists in the project directory, unless `--no-configuration` is passed (see
+below).
+
+Before redeploying an existing connection, ask the user whether the local `configuration.json`
+holds any values that only belong in their local/test setup and shouldn't overwrite the
+connection's production configuration. Do not read or print the file's contents yourself to check
+— that risks exposing secrets. If the user confirms local-only values are present and wants a
+code-only redeploy, pass `--no-configuration` so the connection's existing stored configuration is
+left untouched:
+
+```bash
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection-id "<id>" --no-configuration
+```
+
 ## Alternative: Manual Packaging
 
-If the user prefers manual deployment (e.g., wants to inspect the package before upload):
+If the user prefers manual deployment (e.g., wants to inspect the package before upload), or the
+connector uses **Proxy Agent** (see `sdk-reference.md`) — `deploy_connector.py` doesn't forward
+`--proxy-id`/`--proxy-host-config-key`, so call `fivetran deploy` directly instead:
 
 1. Build the deployable archive:
    ```bash
    fivetran package
    ```
    This produces a ZIP containing `connector.py`, `configuration.json`, `requirements.txt` (or `pyproject.toml`), `README.md`, and any additional source files, respecting `.gitignore`.
-2. Upload via the Fivetran dashboard.
+2. Upload via the Fivetran dashboard, or deploy directly with `fivetran deploy --destination <name> --connection <name> [--proxy-id <id> [--proxy-host-config-key <key>]]`.

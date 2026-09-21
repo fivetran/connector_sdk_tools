@@ -69,6 +69,12 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - Flat string key/value pairs only; preserve existing local values.
 - Fill values supplied or authorized by the user, including non-sensitive settings.
 - Use obvious placeholders only for unresolved fields; never invent credentials.
+- If the connector needs users to provide credentials or connection-specific settings during
+  connection setup, tell the user a **setup form** (`configuration_form`, see `sdk-reference.md`)
+  is available so those values can be entered in the Fivetran dashboard instead of a manually
+  created `configuration.json`, and offer to add one. The setup form is optional — connectors
+  without one continue to work with a manually created `configuration.json`; add it only with
+  the user's agreement.
 
 ### README.md
 - Connector purpose, setup instructions, and configuration guide.
@@ -105,6 +111,11 @@ def schema(configuration: dict):
     ]
 ```
 
+**Use table/column identifiers in `op.upsert()`, `op.update()`, `op.delete()`, and
+`op.truncate()` that normalize to the same destination name as in `schema()`** — see the
+destination naming/normalization Gotcha in `sdk-reference.md` for why a mismatch silently
+creates a duplicate table.
+
 ### 2. Logging - Use EXACT method names
 - **Preferred (Python-style):** `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()`
 - **Deprecated (Java-style):** `log.fine()`, `log.severe()` — still work for backward compatibility, but new code should use Python-style
@@ -125,6 +136,10 @@ log.error(f"Error details: {error_details}")
 # CRITICAL - Critical failures
 log.critical(f"Critical failure: {details}")
 ```
+
+**Never log per-record.** Follow the logging-milestone guidance in `sdk-reference.md` (by
+record count, by entity/table, or by elapsed time) so a long sync never goes silent long enough
+to look stuck.
 
 ### 3. Type Hints - CRITICAL: Use simple built-in types only
 - **CORRECT:** `def update(configuration: dict, state: dict):`
@@ -150,9 +165,20 @@ op.update(table, modified)
 op.delete(table, keys)
 ```
 
+**Never accumulate the full result set before the first `op.upsert()` call** — see **Memory
+Management** in `sdk-reference.md` for the fetch-chunk-upsert-repeat pattern and checkpoint
+cadence.
+
+**Error handling — pick the response based on the failure, not a blanket try/except.** Follow
+the retry/warn-and-continue/fail-fast table and the `op.error()`/`op.warning()` vs.
+`log.error()`/`log.warning()` distinction in **Error Handling** in `sdk-reference.md`. Never
+catch an exception and continue past a partial failure (skipped rows/endpoints, degraded data)
+without calling `op.warning()` — logging it too is fine, but logging alone never creates a
+dashboard alert and does not satisfy this.
+
 ### 5. State Management and Checkpointing
-- Implement checkpoint logic after each batch of operations
-- Don't make batches too big, checkpoint often
+- Checkpoint on a time/state cadence — roughly every 10 minutes for long operations, and no
+  more than once per minute — not after every batch or chunk of operations
 - Store cursor values or sync state in checkpoint
 
 ```python

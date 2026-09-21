@@ -14,11 +14,13 @@ Usage:
     python deploy_connector.py --help
 """
 import argparse
+import atexit
 import errno
 import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -324,6 +326,93 @@ def unpause_connection(api_key: str, connection_id: str):
     print(f"Dashboard: https://fivetran.com/dashboard/connections/{connection_id}/status")
 
 
+class HiddenConfigurationFile:
+    """
+    Temporarily renames configuration.json out of the way, in the same directory, while active.
+
+    Omitting --configuration and any FIVETRAN_CONFIGURATION env var is not enough to keep a
+    connector's local configuration.json from being submitted: `fivetran deploy` itself falls
+    back to reading configuration.json from its working directory (here, the project directory)
+    whenever neither the flag nor the env var is set. --no-configuration must hide the file from
+    that fallback too, or a routine redeploy would still submit it.
+
+    The renamed copy stays in the project directory rather than a shared system temp
+    directory, for two reasons: an `os.rename` within the same filesystem never falls back to a
+    copy that could change file permissions (a cross-device move can, exposing a
+    credential-bearing file to other users on that system), and if this process is killed by a
+    signal that skips __exit__ (SIGKILL — not something any process can intercept), the
+    original file is left right next to where it was, under an obvious name, not lost in a
+    system temp directory the user has no reason to look in.
+    """
+    _active_instances = []
+
+    def __init__(self, config_path: Path, active: bool):
+        self.config_path = config_path
+        self.active = active
+        self.hidden_path = config_path.with_name(config_path.name + ".hidden-by-deploy")
+
+    def _restore(self):
+        if self.hidden_path.exists() and not self.config_path.exists():
+            os.rename(self.hidden_path, self.config_path)
+        try:
+            HiddenConfigurationFile._active_instances.remove(self)
+        except ValueError:
+            pass
+
+    def __enter__(self):
+        if self.active and self.config_path.exists():
+            os.rename(self.config_path, self.hidden_path)
+            HiddenConfigurationFile._active_instances.append(self)
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self._restore()
+        return False
+
+
+def _restore_hidden_configuration_files(*_args):
+    # Best-effort safety net for SIGTERM and normal interpreter exit; __exit__ already
+    # covers the ordinary exception/success paths. SIGKILL cannot be intercepted by any
+    # process, so it is not something this (or any) cleanup handler can guard against.
+    for instance in list(HiddenConfigurationFile._active_instances):
+        instance._restore()
+
+
+_active_deploy_subprocess = None
+
+
+def _terminate_active_deploy_subprocess():
+    # If SIGTERM targets only this wrapper's PID (as service managers commonly do), the
+    # child `fivetran deploy` process does not receive it and would otherwise keep running,
+    # orphaned, after we exit. Must run — and finish — before the configuration file is
+    # restored, or a still-running deploy could read it back while it's "cancelled".
+    proc = _active_deploy_subprocess
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+    except Exception:
+        pass
+
+
+def _handle_sigterm(signum, frame):
+    _terminate_active_deploy_subprocess()
+    _restore_hidden_configuration_files()
+    sys.exit(1)
+
+
+def _register_hidden_configuration_cleanup():
+    # Registered from main(), not at module import time, so importing this file (e.g. in
+    # tests) never mutates the importing process's signal handlers as a side effect.
+    atexit.register(_restore_hidden_configuration_files)
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, _handle_sigterm)
+
+
 class ConfigPipe:
     """
     Named pipe for securely passing config to the SDK.
@@ -562,10 +651,17 @@ def main():
     parser.add_argument("--start-sync", action="store_true",
                         help="Unpause an already-deployed connection to start syncing (use with --connection-id)")
     parser.add_argument("--connection-id", help="Existing connection ID to redeploy, or unpause with --start-sync")
+    parser.add_argument("--no-configuration", action="store_true",
+                        help="Deploy code only; do not pass local configuration.json even if it exists. "
+                             "Use for a routine redeploy when the connection's existing stored configuration "
+                             "should be left untouched.")
     args = parser.parse_args()
     if args.connection_id and (args.connection or args.destination):
         parser.error("--connection-id cannot be combined with --connection or --destination; "
                      "the existing connection determines both.")
+
+    if args.no_configuration:
+        _register_hidden_configuration_cleanup()
 
     # Opt-in unpause path: start the initial sync of an already-deployed connection.
     # The build/deploy skill calls this only after the user explicitly confirms.
@@ -587,7 +683,7 @@ def main():
 
     config_path = connector_dir / "configuration.json"
     try:
-        config = load_runtime_config(config_path) if config_path.exists() else None
+        config = load_runtime_config(config_path) if config_path.exists() and not args.no_configuration else None
     except DecryptionFailed as exc:
         print("Error: Failed to decrypt configuration.", file=sys.stderr)
         if str(exc):
@@ -621,10 +717,20 @@ def main():
     print(f"Destination: {destination_name}")
     print(f"Deploying as connection: {connection_name}")
 
-    # Without a local file, leave configuration resolution to the SDK, including
-    # FIVETRAN_CONFIGURATION. No supplied configuration preserves existing values.
     config_pipe = ConfigPipe(connector_dir, config) if config is not None else None
-    with config_pipe if config_pipe is not None else nullcontext() as pipe_path:
+    subprocess_env = os.environ.copy()
+    if args.no_configuration:
+        # --no-configuration promises the connection's stored configuration is left
+        # untouched; an inherited FIVETRAN_CONFIGURATION would let the SDK submit
+        # configuration anyway, breaking that promise, so strip it for this run only.
+        subprocess_env.pop("FIVETRAN_CONFIGURATION", None)
+    elif config is None:
+        # No local file and --no-configuration wasn't requested: leave configuration
+        # resolution to the SDK, including any FIVETRAN_CONFIGURATION the caller set.
+        # No supplied configuration preserves existing values.
+        pass
+    with HiddenConfigurationFile(config_path, args.no_configuration), \
+         config_pipe if config_pipe is not None else nullcontext() as pipe_path:
         cmd = [
             find_fivetran_executable(connector_dir),
             "deploy",
@@ -641,20 +747,26 @@ def main():
             cmd.extend(["--configuration", str(pipe_path)])
 
         connection_id = args.connection_id
+        global _active_deploy_subprocess
         process = subprocess.Popen(
             cmd,
             cwd=connector_dir,
+            env=subprocess_env,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             bufsize=1,
             universal_newlines=True
         )
-        for line in process.stdout:
-            print(line, end='', flush=True)
-            match = re.search(r"Connection ID:\s*(\S+)", line)
-            if match:
-                connection_id = match.group(1)
-        process.wait()
+        _active_deploy_subprocess = process
+        try:
+            for line in process.stdout:
+                print(line, end='', flush=True)
+                match = re.search(r"Connection ID:\s*(\S+)", line)
+                if match:
+                    connection_id = match.group(1)
+            process.wait()
+        finally:
+            _active_deploy_subprocess = None
 
         if config_pipe is not None and config_pipe.writer_error:
             print(f"Error: Failed to write configuration pipe: {config_pipe.writer_error}", file=sys.stderr)
