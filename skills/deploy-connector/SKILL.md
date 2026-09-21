@@ -150,11 +150,13 @@ python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection
 
 ## Alternative: Manual Packaging
 
-If the user prefers manual deployment (e.g., wants to inspect the package before upload):
+If the user prefers manual deployment (e.g., wants to inspect the package before upload), or the
+connector uses **Proxy Agent** (see `sdk-reference.md`) — `deploy_connector.py` doesn't forward
+`--proxy-id`/`--proxy-host-config-key`, so call `fivetran deploy` directly instead:
 
 1. Build the deployable archive:
    ```bash
    fivetran package
    ```
    This produces a ZIP containing `connector.py`, `configuration.json`, `requirements.txt` (or `pyproject.toml`), `README.md`, and any additional source files, respecting `.gitignore`.
-2. Upload via the Fivetran dashboard.
+2. Upload via the Fivetran dashboard, or deploy directly with `fivetran deploy --destination <name> --connection <name> [--proxy-id <id> [--proxy-host-config-key <key>]]`.

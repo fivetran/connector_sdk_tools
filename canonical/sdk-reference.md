@@ -285,7 +285,11 @@ network, so no inbound firewall ports need to open. Not supported with Hybrid De
   the key `host`, or multiple endpoints as one comma-separated string under the key `hosts` (e.g.
   `"hosts": "db-primary.internal.com:5432,db-replica.internal.com:5432"`) — both are
   auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time.
-- Deploy with `fivetran deploy --proxy-id <PROXY_AGENT_ID> [--proxy-host-config-key <key>] ...`.
+- Deploy with `fivetran deploy --proxy-id <PROXY_AGENT_ID> [--proxy-host-config-key <key>] ...`
+  — a real, working flag on the installed SDK (hidden from `--help`, not unsupported). This
+  plugin's `deploy_connector.py` wrapper doesn't forward `--proxy-id`/`--proxy-host-config-key`;
+  for a Proxy Agent connection, call `fivetran deploy` directly instead of the wrapper (see
+  **Alternative: Manual Packaging** in deploy-connector).
 - `fivetran debug` and `fivetran configuration --test` don't route through the Proxy Agent —
   neither can validate end-to-end connectivity locally, even though `add_test()` setup tests
   otherwise run fine locally (see **Setup Form** above). A Proxy Agent connectivity check in
