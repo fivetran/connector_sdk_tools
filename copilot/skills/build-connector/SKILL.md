@@ -95,6 +95,13 @@ running `fivetran init`. Do not silently derive it from the current path or proc
 confirmation — this name becomes the project directory and, by default, the connection name at
 deploy time (see **deploy-connector**).
 
+**Before running `fivetran init`, check whether `<connector_dir>` already exists and has
+contents.** Confirming the *name* is not the same as confirming an *overwrite* — the proposed
+name could collide with an unrelated existing directory (a different project, someone else's
+connector). If it exists and isn't empty, stop and ask the user to explicitly confirm overwriting
+it, or pick a different directory name; only pass `--yes` once the target is confirmed empty/new
+or the user has explicitly authorized overwriting it.
+
 - **EXACT MATCH / FUZZY MATCH** — start from the community connector:
   ```bash
   fivetran init "<connector_dir>" --template connectors/<name> --yes
