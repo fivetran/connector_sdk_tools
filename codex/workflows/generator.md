@@ -167,7 +167,9 @@ cadence.
 **Error handling — pick the response based on the failure, not a blanket try/except.** Follow
 the retry/warn-and-continue/fail-fast table and the `op.error()`/`op.warning()` vs.
 `log.error()`/`log.warning()` distinction in **Error Handling** in `sdk-reference.md`. Never
-catch an exception and continue without either logging it or calling `op.warning()`.
+catch an exception and continue past a partial failure (skipped rows/endpoints, degraded data)
+without calling `op.warning()` — logging it too is fine, but logging alone never creates a
+dashboard alert and does not satisfy this.
 
 ### 5. State Management and Checkpointing
 - Checkpoint on a time/state cadence — roughly every 10 minutes for long operations, and no

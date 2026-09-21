@@ -85,9 +85,11 @@ Flag as `required` only when the code clearly demonstrates the problem.
 **5. Exception Handling**
 - Missing error handling around network, file, or database operations
 - Exceptions caught but silently ignored (`except Exception: pass`)
-- A partial failure that only continues processing without any user-visible signal — no
-  `op.warning()` call and no logging of what was skipped. Skipping bad rows/endpoints is fine;
-  doing so silently is not.
+- A partial failure (skipped rows/endpoints, degraded data) that continues processing without
+  calling `op.warning()` — flag this even if the code logs the skip. `log.*()` never creates a
+  dashboard alert (see **Error Handling** in `sdk-reference.md`); only `op.warning()` does, and
+  logging is an optional supplement, not a substitute. Skipping bad rows/endpoints is fine — doing
+  so without `op.warning()` is not.
 
 ---
 

@@ -161,18 +161,22 @@ calling `fivetran debug` directly would pass that ciphertext as-is and can fail.
 `--subprocesses` so py-spy also samples the `fivetran` process `run_connector.py` launches, where
 the connector code actually runs:
 
+Use the connector's own `.venv` interpreter to launch `run_connector.py`, not whatever `python`
+resolves to on `PATH` — that venv is the one guaranteed to be on the selected py-spy-compatible
+version and to have `cryptography` installed for decrypting `ENCRYPTED:v1:...` values.
+
 macOS/Linux:
 ```bash
 cd "<connector_directory>"
 uv pip install --python .venv/bin/python py-spy
-.venv/bin/py-spy record -o cpu_profile.svg --subprocesses -- python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
+.venv/bin/py-spy record -o cpu_profile.svg --subprocesses -- .venv/bin/python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
 ```
 
 Windows PowerShell:
 ```powershell
 cd "<connector_directory>"
 uv pip install --python .\.venv\Scripts\python.exe py-spy
-.\.venv\Scripts\py-spy.exe record -o cpu_profile.svg --subprocesses -- python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
+.\.venv\Scripts\py-spy.exe record -o cpu_profile.svg --subprocesses -- .\.venv\Scripts\python.exe "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600
 ```
 
 Leave existing state alone by default, so the profile matches the actual slow run being
