@@ -378,12 +378,39 @@ def _restore_hidden_configuration_files(*_args):
         instance._restore()
 
 
+_active_deploy_subprocess = None
+
+
+def _terminate_active_deploy_subprocess():
+    # If SIGTERM targets only this wrapper's PID (as service managers commonly do), the
+    # child `fivetran deploy` process does not receive it and would otherwise keep running,
+    # orphaned, after we exit. Must run — and finish — before the configuration file is
+    # restored, or a still-running deploy could read it back while it's "cancelled".
+    proc = _active_deploy_subprocess
+    if proc is None or proc.poll() is not None:
+        return
+    try:
+        proc.terminate()
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+    except Exception:
+        pass
+
+
+def _handle_sigterm(signum, frame):
+    _terminate_active_deploy_subprocess()
+    _restore_hidden_configuration_files()
+    sys.exit(1)
+
+
 def _register_hidden_configuration_cleanup():
     # Registered from main(), not at module import time, so importing this file (e.g. in
     # tests) never mutates the importing process's signal handlers as a side effect.
     atexit.register(_restore_hidden_configuration_files)
     if hasattr(signal, "SIGTERM"):
-        signal.signal(signal.SIGTERM, lambda signum, frame: (_restore_hidden_configuration_files(), sys.exit(1)))
+        signal.signal(signal.SIGTERM, _handle_sigterm)
 
 
 class ConfigPipe:
@@ -720,6 +747,7 @@ def main():
             cmd.extend(["--configuration", str(pipe_path)])
 
         connection_id = args.connection_id
+        global _active_deploy_subprocess
         process = subprocess.Popen(
             cmd,
             cwd=connector_dir,
@@ -729,12 +757,16 @@ def main():
             bufsize=1,
             universal_newlines=True
         )
-        for line in process.stdout:
-            print(line, end='', flush=True)
-            match = re.search(r"Connection ID:\s*(\S+)", line)
-            if match:
-                connection_id = match.group(1)
-        process.wait()
+        _active_deploy_subprocess = process
+        try:
+            for line in process.stdout:
+                print(line, end='', flush=True)
+                match = re.search(r"Connection ID:\s*(\S+)", line)
+                if match:
+                    connection_id = match.group(1)
+            process.wait()
+        finally:
+            _active_deploy_subprocess = None
 
         if config_pipe is not None and config_pipe.writer_error:
             print(f"Error: Failed to write configuration pipe: {config_pipe.writer_error}", file=sys.stderr)

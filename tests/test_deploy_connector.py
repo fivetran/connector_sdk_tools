@@ -5,6 +5,8 @@ import importlib.util
 import io
 import json
 import os
+import signal
+import subprocess
 import sys
 import tempfile
 import time
@@ -142,6 +144,29 @@ class DeployTests(unittest.TestCase):
         self.assertTrue(config_path.exists())
         self.assertEqual(config_path.read_text(), original_contents)
         self.assertFalse(hidden_path.exists())
+
+    def test_sigterm_handler_terminates_child_before_restoring_configuration(self):
+        config_path = self.project / "configuration.json"
+        original_contents = config_path.read_text()
+
+        # A real, slow child process — standing in for `fivetran deploy` — to prove the
+        # handler actually waits for it to die rather than abandoning it as an orphan.
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        self.helper._active_deploy_subprocess = child
+
+        hidden = self.helper.HiddenConfigurationFile(config_path, active=True)
+        hidden.__enter__()
+        try:
+            with self.assertRaises(SystemExit):
+                self.helper._handle_sigterm(signal.SIGTERM, None)
+            self.assertIsNotNone(child.poll(), "child process was left running")
+            self.assertTrue(config_path.exists())
+            self.assertEqual(config_path.read_text(), original_contents)
+        finally:
+            self.helper._active_deploy_subprocess = None
+            if child.poll() is None:
+                child.kill()
+                child.wait()
 
     def test_explicit_new_destination_needs_no_discovery(self):
         self.assertEqual(self.run_main("--destination", "Chosen Group", "--connection", "new"), 0)
