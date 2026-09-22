@@ -123,18 +123,6 @@ name and destination even when the recovered project directory has a different
 name. Redeployment replaces code and supplied configuration; it does not itself
 unpause the connection.
 
-### Verify the repair in production
-
-- Verify the outcome, not just deployment acceptance. Use evidence from work
-  that ran after the change took effect; distinguish failure from an outcome
-  that is not yet verified.
-- Carry validation through to a result. If another action is needed, propose it
-  and obtain the required approval rather than waiting for the user to suggest
-  it. Monitor existing work with bounded waits instead of duplicating it; if
-  validation cannot finish, report it as pending.
-- Base further diagnosis on observed evidence and accessible sources. Do not
-  infer a new cause or assume access to additional data without checking.
-
 ## Alternative: Manual Packaging
 
 If the user prefers manual deployment (e.g., wants to inspect the package before upload):
