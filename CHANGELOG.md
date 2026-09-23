@@ -4,6 +4,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## September 2026
 
+### fivetran-connector-sdk-tools 2026.9.17.2
+
+- Put repair outcome verification in the fixer workflow rather than the deployment skill.
+- Validate against evidence from after the change, pursue required validation through approval, and distinguish pending outcomes from failures.
+
 ### fivetran-connector-sdk-tools 2026.9.18.1
 
 - Corrected runtime facts in sdk-reference.md against the current SDK source/CLI: production and local-debug memory limit is 4 GB (was documented as 1 GB in production), the default deploy Python version is 3.14 (was documented as 3.13), and dropped an unverified "0.5 vCPUs" claim not found in any current source.
