@@ -11,6 +11,8 @@ Usage:
     python deploy_connector.py "<connector_directory>" --connection-id "<id>"
     python deploy_connector.py "<connector_directory>" --destination "<name>" --connection "<name>"
     python deploy_connector.py "<connector_directory>" --start-sync --connection-id "<id>"
+    python deploy_connector.py "<connector_directory>" --destination "<name>" --connection "<name>" --package-id "<package-id>"
+    python deploy_connector.py "<connector_directory>" --connection-id "<id>" --package-id "<package-id>"
     python deploy_connector.py --help
 """
 import argparse
@@ -655,6 +657,11 @@ def main():
                         help="Deploy code only; do not pass local configuration.json even if it exists. "
                              "Use for a routine redeploy when the connection's existing stored configuration "
                              "should be left untouched.")
+    parser.add_argument("--package-id",
+                        help="Bind (new connection) or rebind (existing connection) to an existing reusable "
+                             "package ID instead of uploading local code. With --connection-id, this replaces "
+                             "the connection's code with the target package's; this wrapper always passes "
+                             "--force, so the underlying CLI's confirmation prompt is auto-accepted.")
     args = parser.parse_args()
     if args.connection_id and (args.connection or args.destination):
         parser.error("--connection-id cannot be combined with --connection or --destination; "
@@ -745,6 +752,9 @@ def main():
 
         if pipe_path is not None:
             cmd.extend(["--configuration", str(pipe_path)])
+
+        if args.package_id:
+            cmd.extend(["--package-id", args.package_id])
 
         connection_id = args.connection_id
         global _active_deploy_subprocess
