@@ -66,7 +66,8 @@ Flag as `required` only when the code clearly demonstrates the problem.
   - WRONG: `yield op.upsert(table="x", data=d)`
   - CORRECT: `op.upsert(table="x", data=d)`
 - `update()` must not return anything — SDK operations return `None`
-- Schema: only `table`, `primary_key`, `columns` keys are valid — any other key is an error
+- Schema: only `table`, `primary_key`, `columns` keys are valid, plus the optional `schema` key for multiple-schema support — any other key is an error
+- Multiple schemas (see **Multiple Schemas** in `sdk-reference.md`): if any `schema()` definition has `schema`, **every** definition must (mixing is an error). `schema=` must be passed to every `op.upsert/update/delete/truncate`. Do NOT flag connectors that don't use `schema`.
 - Schema data types: if `columns` are specified, only `BOOLEAN`, `SHORT`, `INT`, `LONG`, `FLOAT`, `DOUBLE`, `DECIMAL`, `STRING`, `BINARY`, `JSON`, `XML`, `NAIVE_DATE`, `NAIVE_DATETIME`, `UTC_DATETIME` are valid — any other type name is an error
 - Declaring `columns` with valid types is **correct and supported** — do NOT flag it as an issue. Declaring a `primary_key` for each table is recommended.
 - Logging: preferred methods are `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()` — flag `print()`, `logging.*`, `logger.*` as required issues
@@ -120,7 +121,10 @@ Flag as `required` only when the code clearly demonstrates the problem.
 **3. Configurability**
 - No `configuration_form` passed to `Connector(...)` while `connector.py` reads credential- or connection-specific-looking keys from the `configuration` dict (e.g. `configuration.get("api_key")`, `configuration["password"]`, tokens, hosts, URLs) — a setup form lets users provide those values through the Fivetran dashboard instead of a manually created `configuration.json`, and `fivetran configuration` requires one to generate `configuration.json` interactively. Base this on keys read/validated in source code, never on `configuration.json`'s contents. The setup form is optional: `debug`/`run`/`package`/`deploy` all work fine without it.
 
-**4. Reliability**
+**4. Multiple schemas**
+- `connector.py` clearly syncs several source schemas (e.g. loops over database schemas and emits same-named tables to one destination schema) but uses no `schema` key / `schema=` argument — mention it as an optional capability (private preview). Single-schema connectors are fully valid; never flag them.
+
+**5. Reliability**
 - Retries without exponential backoff
 - String timestamp comparison without datetime parsing (can fail across timezones)
 - Pagination logic that could silently skip records

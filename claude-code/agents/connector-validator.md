@@ -118,6 +118,7 @@ The generator needs ALL of the following:
 | Authentication method & header format | Which specific tables/resources to sync |
 | Endpoint paths & HTTP methods | Specific filtering requirements |
 | Pagination type & parameters | Priority of tables if too many |
+| Whether the source has multiple schemas to sync — if so, which; see **Multiple Schemas** in `sdk-reference.md` |
 | Rate limits | Clarification on vague descriptions |
 | Response structure & primary keys | |
 | Sync strategy (incremental vs full) | |

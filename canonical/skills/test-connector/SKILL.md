@@ -52,7 +52,7 @@ do not ask users to paste them into chat.
 
 ## Step 4: Run the Connector
 
-**If the connector's schema or primary keys changed since the last local test**, reset the local
+**If the connector's schema (including adding or removing `schema` on tables) or primary keys changed since the last local test**, reset the local
 state first so the run simulates a clean initial sync (clears `warehouse.db` and `state.json`; it
 does not touch credentials):
 
@@ -91,13 +91,14 @@ macOS/Linux:
 import duckdb
 conn = duckdb.connect('files/warehouse.db')
 tables = conn.execute(\"\"\"
-    SELECT table_name FROM information_schema.tables WHERE table_schema = 'tester'
+    SELECT table_schema, table_name FROM information_schema.tables
+    WHERE table_schema NOT IN ('information_schema', 'pg_catalog')
 \"\"\").fetchall()
 print(f'Tables synced: {len(tables)}')
-for (table,) in tables:
-    count = conn.execute(f'SELECT COUNT(*) FROM tester.{table}').fetchone()[0]
-    print(f'  tester.{table}: {count} rows')
-    rows = conn.execute(f'SELECT * FROM tester.{table} LIMIT 3').fetchall()
+for (schema, table) in tables:
+    count = conn.execute(f'SELECT COUNT(*) FROM \"{schema}\".\"{table}\"').fetchone()[0]
+    print(f'  {schema}.{table}: {count} rows')
+    rows = conn.execute(f'SELECT * FROM \"{schema}\".\"{table}\" LIMIT 3').fetchall()
     cols = [desc[0] for desc in conn.description]
     print(f'    Columns: {cols}')
     for row in rows:
@@ -109,7 +110,7 @@ conn.close()
 
 Windows PowerShell:
 ```powershell
-.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = ''tester''").fetchall(); print("Tables synced:", len(tables)); [print("  tester." + table + ": " + str(conn.execute("SELECT COUNT(*) FROM tester." + table).fetchone()[0]) + " rows") for (table,) in tables]; conn.close()'
+.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema NOT IN (''information_schema'', ''pg_catalog'')").fetchall(); print("Tables synced:", len(tables)); [print("  " + s + "." + t + ": " + str(conn.execute("SELECT COUNT(*) FROM \"" + s + "\".\"" + t + "\"").fetchone()[0]) + " rows") for (s, t) in tables]; conn.close()'
 ```
 
 ## Step 6: Report Results
