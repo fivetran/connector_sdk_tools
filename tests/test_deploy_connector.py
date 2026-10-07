@@ -190,6 +190,25 @@ class DeployTests(unittest.TestCase):
         args = self.invocation()
         self.assertEqual(args[args.index("--package-id") + 1], "pkg_123")
 
+    def test_package_id_without_a_target_is_rejected(self):
+        self.assertEqual(self.run_main("--package-id", "pkg_123"), 2)
+        self.assertFalse((self.project / "invocation.json").exists())
+
+    def test_package_id_with_only_destination_is_rejected(self):
+        self.assertEqual(
+            self.run_main("--destination", "Chosen Group", "--package-id", "pkg_123"), 2)
+        self.assertFalse((self.project / "invocation.json").exists())
+
+    def test_package_id_with_only_connection_is_rejected(self):
+        self.assertEqual(self.run_main("--connection", "new", "--package-id", "pkg_123"), 2)
+        self.assertFalse((self.project / "invocation.json").exists())
+
+    def test_package_id_with_start_sync_is_rejected(self):
+        self.assertEqual(
+            self.run_main("--start-sync", "--connection-id", "existing_id",
+                         "--package-id", "pkg_123"), 2)
+        self.assertFalse((self.project / "invocation.json").exists())
+
     def test_no_package_id_omits_the_flag(self):
         self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
         self.assertNotIn("--package-id", self.invocation())

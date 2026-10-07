@@ -666,6 +666,12 @@ def main():
     if args.connection_id and (args.connection or args.destination):
         parser.error("--connection-id cannot be combined with --connection or --destination; "
                      "the existing connection determines both.")
+    if args.package_id:
+        if args.start_sync:
+            parser.error("--package-id cannot be combined with --start-sync; --start-sync only "
+                         "unpauses an already-deployed connection, it never deploys or rebinds a package.")
+        if not (args.connection_id or (args.destination and args.connection)):
+            parser.error("--package-id requires --connection-id, or both --destination and --connection.")
 
     if args.no_configuration:
         _register_hidden_configuration_cleanup()
