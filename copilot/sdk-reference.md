@@ -27,6 +27,10 @@
 | `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
 | `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.14) |
 | `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent |
+| `fivetran deploy --package-id <id>` | Bind/rebind a connection to an existing reusable package instead of uploading code (Private Preview, see **Reusable Packages (1:N)** below) |
+| `fivetran package create` | Upload the current project as a new reusable package; server assigns the package ID (Private Preview) |
+| `fivetran package update <package-id>` | Replace the code artifact for an existing reusable package (Private Preview) |
+| `fivetran package list` | List packages in the account with their connection counts (Private Preview) |
 | `fivetran reset --force` | Reset local state (clear warehouse.db) |
 | `fivetran version` | Print the installed SDK version |
 
@@ -319,6 +323,47 @@ Every file under `drivers/` is packaged on deploy — include only what belongs 
 Inside `installation.sh`, each `configuration.json` key is available as an env var prefixed
 `configuration_` (e.g. `db_name` → `$configuration_db_name`).
 Full reference: https://fivetran.com/docs/connector-sdk/building-connectors/custom-database-drivers
+
+### Reusable Packages — 1:N (Private Preview)
+
+Lets multiple connections share one uploaded code package instead of each connection holding its
+own copy — useful when the same connector code should run identically across many connections
+(e.g. one per customer/tenant). `--package-id` is a real, working flag on the installed SDK
+(hidden from `--help`, not unsupported); `deploy_connector.py` forwards it.
+
+- **`fivetran package create [project_path] --yes`** — packages and uploads the project as a
+  brand-new package. The server assigns the package ID; it is not user-supplied. Does not create
+  or touch any connection. Prints `package id: <id>` on success. Pass `--yes`: like `deploy`, it
+  runs the same `requirements.txt` dependency check, which otherwise prompts interactively (and
+  would block an agent run) on missing/mismatched dependencies; `--yes` auto-accepts, whereas
+  `--force` skips the check entirely instead.
+- **`fivetran package update <package-id> [project_path] --yes`** — repackages the project and
+  replaces the code artifact at an existing `<package-id>`. Every connection already using that
+  package picks up the new code on its next sync. Does not create or touch any connection. Same
+  `--yes` reasoning as `package create`.
+- **`fivetran package list [--limit <n>]`** — prints a `PACKAGE ID` / `CONNECTIONS` table for every
+  package in the account (paginated internally; `--limit` caps the total rows returned).
+- **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
+  connection to an existing package instead of uploading local code; no `connector.py` is required
+  in the current directory for this form. For a new connection, this is equivalent to a normal
+  deploy except the package is reused rather than created. For an existing connection, this
+  **rebinds** it to the given package:
+  - If the connection already uses that package, the command is a no-op (exits 0).
+  - Otherwise it prompts to confirm before replacing the connection's code (and configuration, if
+    `--configuration`/local `configuration.json` is also supplied) with the target package —
+    `--force`/`--yes` skip the prompt for automation.
+  - If the connection's *current* package was shared with other connections, output notes that
+    the connection left that package group; the other connections keep using it unaffected.
+- **Guard on the standard (no `--package-id`) deploy path**: a plain redeploy always packages and
+  uploads a brand-new package and points the connection at it (never edits the old package's code
+  in place — see `package create`/`package_project` above). If a connection's current package is
+  shared with other connections, that would silently detach it from the shared group onto its own
+  new one-off package, so the guard refuses it instead: `cannot update connection '<name>'; its
+  package '<id>' is shared with other connections`. Rebind explicitly with `--package-id <id>` to
+  a *different* package to proceed with leaving the group intentionally (rebinding to the same
+  package ID is the no-op described above, not a way to "proceed").
+- Package IDs returned by `package create` are account-scoped and reusable across any number of
+  connections in that account.
 
 ## Advanced Patterns
 
