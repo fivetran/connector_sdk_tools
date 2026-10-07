@@ -165,16 +165,16 @@ macOS/Linux:
 .venv/bin/python -c "
 import duckdb
 conn = duckdb.connect('files/warehouse.db')
-tables = conn.execute(\"SELECT table_name FROM information_schema.tables WHERE table_schema = 'tester'\").fetchall()
+tables = conn.execute(\"SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema NOT IN ('information_schema', 'pg_catalog')\").fetchall()
 print(f'Tables synced: {len(tables)}')
-for (t,) in tables:
-    count = conn.execute(f'SELECT COUNT(*) FROM tester.{t}').fetchone()[0]
-    print(f'  tester.{t}: {count} rows')"
+for (s, t) in tables:
+    count = conn.execute(f'SELECT COUNT(*) FROM \"{s}\".\"{t}\"').fetchone()[0]
+    print(f'  {s}.{t}: {count} rows')"
 ```
 
 Windows PowerShell:
 ```powershell
-.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = ''tester''").fetchall(); print("Tables synced:", len(tables)); [print("  tester." + t + ": " + str(conn.execute("SELECT COUNT(*) FROM tester." + t).fetchone()[0]) + " rows") for (t,) in tables]; conn.close()'
+.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema NOT IN (''information_schema'', ''pg_catalog'')").fetchall(); print("Tables synced:", len(tables)); [print("  " + s + "." + t + ": " + str(conn.execute("SELECT COUNT(*) FROM \"" + s + "\".\"" + t + "\"").fetchone()[0]) + " rows") for (s, t) in tables]; conn.close()'
 ```
 
 Report: tables synced, row counts, any errors.

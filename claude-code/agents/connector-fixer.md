@@ -119,6 +119,7 @@ such as authentication, pagination, incremental sync, or performance.
 **Schema- and state-changing revisions — warn the user before applying:**
 - **Changing a table's `primary_key`** (or changing a declared column's data type): the destination table must be dropped and the connection fully re-synced to preserve data integrity. Tell the user to drop the table in the destination and run **Resync all historical data** on the connection's Setup tab. Adding new tables or new columns does NOT require a re-sync.
 - **Changing the shape of `state`/cursor keys**: old checkpoints won't match the new structure. Provide fallback defaults for missing keys (`state.get(...)`) and handle migration so the first sync after the change doesn't reprocess or skip data.
+- **Adding or removing `schema` on existing table definitions** (multiple-schema support): this changes the destination layout (e.g. `analytics.orders` → `analytics_sales.orders`) and Fivetran does not move existing data. Tell the user a re-sync is required before applying.
 - After any schema/PK change, re-test from a clean slate: `fivetran reset --force` then re-run the connector (this simulates an initial sync).
 
 ### 4. Implement
@@ -177,7 +178,8 @@ op.delete(table, keys)
 | `connector` not in global scope | Move to module level |
 | Missing `primary_key` in schema | Add `primary_key` for each table (avoids surrogate `_fivetran_id`) |
 | Every column declared with a type | Keep types only where a specific type must be forced; omit the rest for inference/evolution |
-| Invalid schema key or type name | Use only `table`/`primary_key`/`columns` keys and valid SDK type names |
+| Invalid schema key or type name | Use only `schema` (multi-schema only)/`table`/`primary_key`/`columns` keys and valid SDK type names |
+| Some table definitions have `schema`, others don't | Qualify every definition or none |
 | `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
 | `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |
