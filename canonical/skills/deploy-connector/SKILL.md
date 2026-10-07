@@ -15,8 +15,13 @@ Package and deploy the connector in the current directory.
 
 
 If the user wants to bind or rebind a connection to an existing package (see
-**Reusable Packages (1:N)** below) via `--package-id`, no local code is uploaded — skip this
-step and go straight to **Step 3**.
+**Reusable Packages (1:N)** below) via `--package-id`, no local code is uploaded, so skip the
+code-quality checks below and go straight to the binding/rebinding command in that section.
+This does **not** skip configuration: the wrapper still reads and submits any local
+`configuration.json` unless `--no-configuration` is passed, so a package rebind can silently
+overwrite an existing connection's production configuration with unvalidated local values —
+review and confirm that file with the user first, or pass `--no-configuration` if the stored
+configuration should be left untouched.
 
 Otherwise, verify the connector is ready:
 
