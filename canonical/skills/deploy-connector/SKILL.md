@@ -13,7 +13,17 @@ Package and deploy the connector in the current directory.
 
 ## Step 1: Pre-Deployment Validation
 
-Verify the connector is ready:
+
+If the user wants to bind or rebind a connection to an existing package (see
+**Reusable Packages (1:N)** below) via `--package-id`, no local code is uploaded, so skip the
+code-quality checks below and go straight to the binding/rebinding command in that section.
+This does **not** skip configuration: the wrapper still reads and submits any local
+`configuration.json` unless `--no-configuration` is passed, so a package rebind can silently
+overwrite an existing connection's production configuration with unvalidated local values —
+review and confirm that file with the user first, or pass `--no-configuration` if the stored
+configuration should be left untouched.
+
+Otherwise, verify the connector is ready:
 
 1. **Files exist**: `connector.py`, `requirements.txt`, `README.md`; `configuration.json` when supplying configuration.
 2. **Code quality**: Read `connector.py` and check for:
@@ -122,6 +132,75 @@ To update a deployed connection, use `--connection-id <id>`. This preserves its
 name and destination even when the recovered project directory has a different
 name. Redeployment replaces code and supplied configuration; it does not itself
 unpause the connection.
+
+If the connection's current code package is shared with other connections (see **Reusable
+Packages (1:N)** below), a normal redeploy is refused. A plain redeploy always uploads a
+brand-new package and points the connection at it (it never edits the old package's code in
+place), which would silently detach this connection from the shared group — so the tool blocks
+it instead. Rebind it explicitly with `--package-id <id>` to a *different* package if that's
+genuinely what's wanted, or confirm with the user whether they actually want a one-off divergent
+copy (in which case, deploy to a different connection rather than forcing this one off its shared
+package).
+
+## Reusable Packages (1:N)
+
+A reusable package lets the *same* uploaded code run identically across many connections (e.g.
+one per customer/tenant), instead of every connection holding its own independent copy. This is a
+Private Preview CLI feature — the flags exist and work but are hidden from `fivetran --help`.
+
+**Creating a package without a connection** (direct CLI call, not through the wrapper — these
+subcommands have no configuration to protect, so the wrapper's encryption/pipe handling isn't
+needed):
+
+```bash
+fivetran package create "<connector_directory>" --yes
+```
+
+This uploads the project and prints a server-assigned `package id: <id>`. Share that ID with the
+user; it's what every bound connection will reference.
+
+**Updating an existing package's code** (pushes new code to every connection using it, on their
+next sync):
+
+```bash
+fivetran package update "<package-id>" "<connector_directory>" --yes
+```
+
+**Always pass `--yes`** on `package create`/`package update`: like `deploy`, both run the same
+`requirements.txt` dependency check, which otherwise prompts interactively (and would block an
+agent run) when it detects missing/mismatched dependencies. `--yes` auto-accepts and lets the tool
+fix `requirements.txt` for you; prefer it over `--force`, which skips the dependency check
+entirely instead of just auto-answering its prompt.
+
+**Listing packages in the account** (package ID and how many connections use each):
+
+```bash
+fivetran package list
+```
+
+**Binding a new connection to an existing package** (no local code is uploaded — confirm the
+connection name with the user first, same as a normal new-connection deploy in Step 3):
+
+```bash
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --destination "<name>" --connection "<name>" --package-id "<package-id>"
+```
+
+**Rebinding an existing connection to a (possibly different) package**:
+
+```bash
+python "<plugin>/tools/deploy_connector.py" "<connector_directory>" --connection-id "<id>" --package-id "<package-id>"
+```
+
+- If the connection already uses that package, this is a no-op.
+- Otherwise it replaces the connection's code (and configuration, if supplied) with the target
+  package's. The wrapper always passes `--force`, so this happens without an interactive prompt —
+  confirm the rebind with the user before running it, the same way you'd confirm any other
+  destructive redeploy.
+- If the connection's previous package was shared with other connections, the tool reports that
+  the connection left that package group; the other connections are unaffected and keep using it.
+
+`<connector_directory>` only needs to exist as a directory for this flow — `connector.py` is not
+required locally since no code is uploaded.
 
 ## Alternative: Manual Packaging
 
