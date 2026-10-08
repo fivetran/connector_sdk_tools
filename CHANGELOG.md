@@ -4,12 +4,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## October 2026
 
-### fivetran-connector-sdk-tools 2026.10.7.1
+### fivetran-connector-sdk-tools 2026.10.8.2
 
 - Documented 1:N Reusable Packages (Private Preview) in sdk-reference.md: `fivetran package create`/`update`/`list` and the hidden `fivetran deploy --package-id <id>` flag, including the shared-package guard that blocks a routine redeploy from silently detaching a connection from a shared package group, and the no-op when rebinding to the package a connection already uses.
-- deploy_connector.py now accepts `--package-id` and forwards it to `fivetran deploy`, so an existing wrapper-based deploy can bind a new connection to, or rebind an existing connection onto, a reusable package instead of uploading local code. Validates the combination: requires either `--connection-id` or both `--destination` and `--connection`, and rejects pairing with `--start-sync` (which only unpauses an existing connection and never deploys/rebinds a package).
-- deploy-connector's SKILL.md gained a "Reusable Packages (1:N)" section covering `package create`/`update`/`list`, binding/rebinding via the wrapper's `--package-id`, and noting that `connector.py`/local validation is skipped entirely for this flow; also documents the shared-package redeploy guard and recommends `--yes` (not `--force`) on `package create`/`update` so their dependency-validation prompt doesn't block an agent run.
-- Added regression tests covering `--package-id` forwarding for both new and existing connections (including when the project directory has no local `connector.py`), the flag being omitted when not supplied, and each of the rejected invalid combinations above.
+- deploy_connector.py now accepts `--package-id` and forwards it to `fivetran deploy`, so an existing wrapper-based deploy can bind a new connection to, or rebind an existing connection onto, a reusable package instead of uploading local code (requiring either `--connection-id` or both `--destination` and `--connection`, and rejecting it alongside `--start-sync`, which only unpauses an existing connection and never deploys/rebinds a package); deploy-connector's SKILL.md gained a "Reusable Packages (1:N)" section covering `package create`/`update`/`list`, binding/rebinding via `--package-id`, the skipped `connector.py`/local validation, and the shared-package redeploy guard; and regression tests were added covering `--package-id` forwarding for both new and existing connections (including with no local `connector.py`), the flag being omitted when unsupplied, and each rejected invalid combination.
 
 ## September 2026
 
