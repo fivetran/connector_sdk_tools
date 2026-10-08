@@ -1,0 +1,23 @@
+CHANGELOG.md
+  3114080cb3abfa3c 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "d31fd9d4340a5a1dcd85e03a1c52ba925ef796e1",
+  "prompts": {
+    "3114080cb3abfa3c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "29a4fd64-6e88-442d-ae42-e864b0e00596",
+        "model": "<synthetic>"
+      },
+      "human_author": "fivetran-meetmahna <meet.mahna@fivetran.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 3,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
