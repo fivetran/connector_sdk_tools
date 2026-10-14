@@ -10,6 +10,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 - connector-generator uses it only on request or when the source clearly has several schemas; connector-fixer warns about the re-sync and covers common errors; evaluate-connector validates qualification consistency and offers it as an optional suggestion; connector-validator asks about multiple source schemas.
 - test-connector and build-connector now list tables from all warehouse.db schemas instead of only `tester`.
 
+### fivetran-connector-sdk-tools 2026.10.14.1
+
+- Documented 1:N Reusable Packages (Private Preview) in sdk-reference.md: `fivetran package create`/`update`/`list` and the hidden `fivetran deploy --package-id <id>` flag, including the shared-package guard that blocks a routine redeploy from silently detaching a connection from a shared package group, and the no-op when rebinding to the package a connection already uses.
+- deploy_connector.py now accepts `--package-id` and forwards it to `fivetran deploy`, so an existing wrapper-based deploy can bind a new connection to, or rebind an existing connection onto, a reusable package instead of uploading local code (requiring either `--connection-id` or both `--destination` and `--connection`, and rejecting it alongside `--start-sync`, which only unpauses an existing connection and never deploys/rebinds a package); deploy-connector's SKILL.md gained a "Reusable Packages (1:N)" section covering `package create`/`update`/`list`, binding/rebinding via `--package-id`, the skipped `connector.py`/local validation, and the shared-package redeploy guard; and regression tests were added covering `--package-id` forwarding for both new and existing connections (including with no local `connector.py`), the flag being omitted when unsupplied, and each rejected invalid combination.
+
 ## September 2026
 
 ### fivetran-connector-sdk-tools 2026.9.17.2
