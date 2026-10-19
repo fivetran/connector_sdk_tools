@@ -123,16 +123,14 @@ def schema(configuration: dict):
     ]
 ```
 
-### Multiple Schemas (Private Preview)
+### Multiple Schemas
 
 A single connector can sync tables from several source schemas (e.g. a database with `sales` and
 `support` schemas) instead of one connection per schema. **Use this only when the user asks for it
 or the source clearly has multiple schemas to sync** — single-schema connectors need no change.
-The feature is in private preview, so the installed SDK may not support it yet; if `schema` is
-rejected, tell the user rather than working around it.
+If the installed SDK rejects `schema`, it is likely out of date — tell the user to upgrade rather than working around it.
 
-Add an optional `schema` key to table definitions, and pass the keyword-only `schema=` argument to
-every record operation (`op.upsert`, `op.update`, `op.delete`, `op.truncate`):
+Add an optional `schema` key (a non-empty string) to table definitions, and pass the optional `schema=` keyword argument (also a non-empty string) on the record operations (`op.upsert`, `op.update`, `op.delete`, `op.truncate`) for those tables:
 
 ```python
 def schema(configuration: dict):
@@ -146,23 +144,21 @@ def update(configuration: dict, state: dict):
     op.checkpoint(state=state)
 ```
 
-- **All or none:** if any table definition has `schema`, every definition must. Mixing
-  schema-qualified and unqualified definitions is rejected.
+- **Mixing is allowed:** `schema` is optional per table and per operation. Tables and operations without `schema` land in the default schema, which is named after the connection. `schema` must be a non-empty string — never `""` or `None`.
 - **Exact `(schema, table)` match:** a definition applies only to its own pair and is never
   borrowed from another schema, so `sales.orders` and `support.orders` can have different columns
-  and primary keys.
+  and primary keys. An operation without `schema=` targets the default-schema table, not a schema-qualified one with the same name, so always pass `schema=` on operations for tables declared with `schema`.
 - **`schema()` may be incomplete or absent:** an operation may reference an undeclared schema or
   table; Fivetran creates it and infers columns (with `_fivetran_id` if no primary key is
   declared). A genuinely distinct undeclared schema is allowed.
-- **Migration warning:** changing an existing connection from unqualified to schema-qualified
-  tables changes its destination layout (e.g. `analytics.orders` → `analytics_sales.orders`).
+- **Migration warning:** adding or removing `schema` on an existing table (moving it out of or into the default schema) changes its destination layout (e.g. `analytics.orders` → `analytics_sales.orders`).
   Fivetran does not move existing destination data — the user must re-sync. Warn before making
   this change to a connector that is already deployed.
 
 ### Operations
 
-Call operations directly. On a schema-qualified connector, add `schema="..."` to each record
-operation (see **Multiple Schemas**).
+Call operations directly. For tables defined with a `schema`, add `schema="..."` to each record
+operation on them (see **Multiple Schemas**), e.g. `op.upsert(schema="sales", table="t", data=record)`, `op.delete(schema="sales", table="t", keys={...})`.
 
 | Operation | Description |
 |-----------|-------------|
@@ -535,7 +531,7 @@ above rather than silently changing keys or discarding usable local values.
 ## Gotchas
 
 - **`requests` is bundled** — don't add it to requirements.txt
-- **`warehouse.db` is DuckDB, not SQLite** — use `duckdb.connect('files/warehouse.db')`, tables are in the `tester` schema unless the connector defines `schema` (see **Multiple Schemas**), in which case each table lands in its own schema (with the same name normalization applied to schema names)
+- **`warehouse.db` is DuckDB, not SQLite** — use `duckdb.connect('files/warehouse.db')`, tables are in the `tester` schema unless the connector defines `schema` for that table (see **Multiple Schemas**), in which case it lands in its own schema (with the same name normalization applied to schema names)
 - **`fivetran reset` prompts for confirmation** — use `--force` in scripts/agents
 - **Datetime fields** — always use UTC, format as `'%Y-%m-%dT%H:%M:%SZ'`
 - **Never use `exit()`, `sys.exit()`, or `os._exit()`** — the SDK statically scans `connector.py`

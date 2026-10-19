@@ -120,18 +120,15 @@ def schema(configuration: dict):
 destination naming/normalization Gotcha in `sdk-reference.md` for why a mismatch silently
 creates a duplicate table.
 
-**Multiple source schemas (private preview):** only when the user asks for it or the
-source clearly has several schemas to sync, add `"schema": "<raw source schema>"` to **every**
-table definition and pass `schema=` on every `op.upsert/update/delete/truncate`. Use raw source
-names — never build a destination name or add the connection prefix. See **Multiple Schemas** in
-`sdk-reference.md`. Otherwise leave `schema` out.
+**Multiple source schemas:** only when the user asks for it or the source clearly has several schemas to sync, add `"schema": "<raw source schema>"` (non-empty string) to those table definitions and pass the same `schema=` on every `op.upsert/update/delete/truncate` for them.
+Tables without `schema` land in the default schema (named after the connection), so mixing is fine. Use raw source names — never build a destination name or add the connection prefix. See **Multiple Schemas** in `sdk-reference.md`. Otherwise leave `schema` out. When `update()` loops over tables, carry the schema through the loop (e.g. iterate `(schema_name, table_name)` pairs) so no operation omits `schema=`.
 
 ```python
 def schema(configuration: dict):
     return [
         {
             "schema": "sales",
-            "table": "table_name",
+            "table": "orders",
             "primary_key": ["id"],
             # Optional — declare a type only where you must force one; omit the rest
             # so the SDK can infer types and the schema can evolve.
@@ -289,7 +286,7 @@ Before completing the task, the subagent MUST validate its work:
 ### Generation-Specific Validation:
 1. **File Completeness**: All 3 files (connector.py, configuration.json, README.md) are present (scaffolded by `fivetran init`; create any missing one with Write)
 2. **Required Functions**: connector.py must contain both `update()` and `schema()` functions
-3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` (plus `schema` when syncing multiple schemas — on all tables or none, with matching `schema=` on every operation) keys are used; any declared column types are valid type names and used selectively (not every column)
+3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` (plus a non-empty `schema` when syncing multiple schemas, with a matching `schema=` on every operation for those tables) keys are used; any declared column types are valid type names and used selectively (not every column)
 4. **Configuration Flatness**: Validate that configuration.json is flat (no nested objects/arrays) with string values only
 5. **Configuration**: Preserve user-approved values; README follows SDK setup-form or plaintext configuration entry.
 6. **Documentation Completeness**: README must include setup instructions, testing procedures, and API documentation
@@ -313,7 +310,7 @@ Before completing:
 - [ ] Valid Python syntax (read back and verify)
 - [ ] Both `update()` and `schema()` present
 - [ ] Every table declares a `primary_key`; column types (if any) are valid and selective, not exhaustive
-- [ ] If using multiple schemas: `schema` on every table definition or none; `schema=` passed on every record operation
+- [ ] If using multiple schemas: `schema` is a non-empty string, and every record operation for a schema-qualified table passes the matching `schema=`
 - [ ] `connector = Connector(...)` in global scope
 - [ ] No forbidden patterns (`Dict[str, Any]`, `Generator[...]`, `op.Operation` in type hints, `yield` with operations)
 - [ ] configuration.json is valid flat JSON with string values; unresolved fields are explicit
