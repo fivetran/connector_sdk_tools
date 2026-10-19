@@ -98,7 +98,7 @@ import duckdb
 conn = duckdb.connect('files/warehouse.db')
 tables = conn.execute(\"\"\"
     SELECT table_schema, table_name FROM information_schema.tables
-    WHERE table_schema NOT IN ('information_schema', 'pg_catalog')
+    WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('information_schema', 'pg_catalog')
 \"\"\").fetchall()
 print(f'Tables synced: {len(tables)}')
 for (schema, table) in tables:
@@ -116,7 +116,7 @@ conn.close()
 
 Windows PowerShell:
 ```powershell
-.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema NOT IN (''information_schema'', ''pg_catalog'')").fetchall(); print("Tables synced:", len(tables)); [print("  " + s + "." + t + ": " + str(conn.execute("SELECT COUNT(*) FROM \"" + s + "\".\"" + t + "\"").fetchone()[0]) + " rows") for (s, t) in tables]; conn.close()'
+.\.venv\Scripts\python.exe -c 'import duckdb; conn = duckdb.connect("files/warehouse.db"); tables = conn.execute("SELECT table_schema, table_name FROM information_schema.tables WHERE table_type = ''BASE TABLE'' AND table_schema NOT IN (''information_schema'', ''pg_catalog'')").fetchall(); print("Tables synced:", len(tables)); [print("  " + s + "." + t + ": " + str(conn.execute("SELECT COUNT(*) FROM \"" + s + "\".\"" + t + "\"").fetchone()[0]) + " rows") for (s, t) in tables]; conn.close()'
 ```
 
 ## Step 6: Report Results
