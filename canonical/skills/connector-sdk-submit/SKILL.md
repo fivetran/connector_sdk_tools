@@ -106,12 +106,14 @@ Report:
 
 When the final checks pass, ask whether the contributor wants to raise the pull request. Do not commit, push, create a fork, authenticate, or create a pull request without their explicit approval.
 
-If approved, gather a title if they have not supplied one, then create a pull request with this body only:
+If approved, create a concise PR title from the verified change. Use an action-oriented title that names the connector or SDK material affected; do not ask the contributor to write it unless the change cannot be identified from the files.
+
+Fill the Description section with a brief, factual explanation of what the connector does and the data it syncs, based only on verified connector code and documentation. Do not frame it as a summary of implementation changes, include limitations, or add unverified claims. Then create a pull request with this body only:
 
 ```markdown
 ### Description
 
-<!-- Briefly explain what changed and why. Include known limitations only if relevant. -->
+<brief explanation of what the connector does and the data it syncs>
 
 ### Validation
 
