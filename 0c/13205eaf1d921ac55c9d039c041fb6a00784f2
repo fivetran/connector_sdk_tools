@@ -1,0 +1,25 @@
+tests/test_deploy_connector.py
+  3114080cb3abfa3c 211
+canonical/tools/deploy_connector.py
+  3114080cb3abfa3c 669-671
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "0c13205eaf1d921ac55c9d039c041fb6a00784f2",
+  "prompts": {
+    "3114080cb3abfa3c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "29a4fd64-6e88-442d-ae42-e864b0e00596",
+        "model": "<synthetic>"
+      },
+      "human_author": "fivetran-meetmahna <meet.mahna@fivetran.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 1,
+      "accepted_lines": 11,
+      "overriden_lines": 0
+    }
+  }
+}
