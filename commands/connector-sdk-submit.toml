@@ -1,0 +1,6 @@
+description = "Prepare a Fivetran Connector SDK contribution for a pull request"
+prompt = """
+Invoke the `connector-sdk-submit` skill from this extension to prepare a Connector SDK contribution for submission. The skill selects the appropriate upstream repository, applies Community Connectors submission rules, sanitizes tracked configuration, validates documentation, formats and lints code, and guides the contributor through the pull-request handoff.
+
+User request: {{args}}
+"""
