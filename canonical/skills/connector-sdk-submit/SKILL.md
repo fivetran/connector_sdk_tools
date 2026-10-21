@@ -12,7 +12,7 @@ Use this skill immediately before a contributor opens their first Connector SDK 
 1. Ask for the connector directory if it was not supplied. Identify the enclosing Git repository.
 2. Choose the PR destination using these repository rules:
    - Use `community-connectors` for a new, standalone connector for a specific source; or a focused bug fix, reliability/performance improvement, or documentation update to an existing Community Connector. New connectors belong in a top-level connector directory and must be listed in that repository's root `README.md`.
-   - Use `fivetran_connector_sdk` for a Connector SDK template, quickstart/tutorial, reusable generic SDK pattern, platform-feature example, AI/agent guidance, or SDK repository documentation/tooling. Place examples in the repository's existing `examples/`, `all_things_ai/`, or template structure as appropriate.
+   - Use `fivetran_connector_sdk` for a Connector SDK template, quickstart/tutorial, reusable generic SDK pattern, platform-feature example, AI/agent guidance, or SDK repository documentation/tooling. Place examples in the repository's existing `examples/` or template structure as appropriate.
    - If the work changes both a reusable SDK example/pattern and a standalone source connector, recommend separate PRs: the reusable material to `fivetran_connector_sdk` and the source connector to `community-connectors`.
    - If the files already belong to one repository, keep the PR in that repository unless the contributor explicitly wants to split or relocate the work.
 3. State the selected repository and the rule that led to the decision. If none of the rules applies, ask the contributor to choose; do not guess.
