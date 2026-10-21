@@ -1,6 +1,7 @@
 ---
 name: connector-sdk-submit
 description: Prepare a Fivetran Connector SDK contribution for a first pull request by applying the target repository's Copilot review instructions, sanitizing configuration.json, and running Black and Flake8.
+argument-hint: "Connector directory name or path (e.g., 'github_connector' or './github_connector')"
 ---
 
 # Submit Connector SDK Contribution
