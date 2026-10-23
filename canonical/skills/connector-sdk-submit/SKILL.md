@@ -1,12 +1,12 @@
 ---
 name: connector-sdk-submit
-description: Prepare a Community Connector or Fivetran Connector SDK example for a first pull request by applying the target repository's Copilot review instructions, sanitizing configuration.json, and running Black and Flake8.
+description: Prepare a Community Connector or Fivetran Connector SDK example for a first pull request by applying the target repository's GitHub review instructions, sanitizing configuration.json, and running Black and Flake8.
 argument-hint: "Connector directory name or path (e.g., 'github_connector' or './github_connector')"
 ---
 
 # Submit Connector SDK Contribution
 
-Use this skill immediately before a contributor opens their first Connector SDK example-connector pull request. Its authority is the Community Connectors Copilot instruction set, applied consistently to submissions in either repository. Do not use external examples or generic Python conventions as a substitute.
+Use this skill immediately before a contributor opens their first Connector SDK example-connector pull request. Its authority is the selected target repository's GitHub review instructions under `.github/instructions`. Do not use external examples or generic Python conventions as a substitute.
 
 ## Establish the scope and authority
 
@@ -17,12 +17,12 @@ Use this skill immediately before a contributor opens their first Connector SDK 
    - If the work could be treated as either a reusable SDK example/pattern or a standalone source connector, prioritize [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors). Submit the standalone connector there; do not split the work or create PRs in both repositories.
    - If the files already belong to one repository, keep the PR in that repository.
 3. State the selected repository and the rule that led to the decision. If none of the rules applies, ask the contributor to choose; do not guess.
-4. Before reviewing or editing, read the Community Connectors versions of:
+4. Before reviewing or editing, read these instruction files from the selected target repository—either [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors) or [`fivetran/connector_sdk`](https://github.com/fivetran/connector_sdk):
    - `.github/instructions/configuration-review.instructions.md`
    - `.github/instructions/python-review.instructions.md`
    - `.github/instructions/readme-markdown.instructions.md`
-   Use the files from a checked-out [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors) repository. If the contribution itself is in Community Connectors, use its local files. Otherwise, ask the contributor for the Community Connectors checkout path.
-5. If the selected target repository or the Community Connectors instruction checkout is unavailable, explain the missing item in plain language and offer to obtain it. For example: “I need a local Community Connectors checkout to apply its submission rules. May I clone the upstream repository, or would you prefer to fork it first?” Wait for approval before cloning, forking, authenticating, or changing remotes.
+   If the contribution is in the selected repository, use its local files. Otherwise, ask the contributor for a checkout path for that repository.
+5. If the selected target repository or its instruction checkout is unavailable, explain the missing item in plain language and offer to obtain it. For example: “I need a local checkout of the selected repository to apply its submission rules. May I clone the upstream repository, or would you prefer to fork it first?” Wait for approval before cloning, forking, authenticating, or changing remotes.
 6. Confirm that the target is a connector/example directory containing `connector.py`. If it is not, stop and explain that this skill supports connector/example submissions only; do not apply it to documentation-only, tooling, or repository-maintenance changes.
 7. Inspect the connector's changed files and its relevant files: `connector.py`, `README.md`, and dependency files, excluding configuration contents and raw configuration diffs. Discover configuration-like files by path only at this stage; defer reading their contents until the submission configuration has been selected and can be scanned locally without exposing values, as described below. Do not inspect or print real local configuration files such as `configuration_local.json`.
 
@@ -34,7 +34,7 @@ If they agree, invoke the evaluation skill and apply only changes the contributo
 
 ## Review and fix workflow
 
-Perform the following sequence. Treat BLOCKER and REQUEST_CHANGES levels from the loaded Copilot instructions as such in the final report.
+Perform the following sequence. Treat BLOCKER and REQUEST_CHANGES levels from the loaded GitHub review instructions as such in the final report.
 
 ### Preserve and sanitize configuration
 
@@ -90,11 +90,11 @@ Make only unambiguous compliance edits. Before a change that affects connector b
 
 If `README.md` is missing, create it before reviewing the rest of the documentation. Derive the connector name, configuration keys, tables, incremental-sync behavior, dependencies, and other verifiable facts from the connector files. Ask the contributor for information that cannot be safely inferred, such as the connector overview, how credentials are obtained, API limitations, and feature claims. Do not invent product behavior, authentication steps, or external URLs.
 
-Create the README in the structure required by the Community Connectors README instruction: one Title Case H1; Sentence case lower-level headings; required sections in the prescribed order; and optional Configuration file, Requirements file, Authentication, and Pagination sections when they apply. Include the configuration keys as safe placeholders, not real values. Then review the generated README using the same instruction.
+Create the README in the structure required by the selected repository's README instruction: one Title Case H1; Sentence case lower-level headings; required sections in the prescribed order; and optional Configuration file, Requirements file, Authentication, and Pagination sections when they apply. Include the configuration keys as safe placeholders, not real values. Then review the generated README using the same instruction.
 
 For an existing or generated README, enforce exactly one Title Case H1 and Sentence case for every lower-level heading; do not uppercase headings. Enforce the prescribed section requirements/order, configuration and dependency documentation, authentication/pagination requirements where applicable, list style, and formatting restrictions.
 
-Apply these Community Connectors rules in both repositories:
+Apply these submission rules in both repositories:
 
 - The Getting started section must include its required explanation and the correct initialization command for the submitted connector:
   - For a Community Connector, use its complete path relative to the Community Connectors repository root, with no `connectors/` prefix. For example, use `fivetran init --template github` for `github/`, or `fivetran init --template veeva_vault/basic_auth` for `veeva_vault/basic_auth/`.
@@ -117,7 +117,7 @@ This script applies Black with a 99-character line length to Python files in the
 
 Before running the script, tell the contributor that it formats every Python file in the checkout and installs Black with `pip --user` when Black is missing. Ask for approval if that could change files outside the connector or modify the local Python environment.
 
-Community Connectors does not provide a Flake8 wrapper script. Run Flake8 from the repository root so its `.flake8` configuration and per-file ignores apply, following the CI invocation:
+If the repository does not provide a Flake8 wrapper script. Run Flake8 from the repository root so its `.flake8` configuration and per-file ignores apply, following the CI invocation:
 
 ```bash
 flake8 -- <repo-relative Python paths>
@@ -171,4 +171,3 @@ Check only the items that apply:
 See [CONTRIBUTING.md](https://github.com/fivetran/community_connectors/blob/main/CONTRIBUTING.md) for the complete contribution requirements.
 ```
 
-Do not run `fivetran debug` solely to populate this PR body; offer it separately and obtain approval first. Check only checklist items that the contributor has actually completed.
