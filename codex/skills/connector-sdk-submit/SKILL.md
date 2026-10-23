@@ -20,8 +20,8 @@ Use this skill immediately before a contributor opens their first Connector SDK 
 2. Choose the PR destination using these repository rules:
    - Use [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors) for a new, standalone connector for a specific source; or a focused bug fix, reliability/performance improvement, or documentation update to an existing Community Connector. New connectors belong in a top-level connector directory and must be listed in that repository's root `README.md`.
    - Use [`fivetran/connector_sdk`](https://github.com/fivetran/connector_sdk) for a Connector SDK template, quickstart/tutorial, reusable generic SDK pattern. Place examples in the repository's existing `examples/`.
-   - If the work changes both a reusable SDK example/pattern and a standalone source connector, recommend separate PRs: the reusable material to [`fivetran/connector_sdk`](https://github.com/fivetran/connector_sdk) and the source connector to [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors).
-   - If the files already belong to one repository, keep the PR in that repository unless the contributor explicitly wants to split or relocate the work.
+   - If the work could be treated as either a reusable SDK example/pattern or a standalone source connector, prioritize [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors). Submit the standalone connector there; do not split the work or create PRs in both repositories.
+   - If the files already belong to one repository, keep the PR in that repository.
 3. State the selected repository and the rule that led to the decision. If none of the rules applies, ask the contributor to choose; do not guess.
 4. Before reviewing or editing, read the Community Connectors versions of:
    - `.github/instructions/configuration-review.instructions.md`
@@ -30,7 +30,7 @@ Use this skill immediately before a contributor opens their first Connector SDK 
    Use the files from a checked-out [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors) repository. If the contribution itself is in Community Connectors, use its local files. Otherwise, ask the contributor for the Community Connectors checkout path.
 5. If the selected target repository or the Community Connectors instruction checkout is unavailable, explain the missing item in plain language and offer to obtain it. For example: “I need a local Community Connectors checkout to apply its submission rules. May I clone the upstream repository, or would you prefer to fork it first?” Wait for approval before cloning, forking, authenticating, or changing remotes.
 6. Confirm that the target is a connector/example directory containing `connector.py`. If it is not, stop and explain that this skill supports connector/example submissions only; do not apply it to documentation-only, tooling, or repository-maintenance changes.
-7. Inspect the connector's changed files and its relevant files: `connector.py`, `configuration.json`, `README.md`, and dependency files. Do not inspect or print real local configuration files such as `configuration_local.json`.
+7. Inspect the connector's changed files and its relevant files: `connector.py`, `README.md`, and dependency files, excluding configuration contents and raw configuration diffs. Discover configuration-like files by path only at this stage; defer reading their contents until the submission configuration has been selected and can be scanned locally without exposing values, as described below. Do not inspect or print real local configuration files such as `configuration_local.json`.
 
 ## Optional connector evaluation
 
