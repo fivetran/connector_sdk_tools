@@ -1,19 +1,19 @@
 ---
 name: connector-sdk-submit
-description: Prepare a Fivetran Connector SDK contribution for a first pull request by applying the target repository's Copilot review instructions, sanitizing configuration.json, and running Black and Flake8.
+description: Prepare a Community Connector or Fivetran Connector SDK example for a first pull request by applying the target repository's Copilot review instructions, sanitizing configuration.json, and running Black and Flake8.
 argument-hint: "Connector directory name or path (e.g., 'github_connector' or './github_connector')"
 ---
 
 # Submit Connector SDK Contribution
 
-Use this skill immediately before a contributor opens their first Connector SDK pull request. Its authority is the Community Connectors Copilot instruction set, applied consistently to submissions in either repository. Do not use external examples or generic Python conventions as a substitute.
+Use this skill immediately before a contributor opens their first Connector SDK example-connector pull request. Its authority is the Community Connectors Copilot instruction set, applied consistently to submissions in either repository. Do not use external examples or generic Python conventions as a substitute.
 
 ## Establish the scope and authority
 
 1. Ask for the connector directory if it was not supplied. Identify the enclosing Git repository.
 2. Choose the PR destination using these repository rules:
    - Use [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors) for a new, standalone connector for a specific source; or a focused bug fix, reliability/performance improvement, or documentation update to an existing Community Connector. New connectors belong in a top-level connector directory and must be listed in that repository's root `README.md`.
-   - Use [`fivetran/connector_sdk`](https://github.com/fivetran/connector_sdk) for a Connector SDK template, quickstart/tutorial, reusable generic SDK pattern, platform-feature example, AI/agent guidance, or SDK repository documentation/tooling. Place examples in the repository's existing `examples/` or template structure as appropriate.
+   - Use [`fivetran/connector_sdk`](https://github.com/fivetran/connector_sdk) for a Connector SDK template, quickstart/tutorial, reusable generic SDK pattern. Place examples in the repository's existing `examples/`.
    - If the work changes both a reusable SDK example/pattern and a standalone source connector, recommend separate PRs: the reusable material to [`fivetran/connector_sdk`](https://github.com/fivetran/connector_sdk) and the source connector to [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors).
    - If the files already belong to one repository, keep the PR in that repository unless the contributor explicitly wants to split or relocate the work.
 3. State the selected repository and the rule that led to the decision. If none of the rules applies, ask the contributor to choose; do not guess.
@@ -23,7 +23,8 @@ Use this skill immediately before a contributor opens their first Connector SDK 
    - `.github/instructions/readme-markdown.instructions.md`
    Use the files from a checked-out [`fivetran/community_connectors`](https://github.com/fivetran/community_connectors) repository. If the contribution itself is in Community Connectors, use its local files. Otherwise, ask the contributor for the Community Connectors checkout path.
 5. If the selected target repository or the Community Connectors instruction checkout is unavailable, explain the missing item in plain language and offer to obtain it. For example: “I need a local Community Connectors checkout to apply its submission rules. May I clone the upstream repository, or would you prefer to fork it first?” Wait for approval before cloning, forking, authenticating, or changing remotes.
-6. Inspect the connector's changed files and its relevant files: `connector.py`, `configuration.json`, `README.md`, and dependency files. Do not inspect or print real local configuration files such as `configuration_local.json`.
+6. Confirm that the target is a connector/example directory containing `connector.py`. If it is not, stop and explain that this skill supports connector/example submissions only; do not apply it to documentation-only, tooling, or repository-maintenance changes.
+7. Inspect the connector's changed files and its relevant files: `connector.py`, `configuration.json`, `README.md`, and dependency files. Do not inspect or print real local configuration files such as `configuration_local.json`.
 
 ## Optional connector evaluation
 
@@ -37,7 +38,9 @@ Perform the following sequence. Treat BLOCKER and REQUEST_CHANGES levels from th
 
 ### Preserve and sanitize configuration
 
-Parse `configuration.json` without echoing its values. Check that it is a JSON object, uses descriptive consistent keys, and that every value is a descriptive string placeholder in the form `<DESCRIPTION_HERE>`.
+First identify the configuration file. Use `configuration.json` only when it is the single clear, tracked configuration file for the connector. If it is missing, ask the contributor whether a separate safe configuration path should be reviewed; do not create an empty file or guess a path. If multiple configuration-like JSON files exist under different names, list their paths only and ask the contributor which one is the tracked submission configuration. Do not read their values until the contributor identifies the file. Never read or print a known local credential file such as `configuration_local.json`; ask for a sanitized tracked submission configuration instead.
+
+When the contributor identifies the tracked submission configuration, parse it without echoing its values. Check that it is a JSON object, uses descriptive consistent keys, and that every value is a descriptive string placeholder in the form `<DESCRIPTION_HERE>`.
 
 Also scan it for credentials, tokens, passwords, personal data, embedded-credential URLs, database connection strings, IP addresses, internal host names, base64-looking values, and JWTs. Apply the exact security and completeness checks in the loaded configuration instruction, including agreement with connector code and README.
 
@@ -65,7 +68,10 @@ For an existing or generated README, enforce exactly one Title Case H1 and Sente
 
 Apply these Community Connectors rules in both repositories:
 
-- The Getting started section must include the `fivetran init --template <connector-name>` command and its required explanation.
+- The Getting started section must include its required explanation and the correct initialization command for the submitted connector:
+  - For a Community Connector, use its complete path relative to the Community Connectors repository root, with no `connectors/` prefix. For example, use `fivetran init --template github` for `github/`, or `fivetran init --template veeva_vault/basic_auth` for `veeva_vault/basic_auth/`.
+  - For a Connector SDK example, use its complete path relative to the Connector SDK repository, including `examples/`. For example, use `fivetran init --template examples/quickstart/hello` or `fivetran init --template examples/common_patterns/authentication/api_key`.
+  - Preserve an existing correct directory. Otherwise, derive it from the contribution's actual directory. If the directory does not map to one of these locations, ask the contributor rather than guessing.
 - Requirements documentation must use the general Connector SDK preinstalled-packages link rather than naming only `fivetran_connector_sdk` and `requests`.
 - Use plain Markdown examples rather than quoted examples.
 
