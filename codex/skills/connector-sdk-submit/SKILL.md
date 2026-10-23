@@ -44,17 +44,45 @@ Perform the following sequence. Treat BLOCKER and REQUEST_CHANGES levels from th
 
 ### Preserve and sanitize configuration
 
-First identify the configuration file. Use `configuration.json` only when it is the single clear, tracked configuration file for the connector. If it is missing, ask the contributor whether a separate safe configuration path should be reviewed; do not create an empty file or guess a path. If multiple configuration-like JSON files exist under different names, list their paths only and ask the contributor which one is the tracked submission configuration. Do not read their values until the contributor identifies the file. Never read or print a known local credential file such as `configuration_local.json`; ask for a sanitized tracked submission configuration instead.
+#### Select the submission configuration
 
-When the contributor identifies the tracked submission configuration, parse it without echoing its values. Check that it is a JSON object, uses descriptive consistent keys, and that every value is a descriptive string placeholder in the form `<DESCRIPTION_HERE>`.
+1. Use `configuration.json` only when it is the single clear, tracked configuration file for the connector.
+2. If multiple configuration-like JSON files exist under different names, list their paths only and ask the contributor which one is the tracked submission configuration. Do not read their values until the contributor identifies the file.
+3. Never read or print a known local credential file such as `configuration_local.json`.
+
+If `configuration.json` is missing, ask: “Do you have a sanitized tracked submission configuration at another path?” Then follow the contributor's answer:
+
+- If they provide a safe path, use that file for the checks.
+- If they confirm that no submission configuration exists and `connector.py` accesses configuration keys, create `configuration.json` with every statically identifiable key as a descriptive placeholder. For example, `configuration["api_key"]` becomes `"api_key": "<YOUR_API_KEY>"`.
+- If they confirm that no submission configuration exists and `connector.py` does not access any configuration keys, create an empty `configuration.json`:
+
+```json
+{}
+```
+
+- If the contributor is unsure, or `connector.py` constructs configuration keys dynamically so their names cannot be determined, stop and ask before selecting or creating a file.
+
+#### Scan without exposing values
+
+When the contributor identifies the tracked submission configuration, or confirms that a new configuration file should be created, scan that file locally. The scan may read values to detect credentials, but it must not print, echo, paste, or return those values to chat, logs, command output, README content, or the PR. Report only safe information, such as the configuration key and the detected issue category.
+
+Parse the file as JSON and check that it is a JSON object, uses descriptive consistent keys, and that every value is a descriptive string placeholder in the form `<DESCRIPTION_HERE>`.
 
 Also scan it for credentials, tokens, passwords, personal data, embedded-credential URLs, database connection strings, IP addresses, internal host names, base64-looking values, and JWTs. Apply the exact security and completeness checks in the loaded configuration instruction, including agreement with connector code and README.
+
+#### Sanitize confirmed secrets
 
 If a real or possible credential, personal value, or any non-placeholder value is found, warn the contributor before modifying the file:
 
 > `configuration.json` is about to be replaced with safe placeholders. Save the real values in a separate untracked local configuration file, such as `configuration_local.json`, before continuing. Do not commit that local file.
 
-Ask for confirmation. Only after confirmation, replace tracked configuration values with specific angle-bracket placeholders that preserve each field's intended purpose. Never copy the real values into chat, source code, README examples, command output, Git history, or another tracked file. Re-parse and scan the resulting file.
+Ask for confirmation. Only after confirmation, replace tracked configuration values with specific angle-bracket placeholders that preserve each field's intended purpose. Re-parse and scan the resulting file without exposing values.
+
+#### Configuration submission gate
+
+Before submission, ensure that the tracked submission configuration file is named `configuration.json`. If the contributor selected a safe file with a different name, ask before renaming, copying, or replacing files.
+
+Before submission, verify that every configuration value is a descriptive angle-bracket placeholder and that the file contains no credentials, tokens, passwords, personal data, embedded-credential URLs, connection strings, IP addresses, internal host names, base64-looking values, or JWTs.
 
 ### Apply the Python instructions
 
