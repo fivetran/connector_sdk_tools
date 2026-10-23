@@ -53,14 +53,15 @@ Perform the following sequence. Treat BLOCKER and REQUEST_CHANGES levels from th
 If `configuration.json` is missing, ask: “Do you have a sanitized tracked submission configuration at another path?” Then follow the contributor's answer:
 
 - If they provide a safe path, use that file for the checks.
-- If they confirm that no submission configuration exists and `connector.py` accesses configuration keys, create `configuration.json` with every statically identifiable key as a descriptive placeholder. For example, `configuration["api_key"]` becomes `"api_key": "<YOUR_API_KEY>"`.
-- If they confirm that no submission configuration exists and `connector.py` does not access any configuration keys, create an empty `configuration.json`:
+- If they confirm that no submission configuration exists, trace configuration reads and validation from `connector.py` through its reachable local helper modules before deciding which file to create. Include statically identifiable keys read or validated in local modules, not only keys read directly by `connector.py`.
+- If that trace identifies configuration keys, create `configuration.json` with every identified key as a descriptive placeholder. For example, `configuration["api_key"]` becomes `"api_key": "<YOUR_API_KEY>"`.
+- Create an empty `configuration.json` only when the trace finds no configuration keys:
 
 ```json
 {}
 ```
 
-- If the contributor is unsure, or `connector.py` constructs configuration keys dynamically so their names cannot be determined, stop and ask before selecting or creating a file.
+- If a reachable module cannot be inspected or a configuration key is constructed dynamically, or the required keys cannot be determined, stop and ask before selecting or creating a file.
 
 #### Scan without exposing values
 
@@ -68,7 +69,7 @@ When the contributor identifies the tracked submission configuration, or confirm
 
 Parse the file as JSON and check that it is a JSON object, uses descriptive consistent keys, and that every value is a descriptive string placeholder in the form `<DESCRIPTION_HERE>`.
 
-Also scan it for credentials, tokens, passwords, personal data, embedded-credential URLs, database connection strings, IP addresses, internal host names, base64-looking values, and JWTs. Apply the exact security and completeness checks in the loaded configuration instruction, including agreement with connector code and README.
+Also scan it for credentials, tokens, passwords, personal data, embedded-credential URLs, database connection strings, IP addresses, internal host names, base64-looking values, and JWTs. Apply the exact security and completeness checks in the loaded configuration instruction, including agreement with `connector.py`, reachable local helper modules, and README.
 
 #### Sanitize confirmed secrets
 
