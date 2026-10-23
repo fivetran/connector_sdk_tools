@@ -10,6 +10,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | `$test_connector` | User wants to test an existing connector |
 | `$deploy_connector` | User wants to deploy to Fivetran |
 | `$evaluate_connector` | User wants a code review or quality report |
+| `$connector_sdk_submit` | User wants to prepare a Connector SDK contribution before opening a PR |
 
 ## Routing
 
@@ -25,6 +26,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "I'm getting an error..." / "fix my connector" / "help me change X" | Read `workflows/fixer.md` from the plugin directory and follow it to classify the error and apply targeted fixes. |
 | "Deploy my connector" | Invoke `$deploy_connector` |
 | "Review / evaluate my connector" / "Is my connector production-ready?" | Invoke `$evaluate_connector` |
+| "Submit my connector" / "Prepare my connector PR" / "Check my connector before opening a PR" | Invoke `$connector_sdk_submit` |
 
 ## Telemetry
 
