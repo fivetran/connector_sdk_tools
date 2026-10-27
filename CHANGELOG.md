@@ -6,7 +6,7 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ### fivetran-connector-sdk-tools 2026.10.27.1
 
-- Added `connector-sdk-submit`, which checks a Connector SDK example or Community Connector against repository submission rules, removes credentials from `configuration.json`, and prepares it for a pull request.
+- Added `connector-sdk-submit`, which checks a [Connector SDK](https://github.com/fivetran/connector_sdk) example or [Community Connector](https://github.com/fivetran/community_connectors) against repository submission rules, removes credentials from `configuration.json`, and prepares it for a pull request.
 
 ### fivetran-connector-sdk-tools 2026.10.19.1
 
