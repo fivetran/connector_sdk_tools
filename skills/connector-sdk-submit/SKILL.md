@@ -85,6 +85,8 @@ Before submission, ensure that the tracked submission configuration file is name
 
 Before submission, verify that every configuration value is a descriptive angle-bracket placeholder and that the file contains no credentials, tokens, passwords, personal data, embedded-credential URLs, connection strings, IP addresses, internal host names, base64-looking values, or JWTs.
 
+Also scan the outgoing commits locally for sensitive configuration values, including earlier versions that were later replaced with placeholders. Do not print or return values or raw diffs; report only safe paths, commit identifiers, and issue categories. If the outgoing commit range cannot be established or scanned, pause the handoff. If sensitive values are found, block pushing and PR creation, explain that replacing the current file does not remove earlier committed values, and obtain the contributor's explicit approval before cleaning the affected history. Repeat the scan before continuing.
+
 ### Apply the Python instructions
 
 Review `connector.py` against the loaded Python instruction in full. This includes SDK v2 operation usage, validation, logging, imports and dependencies, schema and state handling, error handling, streaming/pagination, naming/constants, docstrings, and main block requirements.
