@@ -4,6 +4,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## October 2026
 
+### fivetran-connector-sdk-tools 2026.10.27.1
+
+- Added `connector-sdk-submit` skill to help contributors prepare Connector SDK examples and Community Connectors for pull requests. It checks the repository's GitHub instructions, documentation, formatting, linting, and that `configuration.json` contains no credentials.
+
 ### fivetran-connector-sdk-tools 2026.10.19.1
 
 - Multiple Schemas support in sdk-reference.md
