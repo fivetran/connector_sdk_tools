@@ -1,0 +1,6 @@
+description = "Submit a Connector SDK example or connector contribution in a pull request"
+prompt = """
+Invoke the `connector-sdk-submit` skill from this extension to submit a Connector SDK example or connector contribution in a pull request. The skill selects the appropriate upstream repository, applies its GitHub review instructions, sanitizes tracked configuration, validates documentation, formats and lints code, and guides the contributor through the pull-request handoff.
+
+User request: {{args}}
+"""
