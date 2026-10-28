@@ -172,11 +172,15 @@ agent run) when it detects missing/mismatched dependencies. `--yes` auto-accepts
 fix `requirements.txt` for you; prefer it over `--force`, which skips the dependency check
 entirely instead of just auto-answering its prompt.
 
-**Listing packages in the account** (package ID and how many connections use each):
+**Listing packages in the account** (package ID and how many connections use each; when the API exposes `package_name`/`visible`, `PACKAGE NAME` and `VISIBLE` columns are also shown):
 
 ```bash
 fivetran package list
 ```
+
+- If a package is marked `visible`, it is intended for dashboard-driven connection setup and must include a valid `configuration_form()` for the dashboard path to create or update its connections. If the package is visible and the project lacks that setup form, block the unsafe path instead of silently creating a connection that cannot be configured.
+- When `[project].name` is invalid in `pyproject.toml`, the platform falls back to the package ID as the package name. Warn before deploy or package update so the user knows the package name will not remain the declared project name.
+- If setup-form metadata declares an unsupported Python version, warn that the setup form will default to the supported runtime version instead instead of the user's declared value.
 
 **Binding a new connection to an existing package** (no local code is uploaded — confirm the
 connection name with the user first, same as a normal new-connection deploy in Step 3):

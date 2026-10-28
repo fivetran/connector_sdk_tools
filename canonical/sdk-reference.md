@@ -371,6 +371,13 @@ own copy — useful when the same connector code should run identically across m
   `--yes` reasoning as `package create`.
 - **`fivetran package list [--limit <n>]`** — prints a `PACKAGE ID` / `CONNECTIONS` table for every
   package in the account (paginated internally; `--limit` caps the total rows returned).
+  When the package-management API exposes `package_name`/`visible`, the table also includes
+  `PACKAGE NAME` and `VISIBLE` columns; packages without those fields keep the compact
+  `PACKAGE ID` / `CONNECTIONS` layout.
+- **Visible packages** — packages marked `visible` are intended for dashboard-managed connection setup and
+  require a valid setup form (`configuration_form()`) to create or update a connection through the
+  dashboard. If `configuration_form()` is missing, the SDK warns or blocks the unsafe path rather than
+  silently creating a connection that cannot be configured from the setup form.
 - **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
   connection to an existing package instead of uploading local code; no `connector.py` is required
   in the current directory for this form. For a new connection, this is equivalent to a normal
