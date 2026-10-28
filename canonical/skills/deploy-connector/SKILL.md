@@ -178,9 +178,11 @@ entirely instead of just auto-answering its prompt.
 fivetran package list
 ```
 
-- If a package is marked `visible`, it is intended for dashboard-driven connection setup and must include a valid `configuration_form()` for the dashboard path to create or update its connections. If the package is visible and the project lacks that setup form, block the unsafe path instead of silently creating a connection that cannot be configured.
-- When `[project].name` is invalid in `pyproject.toml`, the platform falls back to the package ID as the package name. Warn before deploy or package update so the user knows the package name will not remain the declared project name.
-- If setup-form metadata declares an unsupported Python version, warn that the setup form will default to the supported runtime version instead instead of the user's declared value.
+- **Visible packages:** a plain redeploy (no `--package-id`) of a connection whose current package is `visible` is refused with exit 1, the same as a shared package. A visible package can only be redeployed with a new package, so use the rebind form below with `--package-id <id>` to deploy a new package version.
+- **Setup-form metadata warnings** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and prints non-blocking warnings. It never edits the file.
+  - Invalid `[project].name`: the platform falls back to the package ID as the package name. Warn the user before deploy or package update. A valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit.
+  - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version instead of the declared one. Tell the user which version is supported.
+  - On Python < 3.11 the name check is skipped with a log message.
 
 **Binding a new connection to an existing package** (no local code is uploaded — confirm the
 connection name with the user first, same as a normal new-connection deploy in Step 3):

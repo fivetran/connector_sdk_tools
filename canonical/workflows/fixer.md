@@ -276,7 +276,3 @@ verify the repair outcome. A local-only repair does not authorize deployment.
   validation cannot finish, report it as pending.
 - Base further diagnosis on observed evidence and accessible sources. Do not
   infer a new cause or assume access to additional data without checking.
-
-- **Package / deployment safety checks** — when a package is marked `visible`, the deployment tool must warn or block the unsafe path if `configuration_form()` is not implemented. A visible package whose setup form is absent cannot be safely created or updated from the dashboard flow; do not silently proceed.
-- **Package-name fallback warnings** — if `[project].name` in `pyproject.toml` is invalid, warn that the platform falls back to the package ID as the package name instead of the declared name.
-- **Unsupported Python-version warnings** — if setup-form metadata declares an unsupported Python version, warn that the setup form will default to the supported runtime version instead of the user's declared value.

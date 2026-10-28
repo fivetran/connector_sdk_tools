@@ -374,10 +374,15 @@ own copy — useful when the same connector code should run identically across m
   When the package-management API exposes `package_name`/`visible`, the table also includes
   `PACKAGE NAME` and `VISIBLE` columns; packages without those fields keep the compact
   `PACKAGE ID` / `CONNECTIONS` layout.
-- **Visible packages** — packages marked `visible` are intended for dashboard-managed connection setup and
-  require a valid setup form (`configuration_form()`) to create or update a connection through the
-  dashboard. If `configuration_form()` is missing, the SDK warns or blocks the unsafe path rather than
-  silently creating a connection that cannot be configured from the setup form.
+- **Setup-form metadata warnings** — `package create` and `package update` read the local
+  `pyproject.toml` only when the upload response carries `package_name`/`visible` (the setup-form feature is
+  enabled for the account). They print non-blocking warnings and never edit the file:
+  - Invalid `[project].name`: the platform falls back to the package ID as the package name. A valid name is
+    at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or
+    digit.
+  - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version
+    instead of the declared one. The warning lists the supported versions.
+  - On Python < 3.11 the name check is skipped with a log message, because `tomllib` is unavailable.
 - **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
   connection to an existing package instead of uploading local code; no `connector.py` is required
   in the current directory for this form. For a new connection, this is equivalent to a normal
@@ -397,6 +402,10 @@ own copy — useful when the same connector code should run identically across m
   package '<id>' is shared with other connections`. Rebind explicitly with `--package-id <id>` to
   a *different* package to proceed with leaving the group intentionally (rebinding to the same
   package ID is the no-op described above, not a way to "proceed").
+  The guard also refuses (exit 1) when the connection's current package is `visible`, because a visible
+  package can only be redeployed with a new package: `cannot update connection '<name>'; its package '<id>'
+  is visible and can only be redeployed with a new package`. Use `--package-id <id>` to deploy a new package
+  version.
 - Package IDs returned by `package create` are account-scoped and reusable across any number of
   connections in that account.
 

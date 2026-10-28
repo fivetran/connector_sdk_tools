@@ -178,11 +178,17 @@ agent run) when it detects missing/mismatched dependencies. `--yes` auto-accepts
 fix `requirements.txt` for you; prefer it over `--force`, which skips the dependency check
 entirely instead of just auto-answering its prompt.
 
-**Listing packages in the account** (package ID and how many connections use each):
+**Listing packages in the account** (package ID and how many connections use each; when the API exposes `package_name`/`visible`, `PACKAGE NAME` and `VISIBLE` columns are also shown):
 
 ```bash
 fivetran package list
 ```
+
+- **Visible packages:** a plain redeploy (no `--package-id`) of a connection whose current package is `visible` is refused with exit 1, the same as a shared package. A visible package can only be redeployed with a new package, so use the rebind form below with `--package-id <id>` to deploy a new package version.
+- **Setup-form metadata warnings** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and prints non-blocking warnings. It never edits the file.
+  - Invalid `[project].name`: the platform falls back to the package ID as the package name. Warn the user before deploy or package update. A valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit.
+  - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version instead of the declared one. Tell the user which version is supported.
+  - On Python < 3.11 the name check is skipped with a log message.
 
 **Binding a new connection to an existing package** (no local code is uploaded — confirm the
 connection name with the user first, same as a normal new-connection deploy in Step 3):

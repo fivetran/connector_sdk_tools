@@ -198,18 +198,7 @@ supply only the missing fields; adding a form is optional.
 The agent can write supplied settings directly. Enter secrets through the form or
 local file entry, keep them out of chat, and keep configuration out of version
 control. See [Configuration entry](sdk-reference.md#configuration-entry) for the
-shared workflow. For setup-form-aware packages, visible packages require a valid
-`configuration_form()` for dashboard-based connection creation or updates; if a
-package is marked `visible` and the form is missing, warn or block the unsafe path.
-
-When the package metadata exposes `package_name` and `visible`, `fivetran package
-list` includes `PACKAGE NAME` and `VISIBLE` columns in addition to `PACKAGE ID`
-and `CONNECTIONS`. If `[project].name` in `pyproject.toml` is invalid, the
-platform falls back to the package ID as the package name; warn before deploy or
-package update so the user knows the deployed package name will not match the
-project name. If the setup-form metadata declares an unsupported Python version,
-warn that the setup form will default to the supported runtime version instead of
-the declared value.
+shared workflow.
 
 ### Optional encrypted configuration
 
