@@ -23,6 +23,7 @@
 | `fivetran init` | Create new project from the default template |
 | `fivetran init --template connectors/<name>` | Start from a community connector |
 | `fivetran debug` | Test locally, produces `warehouse.db` (DuckDB) |
+| `fivetran debug --record <scenario>` / `--replay <scenario>` | Record a run against the live source, then replay it without calling the source and compare the output (Private Preview, see **Record-and-Replay Regression Testing** below) |
 | `fivetran package` | Build a deployable ZIP without uploading |
 | `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
 | `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.14) |
@@ -398,6 +399,74 @@ own copy — useful when the same connector code should run identically across m
   package ID is the no-op described above, not a way to "proceed").
 - Package IDs returned by `package create` are account-scoped and reusable across any number of
   connections in that account.
+
+### Record-and-Replay Regression Testing (Private Preview)
+
+Record a connector run once against the live source, then replay it without calling the source to
+check that code changes don't change the connector's output. Runs only locally, through
+`fivetran debug`; it can't run on a deployed connection.
+
+**Mark source reads with `@action`** — decorate every function that reads from the source (API
+request, database query, file download). Only decorated calls are recorded.
+
+```python
+from fivetran_connector_sdk import action
+
+@action("customers_page", match=lambda page: {"page": page})
+def fetch_customers_page(page):
+    response = requests.get(url, params={"page": page}, timeout=30)
+    response.raise_for_status()
+    return response.json()
+```
+
+- `name` (required) — stable name for the call site. Repeated calls to the same function share
+  one name; two different functions can't share a name (record and replay fail at start).
+- `match` (optional) — receives the function's arguments (defaults applied) and returns the dict
+  of arguments to store and match on during replay. Without it, all arguments are stored. Use it
+  to leave out values that change every run (timestamps, request IDs) or that are sensitive. It
+  must accept the same arguments as the function; not supported with `*args`/`**kwargs`.
+- Arguments (or the `match` dict) and return values must be JSON-serializable (dicts, lists,
+  strings, numbers, booleans, `None`); convert anything else inside the function, e.g. return
+  `response.json()`, not the response.
+- Calls that share a `name` and matched arguments can't be told apart: replay returns the first
+  recorded result for each. Include an argument that differs, such as a page number or cursor.
+- Not recorded: anything read without `@action` (current time, random values, local files). Make
+  the output deterministic or wrap the read in `@action`.
+- With recording and replay off, `@action` calls the function unchanged. In a deployed
+  connection it has no effect, so it can stay in production code.
+
+**Commands** (run from the project folder; a scenario name is letters, digits, `-`, `_`):
+
+| Command | What it does |
+|---------|--------------|
+| `fivetran debug --record <scenario> [--max-records N] [--yes]` | Runs against the live source and saves the `@action` calls, `warehouse.db`, and `state.json` to `fixtures/<scenario>/`. `--max-records` stops the sync after N `op.upsert`/`op.update`/`op.delete` calls (default 100). `--yes` overwrites an existing scenario without prompting. |
+| `fivetran debug --replay <scenario>` | Reruns the connector from the recorded starting state with each `@action` call answered from the recording, then compares the result with the recording. Exits non-zero and lists the differences if it doesn't match. |
+
+In this plugin, run these through `tools/run_connector.py` (`--record`, `--replay`, `--max-records`,
+`--yes`) so encrypted configuration is still decrypted; see the test-connector skill.
+
+- `--record` and `--replay` can't be combined; `--max-records` only works with `--record` (replay
+  reads the cap from the recording). `--state` is ignored for both.
+- Recording starts from the project's `files/state.json` and `files/warehouse.db` (copied to
+  `fixtures/<scenario>/record_start/`) and writes to `fixtures/<scenario>/`, not to `files/`. A
+  failed or interrupted recording is discarded. An `@action` call that raises is not recorded.
+- Layout: `record_start/` (starting snapshot), `record_data/fixture.jsonl` (captured calls),
+  `record_end/` (the `warehouse.db` and `state.json` that replays are compared with).
+- A replay writes to `.fixtures_replay/<scenario>/` (added to `.gitignore`), recreated each run.
+- Replay fails with `No recorded interaction for '<name>' with arguments` when the code makes a
+  call the recording doesn't contain. If the change is intended, record again; if an argument
+  changes on every run, remove it with `match`.
+- **Sensitive data**: only argument names are masked (`*api_key`, `*token`, `*secret`,
+  `*password`, `*credential`, `*configuration`). Whatever the source returns is stored as is in
+  `fixture.jsonl`, and in the `warehouse.db` and `state.json` snapshots. Review `fixtures/`
+  before committing it, and commit it only if the data is synthetic or sanitized.
+- Several threads reading at once can finish in a different order each run, which makes a replay
+  differ, especially with `--max-records`. Keep the order deterministic.
+- Troubleshooting messages: `No recording found for scenario` (record first), `fixture_version ...
+  is not supported` / `fixture.jsonl ... is empty` / `has an invalid header line` (record again),
+  `is used by two different functions` (rename one), `Another record or replay run is in
+  progress` (wait), `non-JSON-serializable argument|result` (convert or use `match`).
+- Full reference: https://fivetran.com/docs/connector-sdk/testing/regression-testing
 
 ## Advanced Patterns
 

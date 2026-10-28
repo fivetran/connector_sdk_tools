@@ -251,5 +251,58 @@ class RunTests(unittest.TestCase):
         self.run_fixture("terminate")
 
 
+class RegressionOptionsTests(unittest.TestCase):
+    def run_main(self, *argv):
+        """Run main() against a temporary project and return (exit code, debug command)."""
+        helper = load_helper()
+        captured = {}
+
+        def fake_run_debug(cmd, connector_dir, timeout_seconds):
+            captured["cmd"] = cmd
+            return 0
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            (project / "configuration.json").write_text("{}")
+            err = io.StringIO()
+            with patch.object(helper, "find_fivetran_executable", return_value="fivetran"), \
+                 patch.object(helper, "run_debug", side_effect=fake_run_debug), \
+                 patch.object(sys, "argv", ["run_connector.py", str(project), *argv]), \
+                 contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaises(SystemExit) as raised:
+                    helper.main()
+        return raised.exception.code, captured.get("cmd"), err.getvalue()
+
+    def test_plain_run_passes_no_regression_options(self):
+        code, cmd, _ = self.run_main()
+        self.assertEqual(0, code)
+        self.assertEqual(["fivetran", "debug", "--configuration"], cmd[:3])
+        self.assertEqual(4, len(cmd))
+
+    def test_record_passes_scenario_cap_and_yes(self):
+        code, cmd, _ = self.run_main("--record", "basic", "--max-records", "50", "--yes")
+        self.assertEqual(0, code)
+        self.assertEqual(["--record", "basic", "--max-records", "50", "--yes"], cmd[4:])
+
+    def test_replay_passes_scenario(self):
+        code, cmd, _ = self.run_main("--replay", "basic")
+        self.assertEqual(0, code)
+        self.assertEqual(["--replay", "basic"], cmd[4:])
+
+    def test_invalid_combinations_are_rejected_before_running(self):
+        for argv in (
+            ("--record", "a", "--replay", "a"),
+            ("--max-records", "5"),
+            ("--replay", "a", "--max-records", "5"),
+            ("--record", "a", "--max-records", "0"),
+            ("--yes",),
+            ("--record", "bad/name"),
+        ):
+            with self.subTest(argv=argv):
+                code, cmd, _ = self.run_main(*argv)
+                self.assertEqual(2, code)
+                self.assertIsNone(cmd)
+
+
 if __name__ == "__main__":
     unittest.main()

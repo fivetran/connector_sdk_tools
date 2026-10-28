@@ -7,11 +7,15 @@ fivetran debug via named pipe.
 
 Usage:
     python run_connector.py <connector_directory> [--timeout-seconds SECONDS]
+        [--record SCENARIO [--max-records N] | --replay SCENARIO] [--yes]
+
+--record and --replay run record-and-replay regression testing (Private Preview).
 """
 import argparse
 import errno
 import json
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -552,6 +556,30 @@ def run_debug(cmd, connector_dir, timeout_seconds):
     return process.returncode
 
 
+SCENARIO_PATTERN = re.compile(r"[A-Za-z0-9_-]+")
+
+
+def scenario_name(value):
+    if not SCENARIO_PATTERN.fullmatch(value):
+        raise argparse.ArgumentTypeError(
+            "scenario names can contain only letters, digits, hyphens, and underscores")
+    return value
+
+
+def regression_options(args):
+    """Return the fivetran debug flags for --record, --max-records, --replay, and --yes."""
+    options = []
+    if args.record:
+        options += ["--record", args.record]
+        if args.max_records is not None:
+            options += ["--max-records", str(args.max_records)]
+    if args.replay:
+        options += ["--replay", args.replay]
+    if args.yes:
+        options.append("--yes")
+    return options
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     # Optional at the argparse level so a missing directory keeps its own exit
@@ -562,7 +590,29 @@ def main():
         "--timeout-seconds", type=int, default=120,
         help="Debug time limit in seconds (default: 120; maximum: 600).",
     )
+    parser.add_argument(
+        "--record", type=scenario_name, metavar="SCENARIO",
+        help="Record the run as a regression test scenario (Private Preview).",
+    )
+    parser.add_argument(
+        "--replay", type=scenario_name, metavar="SCENARIO",
+        help="Replay a recorded scenario without calling the source and compare the output.",
+    )
+    parser.add_argument(
+        "--max-records", type=int, metavar="N",
+        help="With --record, stop after N write operations (default: 100).",
+    )
+    parser.add_argument(
+        "--yes", action="store_true",
+        help="With --record, overwrite an existing scenario without asking.",
+    )
     args = parser.parse_args()
+    if args.record and args.replay:
+        parser.error("--record and --replay cannot be used together")
+    if args.max_records is not None and (not args.record or args.max_records < 1):
+        parser.error("--max-records must be a positive integer and requires --record")
+    if args.yes and not args.record:
+        parser.error("--yes requires --record")
     if args.connector_directory is None:
         parser.print_usage(sys.stderr)
         print("Error: connector_directory is required.", file=sys.stderr)
@@ -601,6 +651,7 @@ def main():
             "debug",
             "--configuration",
             str(pipe_path),
+            *regression_options(args),
         ]
 
         try:

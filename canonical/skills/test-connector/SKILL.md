@@ -145,6 +145,69 @@ Report which tables were synced and how many rows each.
 
 **If the user wants a fix:** apply the fixer workflow (see `workflows/fixer.md` in the plugin, or — in plugins that support subagents — invoke the `connector-fixer` subagent). After fixing, re-run the test to verify.
 
+## Regression testing: record and replay (Private Preview)
+
+Use this only when the user asks for regression tests, or wants to confirm that a code change
+doesn't change the connector's output. Follow **Record-and-Replay Regression Testing** in
+`sdk-reference.md` for the rules and limits. It needs the connector to run successfully first, and
+the source-reading functions to be decorated with `@action`.
+
+Run these through `run_connector.py`, not `fivetran debug` directly, so encrypted configuration is
+decrypted. Run from the plugin directory's `tools/` path, with the same `--timeout-seconds 600`.
+
+**1. Prepare.** Confirm the connector has `@action` on every function that reads from the source.
+If not, add it (and `match=` for arguments that change on every run or are sensitive). Record only
+from a connector version the user trusts: the recording becomes the golden fixture.
+
+**2. Record.** Pick a descriptive scenario name (letters, digits, `-`, `_`), one per code path to
+protect:
+
+```bash
+python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600 --record <scenario> --max-records 50
+```
+
+`--max-records` is optional (default 100). Add `--yes` only when the user agreed to overwrite an
+existing scenario of that name. The run uses the live source and writes
+`fixtures/<scenario>/`. A failed or interrupted recording is discarded, so re-run it. If the output
+says no `@action` calls were captured, the recording is empty: add `@action` and record again.
+
+**3. Replay.** After any code change:
+
+```bash
+python "<plugin>/tools/run_connector.py" "<connector_directory>" --timeout-seconds 600 --replay <scenario>
+```
+
+Replay never calls the source. Exit code 0 means the output matches the recording.
+
+**4. Analyse differences.** A non-zero exit code means the replay failed or the output differs.
+Read the listed differences and classify them:
+
+- **`Replay state does not match the recording`** (and, when reported, `warehouse.db` table, column,
+  or row mismatches): compare with the change just made. If it is the intended behavior change,
+  tell the user and offer to record the scenario again. If it is not, treat it as a regression
+  and fix the code.
+- **`No recorded interaction for '<name>' with arguments`**: the code now makes a source call the
+  recording lacks, or an argument changes on every run. Intended change: record again. Otherwise
+  remove the argument with `match`.
+- **Differs only on timestamps, random values, local files, or row order with threads**: those reads
+  aren't recorded. Make them deterministic or wrap the read in `@action`.
+- **Recording, fixture, or configuration messages** (`No recording found`, `fixture_version ... is
+  not supported`, `is empty`, `invalid header line`, `is used by two different functions`,
+  `non-JSON-serializable ...`, `Another record or replay run is in progress`): follow the
+  troubleshooting list in `sdk-reference.md`.
+
+Never edit files under `fixtures/` by hand. Never record again just to make a failing replay pass
+without telling the user what changed.
+
+**5. Iterate.** For a regression, apply the fixer workflow (see `workflows/fixer.md`, or invoke
+the `connector-fixer` subagent), then replay again until it matches or the user confirms the
+change is intended.
+
+**6. Before committing `fixtures/`.** Recordings can hold whatever the source returned, including
+personal data or credentials, in `fixture.jsonl`, `warehouse.db`, and `state.json`. Tell the user
+to review them, and commit the folder only when the data is synthetic or sanitized. Don't read
+fixture contents into the conversation.
+
 ## Diagnosing a slow or stuck sync
 
 If a local run takes a long time with no visible progress, don't assume it's hung — profile it

@@ -210,6 +210,7 @@ op.checkpoint(state=state)
 - **Do NOT include** code configurations like pagination_type, page_size, rate_limit settings - hardcode these in connector.py
 
 ### 7. Additional Standards
+- **Regression testing (Private Preview):** only when the user asks for record-and-replay regression tests, decorate each function that reads from the source (API request, database query, file download) with `@action("<unique_name>", match=...)` as described in **Record-and-Replay Regression Testing** in `sdk-reference.md`. Give each function its own name, make arguments and return values JSON-serializable (return `response.json()`, not the response), and use `match` to leave out per-run or sensitive arguments. Don't add `@action` otherwise.
 - **Datetime datatypes:** Always use UTC timestamps formatted as `'%Y-%m-%dT%H:%M:%SZ'`
 - **Docstrings:** Include detailed docstrings for all functions
 - **NO BACKWARDS COMPATIBILITY:** Do NOT implement backwards compatibility unless explicitly requested

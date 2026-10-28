@@ -185,6 +185,10 @@ Windows PowerShell:
 
 Report: tables synced, row counts, any errors.
 
+If the user wants regression tests for the connector (Private Preview), decorate its source-reading
+functions with `@action` and record a scenario; follow **Regression testing: record and replay** in
+`skills/test-connector/SKILL.md`. Don't add `@action` unless they ask.
+
 ## Phase 6: Auto-Fix on Failure
 
 If the test fails:

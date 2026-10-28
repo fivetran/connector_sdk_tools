@@ -124,9 +124,14 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - Pagination logic that could silently skip records
 - A fatal error only raised as a bare/generic exception with no actionable message, where `op.error(message, trace=...)` would give the user a clear, dashboard-visible reason instead of a raw stack trace. Do NOT flag a plain `raise RuntimeError("clear message")` — that is also a correct fail-fast pattern.
 
+**6. Regression testing (record and replay, Private Preview)**
+- `@action` used where it would be wrong: two different functions sharing one `name`; `match=` on a function that takes `*args`/`**kwargs` or doesn't accept the same arguments as the function; a function whose arguments or return value are not JSON-serializable (for example returning a `requests` response object or `bytes`)
+- A `fixtures/` folder in the project that could be committed or packaged, with sensitive data: recordings store whatever the source returned (only argument names are masked). Tell the user to review `fixtures/` before committing. Do not read its contents.
+
 ---
 
 ### Do NOT Flag
+- Missing `@action` — regression testing is optional and the connector is valid without it
 - Code style or formatting preferences
 - Theoretical edge cases not reachable in the actual execution path
 - Issues already handled elsewhere in the code
