@@ -7,6 +7,7 @@
 #   canonical/sdk-reference.md
 #   canonical/workflows/{validator,generator,fixer}.md
 #   canonical/skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md
+#   canonical/skills/connector-sdk-submit/SKILL.md
 #   canonical/tools/*
 #   canonical/hooks/log-skill-use.sh
 #
@@ -14,22 +15,26 @@
 #   claude-code/sdk-reference.md
 #   claude-code/agents/connector-{validator,generator,fixer}.md
 #   claude-code/skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md
+#   claude-code/skills/connector-sdk-submit/SKILL.md
 #   claude-code/tools/*
 #   claude-code/hooks/log-skill-use.sh
 #   codex/sdk-reference.md
 #   codex/native-connectors.md
 #   codex/skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md
+#   codex/skills/connector-sdk-submit/SKILL.md
 #   codex/workflows/{validator,generator,fixer}.md
 #   codex/tools/*
 #   codex/hooks/log-skill-use.sh
 #   sdk-reference.md                                         (Gemini)
 #   agents/connector-{validator,generator,fixer}.md          (Gemini)
 #   skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md            (Gemini)
+#   skills/connector-sdk-submit/SKILL.md                                                                            (Gemini)
 #   tools/*                                                  (Gemini)
 #   hooks/log-skill-use.sh                                   (Gemini)
 #   copilot/sdk-reference.md                                 (Copilot CLI)
 #   copilot/agents/connector-{validator,generator,fixer}.md  (Copilot CLI)
 #   copilot/skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md    (Copilot CLI)
+#   copilot/skills/connector-sdk-submit/SKILL.md                                                                      (Copilot CLI)
 #   copilot/tools/*                                          (Copilot CLI)
 
 set -euo pipefail
@@ -116,7 +121,7 @@ CLAUDE_DIR="claude-code"
 CODEX_DIR="codex"
 GEMINI_DIR="."
 COPILOT_DIR="copilot"
-SKILLS=(build-connector test-connector deploy-connector evaluate-connector migrate-functions-connector migrate-meltano-connector migrate-airbyte-connector)
+SKILLS=(build-connector test-connector deploy-connector evaluate-connector connector-sdk-submit migrate-functions-connector migrate-meltano-connector migrate-airbyte-connector)
 
 # --- Helpers ---
 

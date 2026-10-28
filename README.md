@@ -114,6 +114,7 @@ Once installed, in your connector project directory:
 | `/fivetran-connector-sdk:test-connector` | `$test_connector` | Run and validate an existing connector locally |
 | `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | Deploy a connector to your Fivetran account |
 | `/fivetran-connector-sdk:evaluate-connector` | `$evaluate_connector` | Code review and quality report |
+| `/fivetran-connector-sdk:connector-sdk-submit` | `$connector_sdk_submit` | Submit a Connector SDK example or connector contribution in a pull request |
 | `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | Migrate a Fivetran Functions connector to Connector SDK |
 | `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
 | `/fivetran-connector-sdk:migrate-airbyte-connector` | `$migrate_airbyte_connector` | Migrate an Airbyte source connector to Connector SDK |
@@ -242,6 +243,7 @@ canonical/                          edit these (source of truth)
   sdk-reference.md
   workflows/{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
+  skills/connector-sdk-submit/SKILL.md
   tools/{enter_configuration,run_connector,deploy_connector}.py
   hooks/log-skill-use.sh
 
@@ -250,6 +252,7 @@ claude-code/                        Claude Code plugin (mostly generated)
   CLAUDE.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
+  skills/connector-sdk-submit/SKILL.md
   tools/, sdk-reference.md
 
 codex/                              Codex CLI plugin (mostly generated)
@@ -264,6 +267,7 @@ copilot/                            GitHub Copilot CLI plugin (mostly generated)
   AGENTS.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
+  skills/connector-sdk-submit/SKILL.md
   commands/{build,test,deploy,evaluate}-connector.md
   tools/, sdk-reference.md
 
@@ -272,6 +276,7 @@ GEMINI.md                           Gemini context file
 commands/{build,test,deploy}-connector.toml   Gemini slash commands
 agents/connector-{validator,generator,fixer}.md   Gemini agents (generated)
 skills/{build,test,deploy}-connector/SKILL.md     Gemini skills (generated)
+skills/connector-sdk-submit/SKILL.md              Gemini submission skill (generated)
 tools/                              Gemini tools (generated copy of canonical/tools/)
 
 .claude-plugin/marketplace.json     Claude Code marketplace pointing to ./claude-code
