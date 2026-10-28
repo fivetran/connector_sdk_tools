@@ -188,7 +188,7 @@ fivetran package list
 - **Setup-form metadata warnings** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and prints non-blocking warnings. It never edits the file.
   - Invalid `[project].name`: the platform falls back to the package ID as the package name. Warn the user before deploy or package update. A valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit.
   - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version instead of the declared one. Tell the user which version is supported.
-  - On Python < 3.11 the name check is skipped with a log message.
+  - On Python < 3.11 both checks are skipped (`tomllib` is unavailable). The name check logs a message; the Python-version check is silent.
 
 **Binding a new connection to an existing package** (no local code is uploaded — confirm the
 connection name with the user first, same as a normal new-connection deploy in Step 3):
