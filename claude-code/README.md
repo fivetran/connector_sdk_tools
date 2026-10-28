@@ -99,6 +99,7 @@ Once testing passes, you can:
 - Run `/migrate-functions-connector` to port an existing Fivetran Functions connector to Connector SDK
 - Run `/migrate-meltano-connector` to port an existing Meltano extractor or Singer tap to Connector SDK
 - Run `/migrate-airbyte-connector` to port an existing Airbyte source connector to Connector SDK
+- Run `/connector-sdk-submit` to submit a Connector SDK example or connector contribution in a pull request
 - Run `/deploy-connector` when ready to deploy to Fivetran
 
 ### Example Session
@@ -194,6 +195,7 @@ Validates, runs a final test, and guides you through Fivetran deployment.
 | `/build-connector` | Full generation workflow (research → generate → test → auto-fix) |
 | `/test-connector` | Run and validate connector tests |
 | `/deploy-connector` | Package and deploy to Fivetran |
+| `/connector-sdk-submit` | Submit a Connector SDK example or connector contribution in a pull request |
 | `/migrate-functions-connector` | Migrate Fivetran Functions connectors to Connector SDK |
 | `/migrate-meltano-connector` | Migrate Meltano extractors or Singer taps to Connector SDK |
 | `/migrate-airbyte-connector` | Migrate Airbyte source connectors to Connector SDK |
