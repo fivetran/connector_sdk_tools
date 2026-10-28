@@ -1,0 +1,27 @@
+CHANGELOG.md
+  aee66ad470fc229f 7-10
+canonical/sdk-reference.md
+  aee66ad470fc229f 377-385,405-408
+canonical/skills/deploy-connector/SKILL.md
+  aee66ad470fc229f 181-185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "86faa8f0684625d05ece5504b89793f44e8d6507",
+  "prompts": {
+    "aee66ad470fc229f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3b20f8e6-f2a2-4246-bd54-373a5d9bf294",
+        "model": "claude-haiku-5-5"
+      },
+      "human_author": "anushka.parashar <anushka.parashar@fivetran.com>",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 7,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
