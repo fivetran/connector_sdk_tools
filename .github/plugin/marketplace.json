@@ -2,7 +2,7 @@
   "name": "fivetran-connector-sdk-ai",
   "metadata": {
     "description": "AI-powered tools for building, testing, and deploying Fivetran connectors",
-    "version": "2026.10.28.1"
+    "version": "2026.10.29.1"
   },
   "owner": {
     "name": "Fivetran",
