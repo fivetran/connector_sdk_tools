@@ -178,11 +178,19 @@ agent run) when it detects missing/mismatched dependencies. `--yes` auto-accepts
 fix `requirements.txt` for you; prefer it over `--force`, which skips the dependency check
 entirely instead of just auto-answering its prompt.
 
-**Listing packages in the account** (package ID and how many connections use each):
+**Listing packages in the account** (package ID and how many connections use each; when the API exposes `package_name`/`visible`, `PACKAGE NAME` and `VISIBLE` columns are also shown):
 
 ```bash
 fivetran package list
 ```
+
+- **Visible packages (connection creation via setup form):** set `[tool.package-metadata].visible = true` (a native TOML boolean) in `pyproject.toml` to make a reusable package appear in the Fivetran dashboard so users can create connections from it via its setup form. A visible package **must** implement `configuration_form()` — `package create`/`package update` are rejected server-side (HTTP 4xx, `A visible package must implement configuration_form()`) otherwise, so confirm the connector defines one before marking it visible. A plain redeploy (no `--package-id`) of a connection whose current package is `visible` is refused with exit 1, the same as a shared package. A visible package can only be redeployed with a new package, so use the rebind form below with `--package-id <id>` to deploy a new package version.
+- **Setup-form metadata warnings** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and prints non-blocking warnings. It never edits the file.
+  - Invalid or missing `[project].name`: the platform falls back to the package ID as the package name. Warn the user before deploy or package update. A valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit.
+  - Missing or non-boolean `[tool.package-metadata].visible` (e.g. the quoted string `"true"` instead of a native boolean): the platform falls back to `visible=false`.
+  - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version instead of the declared one. Tell the user which version is supported.
+  - `[tool.package-metadata].proxy_host_config_key` (Proxy Agent packages): names the `configuration` key that holds the proxy `host:port` endpoint(s), and that key must be defined in the connector's `configuration_form()`. If it is omitted from `pyproject.toml`, the setup form falls back to the default `host`/`hosts` keys, so one of those default keys must instead be defined in `configuration_form()`.
+  - On Python < 3.11 both checks are skipped (`tomllib` is unavailable). The name check logs a message; the Python-version check is silent.
 
 **Binding a new connection to an existing package** (no local code is uploaded — confirm the
 connection name with the user first, same as a normal new-connection deploy in Step 3):

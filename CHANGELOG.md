@@ -4,6 +4,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## October 2026
 
+### fivetran-connector-sdk-tools 2026.10.29.1
+
+- Connection creation via setup form (visible packages). Documented in sdk-reference.md and deploy-connector's SKILL.md that `[tool.package-metadata].visible = true` in `pyproject.toml` marks a package as visible so it appears in the Fivetran dashboard for users to create connections from via its setup form, and that a visible package **must** implement `configuration_form()`. Also documented the `[tool.package-metadata].proxy_host_config_key` field: it names the `configuration` key holding the Proxy Agent `host:port` endpoint(s) (which must be defined in `configuration_form()`), and when omitted the setup form falls back to the default `host`/`hosts` keys, so one of those must be defined in the form instead.
+
 ### fivetran-connector-sdk-tools 2026.10.27.1
 
 - Added `connector-sdk-submit`, which checks a [Connector SDK](https://github.com/fivetran/connector_sdk) example or [Community Connector](https://github.com/fivetran/community_connectors) against repository submission rules, removes credentials from `configuration.json`, and prepares it for a pull request.

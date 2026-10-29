@@ -269,6 +269,12 @@ connector = Connector(
   `--configuration configuration.json`; those values are stored securely and can pre-populate or
   update the connection's configuration — for an existing connection, omitting `--configuration`
   keeps the existing stored values.
+- **Connection creation via setup form (visible packages):** marking a reusable package `visible`
+  (`[tool.package-metadata].visible = true` in `pyproject.toml`, see **Reusable Packages — 1:N**
+  below) makes it appear in the Fivetran dashboard so users can create connections from it and
+  enter configuration through its setup form. A visible package **must** define
+  `configuration_form()` — the platform rejects (HTTP 4xx) a `package create`/`package update` for
+  a visible package without one (`A visible package must implement configuration_form()`).
 - Full reference: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-setup-form
 
 ### Unstructured File Uploads
@@ -377,6 +383,31 @@ own copy — useful when the same connector code should run identically across m
   `--yes` reasoning as `package create`.
 - **`fivetran package list [--limit <n>]`** — prints a `PACKAGE ID` / `CONNECTIONS` table for every
   package in the account (paginated internally; `--limit` caps the total rows returned).
+  When the package-management API exposes `package_name`/`visible`, the table also includes
+  `PACKAGE NAME` and `VISIBLE` columns; packages without those fields keep the compact
+  `PACKAGE ID` / `CONNECTIONS` layout.
+- **Visible packages (connection creation via setup form)** — set `[tool.package-metadata].visible
+  = true` (a native TOML boolean, not the quoted string `"true"`) in `pyproject.toml` to make a
+  reusable package appear in the Fivetran dashboard so users can create connections from it via its
+  setup form. A visible package **must** implement `configuration_form()`; `package create`/`package
+  update` are rejected server-side (HTTP 4xx, `A visible package must implement
+  configuration_form()`) otherwise. A connection already on a visible package can't be redeployed in
+  place — see the guard below.
+- **Setup-form metadata warnings** — `package create` and `package update` read the local
+  `pyproject.toml` only when the upload response carries `package_name`/`visible` (the setup-form feature is
+  enabled for the account). They print non-blocking warnings and never edit the file:
+  - Invalid or missing `[project].name`: the platform falls back to the package ID as the package name. A valid name is
+    at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or
+    digit.
+  - Missing or non-boolean `[tool.package-metadata].visible` (e.g. the quoted string `"true"` instead of a
+    native boolean): the platform falls back to `visible=false`.
+  - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version
+    instead of the declared one. The warning lists the supported versions.
+  - `[tool.package-metadata].proxy_host_config_key` (Proxy Agent packages): names the `configuration`
+    key that holds the proxy `host:port` endpoint(s), and that key must be defined in the connector's
+    `configuration_form()`. If it is omitted from `pyproject.toml`, the setup form falls back to the
+    default `host`/`hosts` keys, so one of those default keys must instead be defined in `configuration_form()`.
+  - On Python < 3.11 both checks are skipped, because `tomllib` is unavailable. The name check logs a message; the Python-version check is silent.
 - **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
   connection to an existing package instead of uploading local code; no `connector.py` is required
   in the current directory for this form. For a new connection, this is equivalent to a normal
@@ -396,6 +427,10 @@ own copy — useful when the same connector code should run identically across m
   package '<id>' is shared with other connections`. Rebind explicitly with `--package-id <id>` to
   a *different* package to proceed with leaving the group intentionally (rebinding to the same
   package ID is the no-op described above, not a way to "proceed").
+  The guard also refuses (exit 1) when the connection's current package is `visible`, because a visible
+  package can only be redeployed with a new package: `cannot update connection '<name>'; its package '<id>'
+  is visible and can only be redeployed with a new package`. Use `--package-id <id>` to deploy a new package
+  version.
 - Package IDs returned by `package create` are account-scoped and reusable across any number of
   connections in that account.
 
