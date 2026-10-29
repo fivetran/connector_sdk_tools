@@ -380,8 +380,7 @@ own copy — useful when the same connector code should run identically across m
   When the package-management API exposes `package_name`/`visible`, the table also includes
   `PACKAGE NAME` and `VISIBLE` columns; packages without those fields keep the compact
   `PACKAGE ID` / `CONNECTIONS` layout.
-/plugin marketplace add fivetran/connector_sdk_tools
-/plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai- **Visible packages (connection creation via setup form)** — set `[tool.package-metadata].visible
+- **Visible packages (connection creation via setup form)** — set `[tool.package-metadata].visible
   = true` (a native TOML boolean, not the quoted string `"true"`) in `pyproject.toml` to make a
   reusable package appear in the Fivetran dashboard so users can create connections from it via its
   setup form. A visible package **must** implement `configuration_form()`; `package create`/`package
