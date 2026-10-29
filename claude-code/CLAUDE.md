@@ -10,6 +10,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | `/fivetran-connector-sdk:test-connector` | User wants to test an existing connector |
 | `/fivetran-connector-sdk:deploy-connector` | User wants to deploy to Fivetran |
 | `/fivetran-connector-sdk:evaluate-connector` | User wants a code review or quality report |
+| `/fivetran-connector-sdk:connector-sdk-submit` | User wants to submit a Connector SDK example or connector contribution in a pull request |
 | `/fivetran-connector-sdk:migrate-functions-connector` | User wants to migrate a Fivetran Functions connector to Connector SDK |
 | `/fivetran-connector-sdk:migrate-meltano-connector` | User wants to migrate a Meltano extractor or Singer tap to Connector SDK |
 | `/fivetran-connector-sdk:migrate-airbyte-connector` | User wants to migrate an Airbyte source connector to Connector SDK |
@@ -28,6 +29,7 @@ You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical 
 | "I'm getting an error..." / "fix my connector" / "help me change X" | Invoke the `connector-fixer` subagent with the error details and user context. Do not handle code fixes in the main thread. |
 | "Deploy my connector" | Run `/fivetran-connector-sdk:deploy-connector` |
 | "Review / evaluate my connector" / "Is my connector production-ready?" | Run `/fivetran-connector-sdk:evaluate-connector` |
+| "Submit a Connector SDK example" / "Prepare my connector before opening a PR" / "Check my connector before opening a PR" | Run `/fivetran-connector-sdk:connector-sdk-submit` |
 | "I already have a connector, help me test/modify it" | Use `/fivetran-connector-sdk:test-connector`, or invoke the `connector-fixer` subagent for code changes |
 
 ## Telemetry

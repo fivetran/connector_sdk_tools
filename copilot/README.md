@@ -53,6 +53,7 @@ Commands appear as slash commands:
 - `/fivetran-connector-sdk:test-connector` — Run and validate your connector locally
 - `/fivetran-connector-sdk:deploy-connector` — Package and deploy to Fivetran
 - `/fivetran-connector-sdk:evaluate-connector` — Code review and quality report
+- `/fivetran-connector-sdk:connector-sdk-submit` — Submit a Connector SDK example or connector contribution in a pull request
 - `/fivetran-connector-sdk:migrate-functions-connector` — Migrate a Fivetran Functions connector to Connector SDK
 - `/fivetran-connector-sdk:migrate-meltano-connector` — Migrate a Meltano extractor or Singer tap to Connector SDK
 - `/fivetran-connector-sdk:migrate-airbyte-connector` — Migrate an Airbyte source connector to Connector SDK
@@ -67,6 +68,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `commands/test-connector.md` | Run and validate connector tests |
 | `commands/deploy-connector.md` | Package and deploy to Fivetran |
 | `commands/evaluate-connector.md` | Static code review and scored report |
+| `commands/connector-sdk-submit.md` | Submit a Connector SDK example or connector contribution in a pull request |
 | `commands/migrate-functions-connector.md` | Migrate Fivetran Functions connectors to Connector SDK |
 | `commands/migrate-meltano-connector.md` | Migrate Meltano extractors or Singer taps to Connector SDK |
 | `commands/migrate-airbyte-connector.md` | Migrate Airbyte source connectors to Connector SDK |

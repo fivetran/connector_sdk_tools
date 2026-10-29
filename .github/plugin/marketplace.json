@@ -18,7 +18,8 @@
         "./skills/build-connector",
         "./skills/test-connector",
         "./skills/deploy-connector",
-        "./skills/evaluate-connector"
+        "./skills/evaluate-connector",
+        "./skills/connector-sdk-submit"
       ]
     }
   ]
