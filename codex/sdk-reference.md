@@ -171,7 +171,8 @@ operation on them (see **Multiple Schemas**), e.g. `op.upsert(schema="sales", ta
 | `op.upsert(table="t", data=record)` | Insert or update a record by primary key |
 | `op.update(table="t", modified=record)` | Update an existing record only (no new rows) |
 | `op.delete(table="t", keys={"id": "123"})` | Soft-delete a record (`_fivetran_deleted = TRUE`) |
-| `op.truncate(table="t")` | Soft-delete all rows synced before this call; flushed at the next checkpoint |
+| `op.truncate(table="t")` | Regular truncate: soft-delete all rows synced before this call; applied at the next checkpoint, even if the sync fails later |
+| `op.truncate(table="t", deferred=True)` | Deferred truncate: same rows, but applied only after `update()` returns successfully; a failed sync deletes nothing |
 | `op.checkpoint(state=state)` | Save sync progress (and flush buffered data to the destination) |
 | `op.error(message="...", trace=None)` | Fail the sync immediately with a custom, dashboard-visible message (title: **Connector SDK Code Error**). Only one per sync — code stops running after the call. |
 | `op.warning(message="...")` | Surface a non-critical, dashboard-visible warning without stopping the sync. Max 10 per sync; extras are dropped. |
@@ -180,6 +181,28 @@ operation on them (see **Multiple Schemas**), e.g. `op.upsert(schema="sales", ta
 logs only — they do **not** create a dashboard alert or affect the sync outcome. Use
 `op.error()`/`op.warning()` (optionally alongside logging) whenever the issue should be visible
 to the user on the Fivetran dashboard, not just in logs.
+
+**Regular vs. deferred truncate:** both soft-delete (`_fivetran_deleted = TRUE`) every row of the
+table synced before the call; rows sent after the call are not affected. They differ in *when* it is applied.
+
+- **Regular** (`op.truncate(table="t")`): applied at the next `op.checkpoint()`. If the sync fails
+  later, the rows stay deleted and the table may be only partly reloaded. Use it for a table-wide
+  soft delete that should happen no matter how the rest of the sync goes.
+- **Deferred** (`op.truncate(table="t", deferred=True)`): applied only after `update()` returns
+  successfully. If the sync fails, nothing is deleted. Use it to replace a table's contents with a
+  full reload: call it first, then upsert every row. A second deferred call for the same table (and
+  `schema`) replaces the first. If the sync fails after a checkpoint that follows the call, the next
+  sync applies it when it succeeds, with the time of the original call. If the state is reset
+  (a re-sync), it is dropped.
+- Both accept `schema=` for a schema-qualified table. `deferred` needs an SDK version that supports
+  it; older versions raise `TypeError`.
+
+```python
+op.truncate(table="t", deferred=True)   # old rows are marked deleted only if update() succeeds
+for record in fetch_all_records():
+    op.upsert(table="t", data=record)
+    # checkpoint as usual
+```
 
 ### Error Handling — Choose the Right Response
 

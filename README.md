@@ -144,7 +144,7 @@ The Functions migrator supports AWS Lambda, Azure Functions, Google Cloud Functi
 | returned `schema` | `schema(configuration)` |
 | `insert[table]` | `op.upsert(...)` |
 | `delete[table]` | `op.delete(...)` with primary-key fields only |
-| top-level `softDelete` | `op.truncate(...)` for listed tables |
+| top-level `softDelete` | regular `op.truncate(...)` for listed tables |
 | returned `state` | `op.checkpoint(...)` |
 | `hasMore` | internal loop/checkpoint logic in `update()` |
 
@@ -166,7 +166,7 @@ The Meltano migrator focuses on extractors/Singer taps. Meltano loaders, targets
 | Singer `STATE` messages / bookmarks | `op.checkpoint(...)` |
 | replication key metadata | cursor logic in `update()` |
 
-The migrator also requires an explicit decision for full-table streams: keep upsert-only snapshot behavior, or use `op.truncate(...)` before reloading a complete snapshot when the old pipeline relied on replacement semantics. For pipeline setup beyond connector code, install and use `fivetran-cli` (`python3 -m pip install -U fivetran-cli`) after the CSDK connector migration.
+The migrator also requires an explicit decision for full-table streams: keep upsert-only snapshot behavior, or use `op.truncate(...)` (regular, or `deferred=True` so a failed sync keeps the old rows) before reloading a complete snapshot when the old pipeline relied on replacement semantics. For pipeline setup beyond connector code, install and use `fivetran-cli` (`python3 -m pip install -U fivetran-cli`) after the CSDK connector migration.
 
 ### Airbyte Connector Migrator
 
@@ -184,7 +184,7 @@ The Airbyte migrator focuses on source connectors. Airbyte destinations, normali
 | `RECORD` messages | `op.upsert(...)` |
 | `STATE` messages | `op.checkpoint(...)` |
 | incremental sync mode | cursor logic in `update()` |
-| full-refresh overwrite | explicit `op.truncate(...)` plus reload decision |
+| full-refresh overwrite | explicit `op.truncate(...)` (regular or `deferred=True`) plus reload decision |
 
 The migrator also requires explicit decisions for append-only streams without primary keys, full-refresh overwrite behavior, and delete/CDC markers. It does not infer deletes from missing records unless the source stream is intentionally migrated as full-refresh overwrite.
 

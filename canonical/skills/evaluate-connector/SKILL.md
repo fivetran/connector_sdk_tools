@@ -56,6 +56,7 @@ Flag as `required` only when the code clearly demonstrates the problem.
 - `update(configuration, state)` function must exist and be passed to `Connector()` instantiation
 - At least one of `op.upsert()`, `op.update()`, `op.delete()`, or `op.truncate()` must be called
 - `op.checkpoint()` must be called
+- If `op.truncate()` is followed by a reload of the same table, flag a regular truncate as a good-to-have "Reliability" finding: a failed sync leaves the deleted rows behind, and `op.truncate(..., deferred=True)` avoids that. Do not flag a regular truncate used for a table-wide soft delete
 - SDK operations (`op.upsert`, `op.update`, `op.delete`, `op.truncate`, `op.checkpoint`) must be called directly — never with `yield` or `yield from`:
   - WRONG: `yield op.upsert(table="x", data=d)`
   - CORRECT: `op.upsert(table="x", data=d)`
