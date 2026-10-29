@@ -397,6 +397,10 @@ own copy — useful when the same connector code should run identically across m
     native boolean): the platform falls back to `visible=false`.
   - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version
     instead of the declared one. The warning lists the supported versions.
+  - `[tool.package-metadata].proxy_host_config_key` (Proxy Agent packages): names the `configuration`
+    key that holds the proxy `host:port` endpoint(s), and that key must be defined in the connector's
+    `configuration_form()`. If it is omitted from `pyproject.toml`, the setup form falls back to the
+    default `host`/`hosts` keys, so one of those default keys must instead be defined in `configuration_form()`.
   - On Python < 3.11 both checks are skipped, because `tomllib` is unavailable. The name check logs a message; the Python-version check is silent.
 - **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
   connection to an existing package instead of uploading local code; no `connector.py` is required
