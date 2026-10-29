@@ -269,6 +269,12 @@ connector = Connector(
   `--configuration configuration.json`; those values are stored securely and can pre-populate or
   update the connection's configuration — for an existing connection, omitting `--configuration`
   keeps the existing stored values.
+- **Connection creation via setup form (visible packages):** marking a reusable package `visible`
+  (`[tool.package-metadata].visible = true` in `pyproject.toml`, see **Reusable Packages — 1:N**
+  below) makes it appear in the Fivetran dashboard so users can create connections from it and
+  enter configuration through its setup form. A visible package **must** define
+  `configuration_form()` — the platform rejects (HTTP 4xx) a `package create`/`package update` for
+  a visible package without one (`A visible package must implement configuration_form()`).
 - Full reference: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-setup-form
 
 ### Unstructured File Uploads
