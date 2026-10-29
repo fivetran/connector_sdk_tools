@@ -2,6 +2,14 @@
 
 Changes for the Fivetran AI coding agent tools in this repository.
 
+## November 2026
+
+### fivetran-connector-sdk-tools 2026.11.2.1
+
+- Documented regular and deferred truncate in sdk-reference.md: `op.truncate(table="t")` is applied at the next checkpoint, even if the sync fails later, and `op.truncate(table="t", deferred=True)` is applied only after `update()` returns successfully, so a failed sync deletes nothing. Covers when to use each, repeated calls, what happens after a failed sync, and that older SDK versions raise `TypeError` for `deferred`.
+- connector-fixer lists `deferred` in its operations, fixes the `TypeError` an older SDK raises for it, and has a "Replacing a Table's Contents" revision pattern; test-connector reports soft-deleted rows when a connector truncates; connector-validator points full refreshes at `op.truncate`.
+- connector-generator prefers `deferred=True` before a full-table reload; evaluate-connector flags a regular truncate followed by a reload of the same table as a good-to-have finding; the Meltano and Airbyte migrators ask for a regular-or-deferred decision on full-table and overwrite streams; the Functions migrator maps `softDelete` to a regular truncate.
+
 ## October 2026
 
 ### fivetran-connector-sdk-tools 2026.10.27.1

@@ -146,6 +146,8 @@ op.upsert("table_name", data)
 op.checkpoint(state=state)
 op.update(table, modified)
 op.delete(table, keys)
+op.truncate(table)                  # regular: applied at the next checkpoint
+op.truncate(table, deferred=True)   # deferred: applied only if update() succeeds
 ```
 
 ### Configuration Files
@@ -168,6 +170,8 @@ op.delete(table, keys)
 | `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
 | `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |
+| `TypeError` mentioning an unexpected keyword argument `deferred` | The installed SDK predates `deferred`. Upgrade `fivetran-connector-sdk` (`pip install -U fivetran-connector-sdk`) or drop `deferred=True` |
+| A full-table reload leaves a table emptied or partly reloaded after a failed sync | A regular `op.truncate` deletes at the next checkpoint even if the sync fails later. Use `op.truncate(table=..., deferred=True)` before the reload so a failed sync deletes nothing |
 
 ## Relevant examples
 
@@ -224,6 +228,11 @@ When adding new capabilities to a working connector:
 ### Adding Pagination
 - Study: pagination examples matching the source (offset, keyset, page number, or next URL)
 - Pattern: Study pagination loop structures and state management
+
+### Replacing a Table's Contents
+- Call `op.truncate(table=..., deferred=True)` first, then upsert every row; the old rows are marked deleted only if `update()` succeeds
+- Use a regular `op.truncate(table=...)` only when the rows should be deleted at the next checkpoint no matter how the sync ends
+- See **Operations** in `sdk-reference.md` for what happens after a failed sync
 
 ### Adding Incremental Sync
 - Study: incremental sync and checkpoint examples
