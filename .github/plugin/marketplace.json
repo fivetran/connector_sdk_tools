@@ -13,7 +13,7 @@
       "name": "fivetran-connector-sdk",
       "source": "./copilot",
       "description": "Build, test, and deploy Fivetran connectors with AI assistance",
-      "version": "2026.10.28.1",
+      "version": "2026.10.29.1",
       "skills": [
         "./skills/build-connector",
         "./skills/test-connector",

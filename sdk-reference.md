@@ -380,12 +380,22 @@ own copy — useful when the same connector code should run identically across m
   When the package-management API exposes `package_name`/`visible`, the table also includes
   `PACKAGE NAME` and `VISIBLE` columns; packages without those fields keep the compact
   `PACKAGE ID` / `CONNECTIONS` layout.
+/plugin marketplace add fivetran/connector_sdk_tools
+/plugin install fivetran-connector-sdk@fivetran-connector-sdk-ai- **Visible packages (connection creation via setup form)** — set `[tool.package-metadata].visible
+  = true` (a native TOML boolean, not the quoted string `"true"`) in `pyproject.toml` to make a
+  reusable package appear in the Fivetran dashboard so users can create connections from it via its
+  setup form. A visible package **must** implement `configuration_form()`; `package create`/`package
+  update` are rejected server-side (HTTP 4xx, `A visible package must implement
+  configuration_form()`) otherwise. A connection already on a visible package can't be redeployed in
+  place — see the guard below.
 - **Setup-form metadata warnings** — `package create` and `package update` read the local
   `pyproject.toml` only when the upload response carries `package_name`/`visible` (the setup-form feature is
   enabled for the account). They print non-blocking warnings and never edit the file:
-  - Invalid `[project].name`: the platform falls back to the package ID as the package name. A valid name is
+  - Invalid or missing `[project].name`: the platform falls back to the package ID as the package name. A valid name is
     at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or
     digit.
+  - Missing or non-boolean `[tool.package-metadata].visible` (e.g. the quoted string `"true"` instead of a
+    native boolean): the platform falls back to `visible=false`.
   - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version
     instead of the declared one. The warning lists the supported versions.
   - On Python < 3.11 the name check is skipped with a log message, because `tomllib` is unavailable.

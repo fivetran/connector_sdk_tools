@@ -4,9 +4,9 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## October 2026
 
-### fivetran-connector-sdk-tools 2026.10.28.1
+### fivetran-connector-sdk-tools 2026.10.29.1
 
-- Documented the PyPI setup-form package changes in sdk-reference.md and deploy-connector's SKILL.md: `fivetran package list` adds `PACKAGE NAME` and `VISIBLE` columns when the API exposes those fields; `package create`/`package update` print non-blocking warnings for an invalid `[project].name` (the platform falls back to the package ID) and for an unsupported `[tool.package-metadata].python_version` (the setup form prefills its default); and a plain redeploy of a connection whose package is `visible` is refused, like a shared package, so it must be rebound with `--package-id`.
+- Connection creation via setup form (visible packages). Documented in sdk-reference.md and deploy-connector's SKILL.md that `[tool.package-metadata].visible = true` in `pyproject.toml` marks a package as visible so it appears in the Fivetran dashboard for users to create connections from via its setup form, and that a visible package **must** implement `configuration_form()`.
 
 ### fivetran-connector-sdk-tools 2026.10.19.1
 

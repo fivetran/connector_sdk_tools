@@ -184,9 +184,10 @@ entirely instead of just auto-answering its prompt.
 fivetran package list
 ```
 
-- **Visible packages:** a plain redeploy (no `--package-id`) of a connection whose current package is `visible` is refused with exit 1, the same as a shared package. A visible package can only be redeployed with a new package, so use the rebind form below with `--package-id <id>` to deploy a new package version.
+- **Visible packages (connection creation via setup form):** set `[tool.package-metadata].visible = true` (a native TOML boolean) in `pyproject.toml` to make a reusable package appear in the Fivetran dashboard so users can create connections from it via its setup form. A visible package **must** implement `configuration_form()` — `package create`/`package update` are rejected server-side (HTTP 4xx, `A visible package must implement configuration_form()`) otherwise, so confirm the connector defines one before marking it visible. A plain redeploy (no `--package-id`) of a connection whose current package is `visible` is refused with exit 1, the same as a shared package. A visible package can only be redeployed with a new package, so use the rebind form below with `--package-id <id>` to deploy a new package version.
 - **Setup-form metadata warnings** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and prints non-blocking warnings. It never edits the file.
-  - Invalid `[project].name`: the platform falls back to the package ID as the package name. Warn the user before deploy or package update. A valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit.
+  - Invalid or missing `[project].name`: the platform falls back to the package ID as the package name. Warn the user before deploy or package update. A valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit.
+  - Missing or non-boolean `[tool.package-metadata].visible` (e.g. the quoted string `"true"` instead of a native boolean): the platform falls back to `visible=false`.
   - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version instead of the declared one. Tell the user which version is supported.
   - On Python < 3.11 the name check is skipped with a log message.
 
