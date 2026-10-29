@@ -397,7 +397,7 @@ own copy — useful when the same connector code should run identically across m
     native boolean): the platform falls back to `visible=false`.
   - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version
     instead of the declared one. The warning lists the supported versions.
-  - On Python < 3.11 the name check is skipped with a log message, because `tomllib` is unavailable.
+  - On Python < 3.11 both checks are skipped, because `tomllib` is unavailable. The name check logs a message; the Python-version check is silent.
 - **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
   connection to an existing package instead of uploading local code; no `connector.py` is required
   in the current directory for this form. For a new connection, this is equivalent to a normal
