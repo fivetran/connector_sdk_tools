@@ -120,6 +120,11 @@ Deletion behavior needs explicit review. If the Airbyte source emits deletion ma
 Edit the CSDK project files:
 
 ### `connector.py`
+- Start the file with the AI build marker. Do not add it if it already exists:
+  ```python
+  # Built using Connector SDK AI Plugin
+  # Plugin: fivetran-connector-sdk (copilot) | Skill: migrate-airbyte-connector | Version: 2026.10.31.1
+  ```
 - Keep the scaffolded structure where present: `validate_configuration()`, `schema()`, `update()`, global `connector = Connector(...)`, and `if __name__ == "__main__": connector.debug()`.
 - Port extraction logic directly into Python helper functions.
 - For Python CDK sources, reuse small pure request/parse helpers where practical, but remove Airbyte command dispatch, Docker assumptions, protocol message generation, and CDK runtime dependencies.
