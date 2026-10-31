@@ -116,7 +116,7 @@ which is deprecated for this purpose (still works, but the CLI warns to migrate)
 
 ## Phase 3: Customize the Scaffolded Files
 
-Apply the generator workflow — read `workflows/generator.md` (or invoke the `connector-generator` subagent) to adapt the **already-scaffolded** files to the Phase 1 specification using `Edit` (do not rewrite from scratch). For an EXACT MATCH, the connector may need little or no change beyond configuration; for FUZZY/BUILD ON TEMPLATE, study 2–4 relevant SDK examples and adapt `connector.py`, `configuration.json`, and `README.md` to the spec. Preserve the template structure (`validate_configuration()`, docstrings, global `connector = Connector(...)`, the `__main__` block).
+Apply the generator workflow — read `workflows/generator.md` (or invoke the `connector-generator` subagent) to adapt the **already-scaffolded** files to the Phase 1 specification using `Edit` (do not rewrite from scratch). For an EXACT MATCH, the connector may need little or no change beyond configuration; for FUZZY/BUILD ON TEMPLATE, study 2–4 relevant SDK examples and adapt `connector.py`, `configuration.json`, and `README.md` to the spec. Preserve the template structure (`validate_configuration()`, docstrings, global `connector = Connector(...)`, the `__main__` block). Ensure `connector.py` starts with the AI build marker from `workflows/generator.md` (add it if `fivetran init` did not; do not add it if it already exists).
 
 ## Phase 4: Setup Environment
 

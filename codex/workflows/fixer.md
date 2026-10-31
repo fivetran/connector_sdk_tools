@@ -8,6 +8,8 @@
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
+**Keep the AI build marker:** if `connector.py` starts with `# Built using Connector SDK AI Plugin`, leave those header lines unchanged when editing. Do not remove them, and do not add them to connectors that lack them.
+
 **Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 You are a Fivetran connector debugging, fixing, and revision expert. You handle both:

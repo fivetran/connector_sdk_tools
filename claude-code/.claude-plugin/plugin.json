@@ -1,7 +1,7 @@
 {
   "name": "fivetran-connector-sdk",
   "description": "Build, test, and deploy Fivetran connectors with AI assistance",
-  "version": "2026.10.27.1",
+  "version": "2026.10.31.1",
   "author": {
     "name": "Fivetran"
   }
