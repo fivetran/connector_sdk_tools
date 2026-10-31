@@ -108,6 +108,11 @@ Full-table behavior needs explicit review. Singer taps commonly emit current row
 Edit the CSDK project files:
 
 ### `connector.py`
+- Start the file with the AI build marker. Do not add it if it already exists:
+  ```python
+  # Built using Connector SDK AI Plugin
+  # Plugin: fivetran-connector-sdk (codex) | Skill: migrate-meltano-connector | Version: 2026.10.31.1
+  ```
 - Keep the scaffolded structure where present: `validate_configuration()`, `schema()`, `update()`, global `connector = Connector(...)`, and `if __name__ == "__main__": connector.debug()`.
 - Port extraction logic directly into Python helper functions.
 - If the source tap is already Python, reuse small pure extraction helpers where practical, but remove Singer CLI, stdout message emission, and Meltano runtime assumptions.

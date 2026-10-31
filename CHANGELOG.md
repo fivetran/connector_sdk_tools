@@ -4,6 +4,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## October 2026
 
+### fivetran-connector-sdk-tools 2026.10.31.1
+
+- Connectors built or migrated by the plugin now start with an AI build marker in `connector.py`: `# Built using Connector SDK AI Plugin`, followed by `# Plugin: fivetran-connector-sdk (<agent>) | Version: <version>`, so AI-built connectors can be tracked. The build, generator, and migrate instructions add it, the fixer and submit instructions keep it, and `scripts/sync-plugins.sh` fills in the agent and version for each generated plugin tree.
+
 ### fivetran-connector-sdk-tools 2026.10.27.1
 
 - Added `connector-sdk-submit`, which checks a [Connector SDK](https://github.com/fivetran/connector_sdk) example or [Community Connector](https://github.com/fivetran/community_connectors) against repository submission rules, removes credentials from `configuration.json`, and prepares it for a pull request.

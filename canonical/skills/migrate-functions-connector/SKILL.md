@@ -70,6 +70,11 @@ Function connector `softDelete` marks all previously synced rows in a table as d
 Edit the CSDK project files:
 
 ### `connector.py`
+- Start the file with the AI build marker. Do not add it if it already exists:
+  ```python
+  # Built using Connector SDK AI Plugin
+  # Plugin: {{PLUGIN_NAME}} ({{PLUGIN_AGENT}}) | Skill: migrate-functions-connector | Version: {{PLUGIN_VERSION}}
+  ```
 - Keep the scaffolded structure where present: `validate_configuration()`, `schema()`, `update()`, global `connector = Connector(...)`, and `if __name__ == "__main__": connector.debug()`.
 - Port source extraction logic into Python helper functions.
 - Translate JavaScript/Java Functions code into Python behavior; do not wrap cloud-provider handlers.

@@ -376,4 +376,41 @@ copy_hooks "$GEMINI_DIR/hooks"
 # Copilot CLI has no lifecycle hook system (no UserPromptSubmit/PostToolUse events);
 # it uses commands/ markdown files only, so hooks are not synced there.
 
+# --- AI build marker ---
+# Canonical sources hold {{PLUGIN_NAME}}, {{PLUGIN_AGENT}} and {{PLUGIN_VERSION}}
+# placeholders (the "Built using Connector SDK AI Plugin" header). Each generated
+# tree gets them filled from its own manifest, so the version always matches the
+# release that produced the connector.
+manifest_field() {
+  # manifest_field <key> <file>: first "<key>": "<value>" in the file.
+  grep -m1 "\"$1\"" "$2" | sed "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/"
+}
+
+fill_plugin_markers() {
+  # fill_plugin_markers <agent> <manifest> <path>...
+  # The plugin name is fixed: marketplace manifests also carry a "name" that is
+  # not the plugin name, so it is not read from the file.
+  local agent="$1" manifest="$2"
+  shift 2
+  local name="fivetran-connector-sdk" version f
+  version="$(manifest_field version "$manifest")"
+  for path in "$@"; do
+    [[ -e "$path" ]] || continue
+    while IFS= read -r f; do
+      sed -i.bak \
+        -e "s/{{PLUGIN_NAME}}/${name}/g" \
+        -e "s/{{PLUGIN_AGENT}}/${agent}/g" \
+        -e "s/{{PLUGIN_VERSION}}/${version}/g" "$f"
+      rm -f "${f}.bak"
+    done < <(grep -rl '{{PLUGIN_' "$path" 2>/dev/null || true)
+  done
+}
+
+echo "Filling AI build marker placeholders..."
+fill_plugin_markers claude-code "$CLAUDE_DIR/.claude-plugin/plugin.json" "$CLAUDE_DIR"
+fill_plugin_markers codex "$CODEX_DIR/.codex-plugin/plugin.json" "$CODEX_DIR"
+fill_plugin_markers copilot ".github/plugin/marketplace.json" "$COPILOT_DIR"
+# Gemini tree is the repo root, so only its generated paths are scanned.
+fill_plugin_markers gemini gemini-extension.json skills agents tools hooks sdk-reference.md
+
 echo "Done."
