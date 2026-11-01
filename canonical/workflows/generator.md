@@ -57,9 +57,9 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - AI build marker as the first two lines of the file, above the module docstring. Do not add it if it already exists. Use these exact lines:
   ```python
   # Built using Connector SDK AI Plugin
-  # Plugin: {{PLUGIN_NAME}} ({{PLUGIN_AGENT}}) | Skill: <skill> | Version: {{PLUGIN_VERSION}}
+  # Plugin: {{PLUGIN_NAME}} ({{PLUGIN_AGENT}}) | Version: {{PLUGIN_VERSION}}
   ```
-  The name, agent and version in the block are filled in with the real values when the plugin is generated. Replace `<skill>` with the skill that invoked this workflow (`build-connector`), or with `connector-generator` when this workflow runs as the agent directly. When editing an existing connector, keep the marker and do not change its version.
+  The name, agent and version in the block are filled in with the real values when the plugin is generated. When editing an existing connector, keep the marker and do not change its version.
 
 ### configuration.json
 - Flat string key/value pairs only; preserve existing local values.

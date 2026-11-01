@@ -4,6 +4,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.4.1
+
+- AI build marker for connectors built or migrated by the plugin: connectors now start with `# Built using Connector SDK AI Plugin`, followed by `# Plugin: fivetran-connector-sdk (<agent>) | Version: <version>`, so AI-built connectors can be tracked. The build, generator, and migrate instructions add it; the fixer and submit instructions keep it; and `scripts/sync-plugins.sh` fills in the agent and version for each generated plugin tree.
+
 ### fivetran-connector-sdk-tools 2026.11.3.1
 
 - Documented regular and deferred truncate in sdk-reference.md: `op.truncate(table="t")` is applied at the next checkpoint, even if the sync fails later, and `op.truncate(table="t", deferred=True)` is applied only after `update()` returns successfully, so a failed sync deletes nothing. Covers when to use each, repeated calls, what happens after a failed sync, and that older SDK versions raise `TypeError` for `deferred`.
@@ -12,10 +16,6 @@ Changes for the Fivetran AI coding agent tools in this repository.
 - Connection creation via setup form (visible packages). Documented in sdk-reference.md and deploy-connector's SKILL.md that `[tool.package-metadata].visible = true` in `pyproject.toml` marks a package as visible so it appears in the Fivetran dashboard for users to create connections from via its setup form, and that a visible package **must** implement `configuration_form()`. Also documented the `[tool.package-metadata].proxy_host_config_key` field: it names the `configuration` key holding the Proxy Agent `host:port` endpoint(s) (which must be defined in `configuration_form()`), and when omitted the setup form falls back to the default `host`/`hosts` keys, so one of those must be defined in the form instead.
 
 ## October 2026
-
-### fivetran-connector-sdk-tools 2026.10.31.1
-
-- Connectors built or migrated by the plugin now start with an AI build marker in `connector.py`: `# Built using Connector SDK AI Plugin`, followed by `# Plugin: fivetran-connector-sdk (<agent>) | Version: <version>`, so AI-built connectors can be tracked. The build, generator, and migrate instructions add it, the fixer and submit instructions keep it, and `scripts/sync-plugins.sh` fills in the agent and version for each generated plugin tree.
 
 ### fivetran-connector-sdk-tools 2026.10.27.1
 
