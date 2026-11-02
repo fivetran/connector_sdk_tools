@@ -395,7 +395,7 @@ own copy — useful when the same connector code should run identically across m
   place — see the guard below.
 - **Setup-form metadata validation** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and validates package metadata. It never edits the file.
   - `[project].name`: a valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit. If **missing**, the platform falls back to the package ID. If **invalid** (does not meet the rules), **deployment fails**.
-  - `[tool.package-metadata].visible`: must be a native TOML boolean (`true` or `false`), not a string (e.g. not the quoted string `"true"`). If **missing** or **non-boolean**, **deployment fails**.
+  - `[tool.package-metadata].visible`: must be a native TOML boolean (`true` or `false`), not a string (e.g. not the quoted string `"true"`). If **non-boolean**, **deployment fails**.
   - `[tool.package-metadata].python_version`: must be a supported Python version for the connector SDK. If **unsupported**, **deployment fails**.
   - `[tool.package-metadata].proxy_host_config_key` (Proxy Agent packages): names the `configuration` key that holds the proxy `host:port` endpoint(s), and that key must be defined in the connector's `configuration_form()`. If it is omitted from `pyproject.toml`, the setup form falls back to the default `host`/`hosts` keys, so one of those default keys must instead be defined in `configuration_form()`
 
