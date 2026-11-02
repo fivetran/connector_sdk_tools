@@ -4,6 +4,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.9.1
+
+- Documented the Connector SDK 3.0.0 stateless CLI: field resolution order (flag, environment variable, options file, SDK default), the options file and one-time automatic migration, and the `--python-version` (and Hybrid Deployment agent ID) now required on redeploy (new connections use the SDK and destination defaults), in sdk-reference.md and deploy-connector.
+- `deploy_connector.py` now forwards `--python-version`, `--options-file`, `--profile`, `--proxy-id`, `--proxy-host-config-key` and `--hybrid-deployment-agent-id` to `fivetran deploy`; deploy-connector gained SDK 3.0.0 guidance and troubleshooting.
+
 ### fivetran-connector-sdk-tools 2026.11.5.1
 
 - Documented Record-and-Replay Regression Testing (Public Preview) in sdk-reference.md: the `@action` decorator and `match`, `fivetran debug --record`/`--replay`/`--max-records`/`--yes`, the `fixtures/<scenario>/` layout, JSON-serializable data, error messages, and the limits (unrecorded reads, repeated identical calls, thread ordering, and sensitive data stored in fixtures).

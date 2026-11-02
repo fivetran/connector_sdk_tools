@@ -221,6 +221,40 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
         self.assertNotIn("--package-id", self.invocation())
 
+    def test_passthrough_flags_are_forwarded(self):
+        flags = {
+            "--python-version": "3.12",
+            "--options-file": "/tmp/options.toml",
+            "--profile": "prod",
+            "--proxy-id": "proxy_1",
+            "--proxy-host-config-key": "host",
+            "--hybrid-deployment-agent-id": "agent_1",
+        }
+        argv = [part for item in flags.items() for part in item]
+        self.assertEqual(self.run_main("--connection-id", "existing_id", *argv), 0)
+        args = self.invocation()
+        for flag, value in flags.items():
+            self.assertEqual(args[args.index(flag) + 1], value)
+
+    def test_passthrough_flags_are_omitted_when_unset(self):
+        self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        args = self.invocation()
+        for flag in ("--python-version", "--options-file", "--profile", "--proxy-id",
+                     "--proxy-host-config-key", "--hybrid-deployment-agent-id"):
+            self.assertNotIn(flag, args)
+
+    def test_blank_passthrough_flag_is_rejected(self):
+        for flag in ("--python-version", "--options-file", "--profile", "--proxy-id",
+                     "--proxy-host-config-key", "--hybrid-deployment-agent-id"):
+            with self.subTest(flag=flag):
+                self.assertEqual(self.run_main("--connection-id", "existing_id", flag, ""), 2)
+                self.assertFalse((self.project / "invocation.json").exists())
+
+    def test_python_version_env_var_is_inherited(self):
+        with patch.dict(os.environ, {"FIVETRAN_PYTHON_VERSION": "3.13"}):
+            self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        self.assertNotIn("--python-version", self.invocation())
+
     def test_new_deploy_without_connection_id_keeps_sync_guidance(self):
         executable = self.project / ".venv/bin/fivetran"
         executable.write_text(executable.read_text().replace(

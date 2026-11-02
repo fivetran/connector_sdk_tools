@@ -20,8 +20,9 @@
 | `fivetran debug --record <scenario>` / `--replay <scenario>` | Record a run against the live source, then replay it without calling the source and compare the output (Public Preview, see **Record-and-Replay Regression Testing** below) |
 | `fivetran package` | Build a deployable ZIP without uploading |
 | `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
-| `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.14) |
-| `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent |
+| `fivetran deploy --python-version <ver>` | Deploy on a specific Python version (alias `--python`). In SDK 3.0.0+ a new connection uses the SDK default when unset; a redeploy requires it from some source (see **Stateless CLI & Options File**) |
+| `fivetran deploy --options-file <path> --profile <name>` | Read deploy settings from an options file profile (SDK 3.0.0+) |
+| `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent. In SDK 3.0.0+ a new connection uses the destination's default agent when unset; redeploying a connection on a Hybrid Deployment destination fails without it |
 | `fivetran deploy --package-id <id>` | Bind/rebind a connection to an existing reusable package instead of uploading code (Private Preview, see **Reusable Packages (1:N)** below) |
 | `fivetran package create` | Upload the current project as a new reusable package; server assigns the package ID (Private Preview) |
 | `fivetran package update <package-id>` | Replace the code artifact for an existing reusable package (Private Preview) |
@@ -33,14 +34,14 @@
 
 **Note**: `fivetran init` without `--template` creates a complete, working connector — not empty boilerplate.
 
-**`fivetran deploy` arguments**: authentication is required via `--api-key` or the inherited `FIVETRAN_API_KEY` environment variable; `--connection` is required; `--destination` is optional only if your account has a single destination. The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `community_connectors`, `examples/<path>` from `connector_sdk`, and no flag uses the default `_template_connector`.
+**`fivetran deploy` arguments**: authentication is required via `--api-key` or the inherited `FIVETRAN_API_KEY` environment variable; `--connection` is required; `--destination` is optional only if your account has a single destination. In SDK 3.0.0+, a redeploy also needs `--python-version` (and `--hybrid-deployment-agent-id` on a Hybrid Deployment destination) from some source; a new connection falls back to defaults (see **Stateless CLI & Options File**). The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `community_connectors`, `examples/<path>` from `connector_sdk`, and no flag uses the default `_template_connector`.
 
 ## Runtime Environment
 
 - **Memory:** 4 GB RAM in production; local `fivetran debug` enforces the same 4 GB limit (see
   **Memory Management** below)
 - **Python Versions:** 3.10, 3.11, 3.12, 3.13, **3.14 (default)**
-  - Specify a non-default version with `fivetran deploy --python <version>`
+  - Specify the version with `fivetran deploy --python-version <version>` (alias `--python`); SDK 3.0.0+ requires it on a redeploy (a new connection uses the default; see **Stateless CLI & Options File**)
   - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
 - **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`
 
@@ -286,7 +287,8 @@ connector = Connector(
   the package so Fivetran can render the form for the connection. You can still deploy with
   `--configuration configuration.json`; those values are stored securely and can pre-populate or
   update the connection's configuration — for an existing connection, omitting `--configuration`
-  keeps the existing stored values.
+  keeps the existing stored configuration values (this applies to configuration only; other deploy
+  settings follow **Stateless CLI & Options File**).
 - **Connection creation via setup form (visible packages):** marking a reusable package `visible`
   (`[tool.package-metadata].visible = true` in `pyproject.toml`, see **Reusable Packages — 1:N**
   below) makes it appear in the Fivetran dashboard so users can create connections from it and
@@ -294,6 +296,44 @@ connector = Connector(
   `configuration_form()` — the platform rejects (HTTP 4xx) a `package create`/`package update` for
   a visible package without one (`A visible package must implement configuration_form()`).
 - Full reference: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-setup-form
+
+### Stateless CLI & Options File (SDK 3.0.0+)
+
+From 3.0.0 the CLI no longer infers deploy settings from the existing connection. Each
+`fivetran deploy` resolves its settings from explicit sources. Check `fivetran version` first;
+before 3.0.0 the old behavior applies and none of this does.
+
+- **Resolution order (highest first):** CLI flag → environment variable (e.g.
+  `FIVETRAN_PYTHON_VERSION`) → options file profile → SDK default (if none exists and the field is required, deploy fails).
+  `proxy_id`, `proxy_host_config_key` and `package_id` have no env var.
+- **Required for deploy:** destination and connection always. For a **redeploy**, also the Python
+  version, and the Hybrid Deployment agent ID when the connection is on a Hybrid Deployment
+  destination; if one cannot be resolved, deploy exits (e.g. `--python-version is required; provide
+  it via the --python-version flag, the FIVETRAN_PYTHON_VERSION environment variable, or the options
+  file`). For a **new connection**, an unset Python version uses the SDK default and an unset agent
+  ID uses the destination's default agent.
+- **Options file:** TOML with named profiles (selected by `--profile`, default `default`). Lookup
+  order: `--options-file`, `FIVETRAN_OPTIONS_FILE`, `./options.toml`, then
+  `~/.fivetran/connector_sdk/options.toml`. It is excluded from the deploy package and needs Python 3.11+; on
+  Python 3.10 the CLI skips it and resolves from flags, env vars and defaults only. Storable fields:
+  `destination`, `connection`, `python_version`, `naming`, `hybrid_deployment_agent_id`, `proxy_id`,
+  `proxy_host_config_key`, `package_id`. Never store the API key there.
+- **Automatic migration:** when no options file exists (and Python is 3.11+), the first deploy
+  copies the account's previously saved connection settings into
+  `~/.fivetran/connector_sdk/options.toml`, one profile per connection named
+  `<group_id>-<connection_name>`, then continues. Set `CI=true` to skip it. It is all-or-nothing: if
+  fetching any connection fails (e.g. a `404` from the migration endpoint), no file is written, a
+  warning is logged, the deploy continues with flags and env vars, and migration retries on the
+  next deploy.
+- **Proxy Agent:** `proxy_id` has no env var. If it resolves from neither `--proxy-id` nor the
+  profile, the connection reverts to direct networking, so add `proxy_id` to every profile that
+  uses a Proxy Agent. `--proxy-id` cannot be combined with `--hybrid-deployment-agent-id`.
+- **New connection:** pass `--destination` and `--connection`; Python version and agent ID are
+  optional (SDK default and destination default agent). **Redeploy:** nothing is carried over from
+  the existing connection, so pass `--python-version` (and `--hybrid-deployment-agent-id` for a
+  Hybrid Deployment destination) or have an options file profile supply them.
+- Applies to `fivetran deploy` only. Full reference:
+  https://fivetran.com/docs/connector-sdk/getting-started/connector-sdk-commands
 
 ### Unstructured File Uploads
 
@@ -352,12 +392,12 @@ network, so no inbound firewall ports need to open. Not supported with Hybrid De
   this repo's configuration.json contract is flat strings only, so use a single `host:port` under
   the key `host`, or multiple endpoints as one comma-separated string under the key `hosts` (e.g.
   `"hosts": "db-primary.internal.com:5432,db-replica.internal.com:5432"`) — both are
-  auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time.
+  auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time, or
+  (SDK 3.0.0+) set as `proxy_host_config_key` in an options file profile.
 - Deploy with `fivetran deploy --proxy-id <PROXY_AGENT_ID> [--proxy-host-config-key <key>] ...`
   — a real, working flag on the installed SDK (hidden from `--help`, not unsupported). This
-  plugin's `deploy_connector.py` wrapper doesn't forward `--proxy-id`/`--proxy-host-config-key`;
-  for a Proxy Agent connection, call `fivetran deploy` directly instead of the wrapper (see
-  **Alternative: Manual Packaging** in deploy-connector).
+  plugin's `deploy_connector.py` wrapper forwards `--proxy-id` and `--proxy-host-config-key`
+  unchanged to `fivetran deploy`.
 - `fivetran debug` and `fivetran configuration --test` don't route through the Proxy Agent —
   neither can validate end-to-end connectivity locally, even though `add_test()` setup tests
   otherwise run fine locally (see **Setup Form** above). A Proxy Agent connectivity check in
