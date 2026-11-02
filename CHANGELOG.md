@@ -4,6 +4,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.5.1
+
+- Documented the Connector SDK 3.0.0 stateless CLI: field resolution order (flag, environment variable, options file, SDK default), the options file and one-time automatic migration, and the `--python-version` (and Hybrid Deployment agent ID) now required on redeploy (new connections use the SDK and destination defaults), in sdk-reference.md and deploy-connector.
+- `deploy_connector.py` now forwards `--python-version`, `--options-file`, `--profile`, `--proxy-id`, `--proxy-host-config-key` and `--hybrid-deployment-agent-id` to `fivetran deploy`; deploy-connector gained SDK 3.0.0 guidance and troubleshooting.
+
 ### fivetran-connector-sdk-tools 2026.11.4.1
 
 - AI build marker for connectors built or migrated by the plugin: connectors now start with `# Built using Connector SDK AI Plugin`, followed by `# Plugin: fivetran-connector-sdk (<agent>) | Version: <version>`, so AI-built connectors can be tracked. The build, generator, and migrate instructions add it; the fixer and submit instructions keep it; and `scripts/sync-plugins.sh` fills in the agent and version for each generated plugin tree.
