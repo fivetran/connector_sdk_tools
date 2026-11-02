@@ -236,6 +236,11 @@ class DeployTests(unittest.TestCase):
         for flag, value in flags.items():
             self.assertEqual(args[args.index(flag) + 1], value)
 
+    def test_relative_options_file_is_resolved_against_callers_cwd(self):
+        self.assertEqual(self.run_main("--connection-id", "existing_id", "--options-file", "settings.toml"), 0)
+        args = self.invocation()
+        self.assertEqual(args[args.index("--options-file") + 1], os.path.abspath("settings.toml"))
+
     def test_passthrough_flags_are_omitted_when_unset(self):
         self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
         args = self.invocation()

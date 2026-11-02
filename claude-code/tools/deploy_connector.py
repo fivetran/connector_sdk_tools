@@ -800,6 +800,9 @@ def main():
         for flag in _PASSTHROUGH_FLAGS:
             value = getattr(args, flag.lstrip("-").replace("-", "_"))
             if value:
+                if flag == "--options-file":
+                    # The child runs with cwd=connector_dir, so resolve against the caller's cwd here.
+                    value = os.path.abspath(os.path.expanduser(value))
                 cmd.extend([flag, value])
 
         connection_id = args.connection_id
