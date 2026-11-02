@@ -241,6 +241,12 @@ class DeployTests(unittest.TestCase):
         args = self.invocation()
         self.assertEqual(args[args.index("--options-file") + 1], os.path.abspath("settings.toml"))
 
+    def test_relative_options_file_env_var_is_resolved_against_callers_cwd(self):
+        with patch.dict(os.environ, {"FIVETRAN_OPTIONS_FILE": "settings.toml"}):
+            self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        args = self.invocation()
+        self.assertEqual(args[args.index("--options-file") + 1], os.path.abspath("settings.toml"))
+
     def test_passthrough_flags_are_omitted_when_unset(self):
         self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
         args = self.invocation()

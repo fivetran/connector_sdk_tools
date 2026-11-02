@@ -799,10 +799,14 @@ def main():
 
         for flag in _PASSTHROUGH_FLAGS:
             value = getattr(args, flag.lstrip("-").replace("-", "_"))
-            if value:
-                if flag == "--options-file":
-                    # The child runs with cwd=connector_dir, so resolve against the caller's cwd here.
+            if flag == "--options-file":
+                # The child runs with cwd=connector_dir, so a relative path from the flag or from
+                # FIVETRAN_OPTIONS_FILE would resolve there. Resolve it once against the caller's
+                # cwd and always pass it as the flag, which takes precedence over the env var.
+                value = value or (os.environ.get("FIVETRAN_OPTIONS_FILE") or "").strip() or None
+                if value:
                     value = os.path.abspath(os.path.expanduser(value))
+            if value:
                 cmd.extend([flag, value])
 
         connection_id = args.connection_id
