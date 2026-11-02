@@ -393,21 +393,12 @@ own copy — useful when the same connector code should run identically across m
   update` are rejected server-side (HTTP 4xx, `A visible package must implement
   configuration_form()`) otherwise. A connection already on a visible package can't be redeployed in
   place — see the guard below.
-- **Setup-form metadata warnings** — `package create` and `package update` read the local
-  `pyproject.toml` only when the upload response carries `package_name`/`visible` (the setup-form feature is
-  enabled for the account). They print non-blocking warnings and never edit the file:
-  - Invalid or missing `[project].name`: the platform falls back to the package ID as the package name. A valid name is
-    at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or
-    digit.
-  - Missing or non-boolean `[tool.package-metadata].visible` (e.g. the quoted string `"true"` instead of a
-    native boolean): the platform falls back to `visible=false`.
-  - Unsupported `[tool.package-metadata].python_version`: the setup form prefills its default Python version
-    instead of the declared one. The warning lists the supported versions.
-  - `[tool.package-metadata].proxy_host_config_key` (Proxy Agent packages): names the `configuration`
-    key that holds the proxy `host:port` endpoint(s), and that key must be defined in the connector's
-    `configuration_form()`. If it is omitted from `pyproject.toml`, the setup form falls back to the
-    default `host`/`hosts` keys, so one of those default keys must instead be defined in `configuration_form()`.
-  - On Python < 3.11 both checks are skipped, because `tomllib` is unavailable. The name check logs a message; the Python-version check is silent.
+- **Setup-form metadata validation** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and validates package metadata. It never edits the file.
+  - `[project].name`: a valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit. If **missing**, the platform falls back to the package ID. If **invalid** (does not meet the rules), **deployment fails**.
+  - `[tool.package-metadata].visible`: must be a native TOML boolean (`true` or `false`), not a string (e.g. not the quoted string `"true"`). If **missing** or **non-boolean**, **deployment fails**.
+  - `[tool.package-metadata].python_version`: must be a supported Python version for the connector SDK. If **unsupported**, **deployment fails**.
+  - `[tool.package-metadata].proxy_host_config_key` (Proxy Agent packages): names the `configuration` key that holds the proxy `host:port` endpoint(s), and that key must be defined in the connector's `configuration_form()`. If it is omitted from `pyproject.toml`, the setup form falls back to the default `host`/`hosts` keys, so one of those default keys must instead be defined in `configuration_form()`
+
 - **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
   connection to an existing package instead of uploading local code; no `connector.py` is required
   in the current directory for this form. For a new connection, this is equivalent to a normal
