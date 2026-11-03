@@ -49,6 +49,7 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - `validate_configuration()` called at the top of `update()` (already present in the template — keep it and fill in the required keys)
 - `schema()` and `update()` functions (adapt the scaffolded ones; see Schema Definition below)
 - `op.upsert()`, `op.checkpoint()` (and `op.update`/`op.delete`/`op.truncate` as needed) called directly — no yield
+- For a full-table stream that replaces a table, call `op.truncate(table=..., deferred=True)` before the reload so a failed sync keeps the old rows. Use a regular `op.truncate(table=...)` only for a table-wide soft delete that should apply at the next checkpoint regardless of how the sync ends (see Operations in `sdk-reference.md`)
 - `connector = Connector(update=update, schema=schema)` in global scope (NOT under `if __name__`)
 - The `if __name__ == "__main__":` block (keep the scaffolded one)
 - Both full and incremental sync where the API supports it
