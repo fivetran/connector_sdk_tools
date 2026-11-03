@@ -3,7 +3,7 @@
   "hooks": {
     "beforeSubmitPrompt": [
       {
-        "command": "\"$CURSOR_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CURSOR_PLUGIN_ROOT/.cursor-plugin/plugin.json\""
+        "command": "\"$CURSOR_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CURSOR_PLUGIN_ROOT/.cursor-plugin/plugin.json\"; printf '{\"continue\":true}\\n'"
       }
     ]
   }
