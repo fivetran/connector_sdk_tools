@@ -1,0 +1,23 @@
+CHANGELOG.md
+  61d16e65ade385c6 7-12,14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "c4267d0c8d592663d6221110d94b438852458002",
+  "prompts": {
+    "61d16e65ade385c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ddddf34e-6647-44ba-a6f6-64915a99efae",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    }
+  }
+}
