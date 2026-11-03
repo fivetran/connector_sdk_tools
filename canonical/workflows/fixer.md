@@ -170,7 +170,7 @@ op.truncate(table, deferred=True)   # deferred: applied only if update() succeed
 | `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
 | `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |
-| `TypeError` mentioning an unexpected keyword argument `deferred` | The installed SDK predates `deferred`. Upgrade `fivetran-connector-sdk` (`pip install -U fivetran-connector-sdk`) or drop `deferred=True` |
+| `TypeError` mentioning an unexpected keyword argument `deferred` | The installed SDK predates `deferred`. Upgrade `fivetran-connector-sdk` (`pip install -U fivetran-connector-sdk`) and keep `deferred=True`. Drop it only if the user accepts that a regular truncate deletes at the next checkpoint even if the sync fails later |
 | A full-table reload leaves a table emptied or partly reloaded after a failed sync | A regular `op.truncate` deletes at the next checkpoint even if the sync fails later. Use `op.truncate(table=..., deferred=True)` before the reload so a failed sync deletes nothing |
 
 ## Relevant examples
