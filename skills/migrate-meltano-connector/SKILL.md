@@ -101,7 +101,7 @@ Map JSON Schema types conservatively:
 | multiple types including `null` | Use the non-null type |
 | unknown or mixed type | Omit the column type or use `JSON` when the field is structured |
 
-Full-table behavior needs explicit review. Singer taps commonly emit current rows without an explicit delete stream. If the old Meltano pipeline relied on a target to replace/truncate data for full-table streams, document that behavior and only use `op.truncate(table=...)` when the intended CSDK behavior is to mark missing prior rows as deleted before reloading a complete snapshot.
+Full-table behavior needs explicit review. Singer taps commonly emit current rows without an explicit delete stream. If the old Meltano pipeline relied on a target to replace/truncate data for full-table streams, document that behavior and only use `op.truncate(table=...)` when the intended CSDK behavior is to mark missing prior rows as deleted before reloading a complete snapshot. Prefer `op.truncate(table=..., deferred=True)` for that reload, so a failed sync keeps the old rows; use a regular truncate only when the rows should be deleted at the next checkpoint regardless of how the sync ends.
 
 ## Step 4: Port the Implementation
 
@@ -155,7 +155,7 @@ Check behavior before testing:
 - Every Singer `RECORD` stream maps to `op.upsert`.
 - Every incremental stream checkpoints after a safe cursor boundary.
 - Array/object configuration fields are documented as JSON-encoded strings and parsed safely.
-- Full-table streams have an explicit documented decision: upsert-only snapshot or `op.truncate` plus reload.
+- Full-table streams have an explicit documented decision: upsert-only snapshot, or `op.truncate` (regular or deferred) plus reload.
 - JSON Schema to CSDK column type mapping is conservative and does not invent unsupported SDK types.
 - No Singer stdout message generation remains.
 - No Meltano loader, target, dbt, schedule, or environment code is required for local CSDK execution.

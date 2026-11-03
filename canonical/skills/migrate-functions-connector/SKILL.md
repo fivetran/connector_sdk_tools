@@ -63,7 +63,7 @@ Use this mapping:
 | Callback/error response | Raise exceptions and use SDK logging |
 
 Function connector `delete` records are full records in many examples. For CSDK `op.delete`, pass only the declared primary-key values.
-Function connector `softDelete` marks all previously synced rows in a table as deleted. For CSDK, use `op.truncate(table=...)` only when the Functions connector returned that table in `softDelete`; do not replace row-level deletes with truncate.
+Function connector `softDelete` marks all previously synced rows in a table as deleted. For CSDK, use a regular `op.truncate(table=...)` (applied at the next checkpoint, like `softDelete`) only when the Functions connector returned that table in `softDelete`; do not replace row-level deletes with truncate.
 
 ## Step 4: Port the Implementation
 

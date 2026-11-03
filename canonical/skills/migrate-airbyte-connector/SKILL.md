@@ -87,7 +87,7 @@ Use this mapping:
 | Airbyte per-stream tolerated errors | Catch/log documented nonfatal stream errors and continue only when the source connector did so |
 | `incremental` sync mode | Cursor logic inside `update(configuration, state)` |
 | `full_refresh` sync mode | Snapshot logic with explicit truncate/upsert decision |
-| Destination sync mode `overwrite` | `op.truncate(table=...)` only when full snapshot replacement is intended |
+| Destination sync mode `overwrite` | `op.truncate(table=..., deferred=True)` when full snapshot replacement is intended, so a failed sync keeps the old rows; a regular `op.truncate(table=...)` only when the rows should be deleted at the next checkpoint regardless |
 | Destination sync mode `append_dedup` | `op.upsert(...)` with declared primary key |
 | Destination sync mode `append` | Requires explicit primary-key strategy before CSDK migration |
 
@@ -169,7 +169,7 @@ Check behavior before testing:
 - Deprecated config aliases and migration behavior are either supported or explicitly documented as changed.
 - Preflight expansion/validation behavior that affects stream construction is preserved.
 - Stream-level failure behavior matches the source connector's documented behavior.
-- Full-refresh/overwrite streams have an explicit documented decision: upsert-only snapshot or `op.truncate` plus reload.
+- Full-refresh/overwrite streams have an explicit documented decision: upsert-only snapshot, or `op.truncate` (regular or deferred) plus reload.
 - Delete/CDC behavior is either implemented with `op.delete` using primary-key fields or explicitly documented as not present in the source connector.
 - JSON Schema to CSDK column type mapping is conservative and does not invent unsupported SDK types.
 - No Airbyte protocol stdout message generation remains.
