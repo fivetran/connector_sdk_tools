@@ -1,21 +1,35 @@
 # Fivetran Connector SDK — Cursor Plugin
 
-AI-assisted workflows for building, testing, evaluating, migrating, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors in Cursor Desktop and Cursor CLI.
+AI-assisted workflows for building, testing, evaluating, migrating, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors in Cursor CLI.
 
 ## Prerequisites
 
 - Python 3.10–3.14
-- [Cursor](https://cursor.com/) Desktop or CLI
+- [Cursor CLI](https://cursor.com/docs/cli/overview)
 - [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
 - A [Fivetran account](https://fivetran.com/)
 
 ## Installation
 
-1. Open [Cursor Marketplace](https://cursor.com/marketplace), or open **Customize** in Cursor.
-2. Find **Fivetran Connector SDK**.
-3. Select **Install** and choose user or project scope.
+1. Register the Fivetran plugin marketplace:
 
-A user-scope installation is available in both Cursor Desktop and Cursor CLI. Cursor does not currently provide a non-interactive `agent plugin install` command, so `fivetran init` detects Cursor CLI and directs you to complete installation in Customize.
+   ```bash
+   agent plugin marketplace add https://github.com/fivetran/connector_sdk_tools
+   ```
+
+2. Run `agent` to start an interactive Cursor CLI session.
+3. Enter `/plugin` and open the Marketplace section.
+4. Find **Fivetran Connector SDK**, select it, and choose user or project scope.
+
+Cursor does not currently provide a non-interactive `agent plugin install` command, so `fivetran init` registers the marketplace and directs you to complete installation interactively.
+
+To refresh the marketplace for an updated plugin version:
+
+```bash
+agent plugin marketplace update https://github.com/fivetran/connector_sdk_tools
+```
+
+Then run `agent` and enter `/plugin` to apply the available plugin update.
 
 ## Configuration
 

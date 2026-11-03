@@ -1,9 +1,9 @@
-AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors. Distributed as a native plugin/extension for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, and Cursor Desktop and CLI.
+AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors. Distributed as a native plugin/extension for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, and Cursor CLI.
 
 ## Prerequisites
 
 - **Python 3.10–3.14**
-- **A supported coding agent** (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, Cursor Desktop, or Cursor CLI — see install options below)
+- **A supported coding agent** (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, or Cursor CLI — see install options below)
 - **Fivetran Connector SDK** — `pip install fivetran-connector-sdk`
 
 ## Quick Start
@@ -15,7 +15,7 @@ pip install fivetran-connector-sdk
 fivetran init
 ```
 
-`fivetran init` scaffolds a new connector project and offers to configure a coding agent for you. It detects Claude Code, Codex CLI, Gemini CLI, the standalone GitHub Copilot CLI, and Cursor CLI. It runs native plugin installation commands where the agent supports them; because Cursor has no non-interactive plugin installation command, Cursor users complete installation in Customize. You can also skip agent setup and install a supported plugin manually; see the options below.
+`fivetran init` scaffolds a new connector project and offers to configure a coding agent for you. It detects Claude Code, Codex CLI, Gemini CLI, the standalone GitHub Copilot CLI, and Cursor CLI. It runs native plugin installation commands where the agent supports them; because Cursor has no non-interactive plugin installation command, Cursor users complete installation interactively in Cursor CLI. You can also skip agent setup and install a supported plugin manually; see the options below.
 
 ## Install the plugin manually
 
@@ -100,9 +100,23 @@ See [`copilot/README.md`](copilot/README.md) for the full tutorial.
 
 ### Cursor
 
-Open [Cursor Marketplace](https://cursor.com/marketplace), find **Fivetran Connector SDK**, select **Install**, and choose user or project scope. A user-scope installation is available in both Cursor Desktop and Cursor CLI.
+Register the Fivetran plugin marketplace:
 
-Cursor does not currently provide a non-interactive `agent plugin install` command. When `fivetran init` detects Cursor CLI, it directs you to complete this installation in Cursor Customize.
+```bash
+agent plugin marketplace add https://github.com/fivetran/connector_sdk_tools
+```
+
+Then run `agent`, enter `/plugin`, open the Marketplace section, find **Fivetran Connector SDK**, select it, and choose user or project scope.
+
+Cursor does not currently provide a non-interactive `agent plugin install` command. When `fivetran init` detects Cursor CLI, it registers the marketplace and directs you to complete installation interactively.
+
+To refresh the marketplace for an updated plugin version:
+
+```bash
+agent plugin marketplace update https://github.com/fivetran/connector_sdk_tools
+```
+
+Then run `agent` and enter `/plugin` to apply the available plugin update.
 
 See [`cursor/README.md`](cursor/README.md) for the available skills and specialized agents.
 
@@ -282,6 +296,7 @@ copilot/                            GitHub Copilot CLI plugin (mostly generated)
 cursor/                             Cursor plugin (mostly generated)
   .cursor-plugin/plugin.json
   agents/connector-{validator,generator,fixer}.md
+  hooks/{hooks.json,log-skill-use.sh}
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
   skills/connector-sdk-submit/SKILL.md
   workflows/{validator,generator,fixer}.md
@@ -311,10 +326,10 @@ Only edit files under **`canonical/`** and the agent-specific static integration
 | Editing... | Run after | Affects |
 |---|---|---|
 | `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all five agents |
-| `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude, Codex, Gemini, Copilot, and Cursor agent/workflow outputs |
+| `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents, Cursor agents and workflows |
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all five agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all five agents |
-| `canonical/hooks/log-skill-use.sh` | `bash scripts/sync-plugins.sh` | Claude Code, Codex, Gemini |
+| `canonical/hooks/log-skill-use.sh` | `bash scripts/sync-plugins.sh` | Claude Code, Codex, Gemini, and Cursor |
 | `README.md` | (no sync needed) | root docs |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml`, `hooks/hooks.json` | (no sync needed) | Gemini only |
 | `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/commands/*.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |

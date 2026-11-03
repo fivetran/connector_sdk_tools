@@ -6,8 +6,8 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ### fivetran-connector-sdk-tools 2026.11.5.1
 
-- Added a Cursor plugin for Cursor Desktop and Cursor CLI with the existing Connector SDK skills, specialized agents, workflows, SDK reference, and shared tools.
-- Added Cursor Marketplace packaging and synchronized Cursor output generation.
+- Added a Cursor CLI plugin with the existing Connector SDK skills, specialized agents, workflows, SDK reference, and shared tools.
+- Added repository-based Cursor marketplace packaging and synchronized Cursor output generation.
 
 ### fivetran-connector-sdk-tools 2026.11.4.1
 
