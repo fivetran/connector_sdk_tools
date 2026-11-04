@@ -108,7 +108,7 @@ agent plugin marketplace add https://github.com/fivetran/connector_sdk_tools
 
 Then run `agent`, enter `/plugin`, open the Marketplace section, find **Fivetran Connector SDK**, select it, and choose user or project scope.
 
-Cursor does not currently provide a non-interactive `agent plugin install` command. When `fivetran init` detects Cursor CLI, it registers the marketplace and directs you to complete installation interactively.
+Cursor does not currently provide a non-interactive `agent plugin install` command. If you select Cursor CLI in `fivetran init`, it registers the marketplace and directs you to complete installation interactively.
 
 To refresh the marketplace for an updated plugin version:
 

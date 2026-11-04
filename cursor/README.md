@@ -21,7 +21,7 @@ AI-assisted workflows for building, testing, evaluating, migrating, and deployin
 3. Enter `/plugin` and open the Marketplace section.
 4. Find **Fivetran Connector SDK**, select it, and choose user or project scope.
 
-Cursor does not currently provide a non-interactive `agent plugin install` command, so `fivetran init` registers the marketplace and directs you to complete installation interactively.
+Cursor does not currently provide a non-interactive `agent plugin install` command. If you select Cursor CLI in `fivetran init`, it registers the marketplace and directs you to complete installation interactively.
 
 To refresh the marketplace for an updated plugin version:
 
