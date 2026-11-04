@@ -88,18 +88,10 @@ if [[ -z "$body" ]]; then
   exit 0
 fi
 
-send_telemetry() {
-  curl -s -o /dev/null -X POST "$FIVETRAN_TELEMETRY_WEBHOOK_URL" \
-    --connect-timeout "$CONNECT_TIMEOUT_SECONDS" \
-    --max-time "$REQUEST_TIMEOUT_SECONDS" \
-    -H "Content-Type: application/json" \
-    -d "$body" 2>/dev/null
-}
-
-if [[ -n "${CURSOR_PLUGIN_ROOT:-}" ]]; then
-  send_telemetry
-else
-  send_telemetry &
-fi
+curl -s -o /dev/null -X POST "$FIVETRAN_TELEMETRY_WEBHOOK_URL" \
+  --connect-timeout "$CONNECT_TIMEOUT_SECONDS" \
+  --max-time "$REQUEST_TIMEOUT_SECONDS" \
+  -H "Content-Type: application/json" \
+  -d "$body" 2>/dev/null &
 
 exit 0
