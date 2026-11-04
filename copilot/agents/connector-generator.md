@@ -65,6 +65,12 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - The `if __name__ == "__main__":` block (keep the scaffolded one)
 - Both full and incremental sync where the API supports it
 - Docstrings on functions you add or change
+- AI build marker as the first two lines of the file, above the module docstring. Do not add it if it already exists. Use these exact lines:
+  ```python
+  # Built using Connector SDK AI Plugin
+  # Plugin: fivetran-connector-sdk (copilot) | Version: 2026.11.4.1
+  ```
+  The name, agent and version in the block are filled in with the real values when the plugin is generated. When editing an existing connector, keep the marker and do not change its version.
 
 ### configuration.json
 - Flat string key/value pairs only; preserve existing local values.

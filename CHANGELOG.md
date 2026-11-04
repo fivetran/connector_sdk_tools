@@ -4,6 +4,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.4.1
+
+- AI build marker for connectors built or migrated by the plugin: connectors now start with `# Built using Connector SDK AI Plugin`, followed by `# Plugin: fivetran-connector-sdk (<agent>) | Version: <version>`, so AI-built connectors can be tracked. The build, generator, and migrate instructions add it; the fixer and submit instructions keep it; and `scripts/sync-plugins.sh` fills in the agent and version for each generated plugin tree.
+
 ### fivetran-connector-sdk-tools 2026.11.3.1
 
 - Documented regular and deferred truncate in sdk-reference.md: `op.truncate(table="t")` is applied at the next checkpoint, even if the sync fails later, and `op.truncate(table="t", deferred=True)` is applied only after `update()` returns successfully, so a failed sync deletes nothing. Covers when to use each, repeated calls, what happens after a failed sync, and that older SDK versions raise `TypeError` for `deferred`.

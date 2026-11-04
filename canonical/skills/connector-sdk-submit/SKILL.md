@@ -83,6 +83,8 @@ Also scan the outgoing commits locally for sensitive configuration values, inclu
 
 ### Apply the Python instructions
 
+Keep the AI build marker lines (`# Built using Connector SDK AI Plugin` and the `# Plugin:` line) at the top of `connector.py`. They are intentional tracking metadata, not a review finding, and must not be removed during sanitizing. If they are already present, keep them unchanged. Do not add them if they do not already exist; this skill only preserves the marker.
+
 Review `connector.py` against the loaded Python instruction in full. This includes SDK v2 operation usage, validation, logging, imports and dependencies, schema and state handling, error handling, streaming/pagination, naming/constants, docstrings, and main block requirements.
 
 For every `op.upsert()` and `op.checkpoint()` call, verify the immediately preceding comment block matches the required block in the loaded instruction. Add the required block when it is missing; do not invent abbreviated wording. Also preserve the instruction's required `update()` opening log statement and its main-block comments.
