@@ -116,7 +116,7 @@ such as authentication, pagination, incremental sync, or performance.
 **Regression-tested connectors (Private Preview).** If the project has a `fixtures/` folder, or the user uses record-and-replay, protect the change with a replay:
 - Before editing, replay the existing scenarios to get a baseline; if one already fails, tell the user before changing code.
 - After editing, replay each scenario with `tools/run_connector.py ... --replay <scenario>` (see **Regression testing: record and replay** in `skills/test-connector/SKILL.md`). A difference is either a regression to fix or the intended change; ask the user which, and record the scenario again only with their agreement.
-- A schema, primary key, or `match`/`@action` argument change makes old recordings stale; the replay will fail with `No recorded interaction`. Record again from the fixed version.
+- Schema or primary-key changes can cause warehouse/output differences without invalidating recorded source interactions; changes to an `@action` name or matched arguments can cause `No recorded interaction`. Inspect the actual failure and record again only after the user confirms the new behavior is intended.
 - Keep `@action` on source reads you add or move, with a unique `name` per function, and `match=` that leaves out sensitive or per-run values.
 - Do not hand-edit `fixtures/`, and do not read its contents into the conversation.
 

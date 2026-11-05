@@ -1,6 +1,6 @@
 ---
 name: test-connector
-description: Test a Fivetran connector by running fivetran debug and checking the results. Use when the user wants to validate or run their connector locally.
+description: Test a Fivetran connector by running fivetran debug and checking the results. Use when the user wants to validate or run their connector locally. Also use when the user asks for regression testing or record and replay: adds `@action` to the connector's source reads, records a scenario, replays it, and analyses differences.
 argument-hint: "Connector directory name (e.g., 'github_connector')"
 ---
 
