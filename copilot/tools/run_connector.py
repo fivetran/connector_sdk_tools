@@ -9,7 +9,7 @@ Usage:
     python run_connector.py <connector_directory> [--timeout-seconds SECONDS]
         [--record SCENARIO [--max-records N] | --replay SCENARIO] [--yes]
 
---record and --replay run record-and-replay regression testing (Private Preview).
+--record and --replay run record-and-replay regression testing (Public Preview).
 """
 import argparse
 import errno
@@ -560,6 +560,8 @@ SCENARIO_PATTERN = re.compile(r"[A-Za-z0-9_-]+")
 
 
 def scenario_name(value):
+    if not value:
+        raise argparse.ArgumentTypeError("scenario name must not be empty")
     if not SCENARIO_PATTERN.fullmatch(value):
         raise argparse.ArgumentTypeError(
             "scenario names can contain only letters, digits, hyphens, and underscores")
@@ -592,7 +594,7 @@ def main():
     )
     parser.add_argument(
         "--record", type=scenario_name, metavar="SCENARIO",
-        help="Record the run as a regression test scenario (Private Preview).",
+        help="Record the run as a regression test scenario (Public Preview).",
     )
     parser.add_argument(
         "--replay", type=scenario_name, metavar="SCENARIO",
@@ -609,8 +611,10 @@ def main():
     args = parser.parse_args()
     if args.record and args.replay:
         parser.error("--record and --replay cannot be used together")
-    if args.max_records is not None and (not args.record or args.max_records < 1):
-        parser.error("--max-records must be a positive integer and requires --record")
+    if args.max_records is not None and not args.record:
+        parser.error("--max-records can only be used with --record")
+    if args.max_records is not None and args.max_records < 1:
+        parser.error("--max-records must be a positive integer")
     if args.yes and not args.record:
         parser.error("--yes requires --record")
     if args.connector_directory is None:

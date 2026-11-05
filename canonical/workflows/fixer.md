@@ -109,7 +109,7 @@ such as authentication, pagination, incremental sync, or performance.
 - **Adding or removing `schema` on existing table definitions** (multiple-schema support): this moves the table between the default schema and a named one (e.g. `analytics.orders` → `analytics_sales.orders`) and Fivetran does not move existing data. Tell the user a re-sync is required before applying.
 - After any schema/PK change, re-test from a clean slate: `fivetran reset --force` then re-run the connector (this simulates an initial sync).
 
-**Regression-tested connectors (Private Preview).** If the project has a `fixtures/` folder, or the user uses record-and-replay, protect the change with a replay:
+**Regression-tested connectors (Public Preview).** If the project has a `fixtures/` folder, or the user uses record-and-replay, protect the change with a replay:
 - Before editing, replay the existing scenarios to get a baseline; if one already fails, tell the user before changing code.
 - After editing, replay each scenario with `tools/run_connector.py ... --replay <scenario>` (see **Regression testing: record and replay** in `skills/test-connector/SKILL.md`). A difference is either a regression to fix or the intended change; ask the user which, and record the scenario again only with their agreement.
 - Schema or primary-key changes can cause warehouse/output differences without invalidating recorded source interactions; changes to an `@action` name or matched arguments can cause `No recorded interaction`. Inspect the actual failure and record again only after the user confirms the new behavior is intended.

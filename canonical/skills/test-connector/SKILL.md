@@ -1,6 +1,6 @@
 ---
 name: test-connector
-description: Test a Fivetran connector by running fivetran debug and checking the results. Use when the user wants to validate or run their connector locally. Also use when the user asks for regression testing or record and replay: adds `@action` to the connector's source reads, records a scenario, replays it, and analyses differences.
+description: "Test a Fivetran connector by running fivetran debug and checking the results. Use when the user wants to validate or run their connector locally. Also use when the user asks for regression testing or record and replay: adds `@action` to the connector's source reads, records a scenario, replays it, and analyses differences."
 argument-hint: "Connector directory name (e.g., 'github_connector')"
 ---
 
@@ -147,7 +147,7 @@ If the connector calls `op.truncate`, also report how many rows in each affected
 
 **If the user wants a fix:** apply the fixer workflow (see `workflows/fixer.md` in the plugin, or — in plugins that support subagents — invoke the `connector-fixer` subagent). After fixing, re-run the test to verify.
 
-## Regression testing: record and replay (Private Preview)
+## Regression testing: record and replay (Public Preview)
 
 Use this only when the user asks for regression tests, or wants to confirm that a code change
 doesn't change the connector's output. Follow **Record-and-Replay Regression Testing** in

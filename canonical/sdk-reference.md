@@ -17,7 +17,7 @@
 | `fivetran init` | Create new project from the default template |
 | `fivetran init --template connectors/<name>` | Start from a community connector |
 | `fivetran debug` | Test locally, produces `warehouse.db` (DuckDB) |
-| `fivetran debug --record <scenario>` / `--replay <scenario>` | Record a run against the live source, then replay it without calling the source and compare the output (Private Preview, see **Record-and-Replay Regression Testing** below) |
+| `fivetran debug --record <scenario>` / `--replay <scenario>` | Record a run against the live source, then replay it without calling the source and compare the output (Public Preview, see **Record-and-Replay Regression Testing** below) |
 | `fivetran package` | Build a deployable ZIP without uploading |
 | `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
 | `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.14) |
@@ -443,7 +443,7 @@ own copy — useful when the same connector code should run identically across m
 - Package IDs returned by `package create` are account-scoped and reusable across any number of
   connections in that account.
 
-### Record-and-Replay Regression Testing (Private Preview)
+### Record-and-Replay Regression Testing (Public Preview)
 
 Record a connector run once against the live source, then replay it without calling the source to
 check that code changes don't change the connector's output. Runs only locally, through

@@ -6,7 +6,7 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ### fivetran-connector-sdk-tools 2026.11.5.1
 
-- Documented Record-and-Replay Regression Testing (Private Preview) in sdk-reference.md: the `@action` decorator and `match`, `fivetran debug --record`/`--replay`/`--max-records`/`--yes`, the `fixtures/<scenario>/` layout, JSON-serializable data, error messages, and the limits (unrecorded reads, repeated identical calls, thread ordering, and sensitive data stored in fixtures).
+- Documented Record-and-Replay Regression Testing (Public Preview) in sdk-reference.md: the `@action` decorator and `match`, `fivetran debug --record`/`--replay`/`--max-records`/`--yes`, the `fixtures/<scenario>/` layout, JSON-serializable data, error messages, and the limits (unrecorded reads, repeated identical calls, thread ordering, and sensitive data stored in fixtures).
 - run_connector.py now accepts `--record <scenario>`, `--max-records`, `--replay <scenario>`, and `--yes` and forwards them to `fivetran debug`, so recording and replay keep decrypting configuration; invalid combinations and scenario names are rejected before the run, with tests.
 - test-connector gained a record, replay, analyse differences, and iterate workflow; connector-fixer replays existing scenarios before and after a change and asks whether a difference is a regression or intended; connector-generator and build-connector add `@action` only on request; evaluate-connector checks `@action` usage and warns about sensitive data in `fixtures/`.
 

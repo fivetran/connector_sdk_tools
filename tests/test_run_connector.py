@@ -289,6 +289,12 @@ class RegressionOptionsTests(unittest.TestCase):
         self.assertEqual(0, code)
         self.assertEqual(["--replay", "basic"], cmd[4:])
 
+    def test_max_records_with_replay_has_clear_message(self):
+        code, cmd, err = self.run_main("--replay", "a", "--max-records", "5")
+        self.assertEqual(2, code)
+        self.assertIsNone(cmd)
+        self.assertIn("--max-records can only be used with --record", err)
+
     def test_invalid_combinations_are_rejected_before_running(self):
         for argv in (
             ("--record", "a", "--replay", "a"),
@@ -297,11 +303,19 @@ class RegressionOptionsTests(unittest.TestCase):
             ("--record", "a", "--max-records", "0"),
             ("--yes",),
             ("--record", "bad/name"),
+            ("--record", ""),
+            ("--replay", ""),
         ):
             with self.subTest(argv=argv):
                 code, cmd, _ = self.run_main(*argv)
                 self.assertEqual(2, code)
                 self.assertIsNone(cmd)
+
+    def test_empty_scenario_name_has_clear_message(self):
+        code, cmd, err = self.run_main("--record", "")
+        self.assertEqual(2, code)
+        self.assertIsNone(cmd)
+        self.assertIn("scenario name must not be empty", err)
 
 
 if __name__ == "__main__":
