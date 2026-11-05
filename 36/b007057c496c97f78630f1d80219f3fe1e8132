@@ -1,0 +1,29 @@
+claude-code/skills/deploy-connector/SKILL.md
+  6e9958053b106b20 188-191
+codex/skills/deploy-connector/SKILL.md
+  6e9958053b106b20 188-191
+canonical/skills/deploy-connector/SKILL.md
+  6e9958053b106b20 182-185
+copilot/skills/deploy-connector/SKILL.md
+  6e9958053b106b20 188-191
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "36b007057c496c97f78630f1d80219f3fe1e8132",
+  "prompts": {
+    "6e9958053b106b20": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "34d013ea-069d-409a-95df-c2fc3b30693c",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "anushka.parashar <anushka.parashar@fivetran.com>",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 44,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}

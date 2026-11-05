@@ -1,0 +1,23 @@
+tests/test_sync_plugins.py
+  61d16e65ade385c6 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "c01bdbf670814824ed40ceaf2e580f70f51d9b10",
+  "prompts": {
+    "61d16e65ade385c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ddddf34e-6647-44ba-a6f6-64915a99efae",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
