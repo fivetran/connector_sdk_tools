@@ -4,6 +4,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.5.1
+
+- Added a Cursor plugin for Cursor Desktop and Cursor CLI with the existing Connector SDK skills, specialized agents, workflows, SDK reference, and shared tools.
+- Added Cursor Marketplace packaging and synchronized Cursor output generation.
+
 ### fivetran-connector-sdk-tools 2026.11.4.1
 
 - AI build marker for connectors built or migrated by the plugin: connectors now start with `# Built using Connector SDK AI Plugin`, followed by `# Plugin: fivetran-connector-sdk (<agent>) | Version: <version>`, so AI-built connectors can be tracked. The build, generator, and migrate instructions add it; the fixer and submit instructions keep it; and `scripts/sync-plugins.sh` fills in the agent and version for each generated plugin tree.

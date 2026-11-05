@@ -1,9 +1,9 @@
-AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors. Distributed as a native plugin/extension for Claude Code, Codex CLI, Gemini CLI and GitHub Copilot CLI.
+AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](https://fivetran.com/docs/connector-sdk) connectors. Distributed as a native plugin/extension for Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, and Cursor Desktop and CLI.
 
 ## Prerequisites
 
 - **Python 3.10–3.14**
-- **A supported coding agent** (Claude Code, Codex CLI, Gemini CLI, or GitHub Copilot CLI — see install matrix below)
+- **A supported coding agent** (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, Cursor Desktop, or Cursor CLI — see install options below)
 - **Fivetran Connector SDK** — `pip install fivetran-connector-sdk`
 
 ## Quick Start
@@ -15,7 +15,7 @@ pip install fivetran-connector-sdk
 fivetran init
 ```
 
-`fivetran init` scaffolds a new connector project and offers to configure a coding agent for you — detecting which of Claude Code, Codex CLI, Gemini CLI, or the standalone GitHub Copilot CLI you have installed and running the relevant plugin install command on your behalf. You can also skip the agent setup if you'd rather install it yourself; see the matrix below.
+`fivetran init` scaffolds a new connector project and offers to configure a coding agent for you. It detects Claude Code, Codex CLI, Gemini CLI, the standalone GitHub Copilot CLI, and Cursor CLI. It runs native plugin installation commands where the agent supports them; because Cursor has no non-interactive plugin installation command, Cursor users complete installation in Customize. You can also skip agent setup and install a supported plugin manually; see the options below.
 
 ## Install the plugin manually
 
@@ -98,6 +98,14 @@ copilot plugin update fivetran-connector-sdk@fivetran-connector-sdk-ai
 
 See [`copilot/README.md`](copilot/README.md) for the full tutorial.
 
+### Cursor
+
+Open [Cursor Marketplace](https://cursor.com/marketplace), find **Fivetran Connector SDK**, select **Install**, and choose user or project scope. A user-scope installation is available in both Cursor Desktop and Cursor CLI.
+
+Cursor does not currently provide a non-interactive `agent plugin install` command. When `fivetran init` detects Cursor CLI, it directs you to complete this installation in Cursor Customize.
+
+See [`cursor/README.md`](cursor/README.md) for the available skills and specialized agents.
+
 ### GitHub Copilot in IDEs
 
 The plugin assets for GitHub Copilot are included in this repository under [`copilot/`](copilot/), and the plugin can be installed directly from source. However, installing it through the Connector SDK PyPI package or `fivetran init` is **not supported** for IDE-integrated Copilot extensions (VS Code, JetBrains, etc.) as those environments manage plugin installation from within the IDE itself.
@@ -108,16 +116,16 @@ To install from source in VS Code, follow the [VS Code agent plugin install guid
 
 Once installed, in your connector project directory:
 
-| Command (Claude Code / Gemini CLI / Copilot CLI) | Codex CLI | Purpose |
-|---|---|---|
-| `/fivetran-connector-sdk:build-connector` | `$build_connector` | Research an API and generate a new connector |
-| `/fivetran-connector-sdk:test-connector` | `$test_connector` | Run and validate an existing connector locally |
-| `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | Deploy a connector to your Fivetran account |
-| `/fivetran-connector-sdk:evaluate-connector` | `$evaluate_connector` | Code review and quality report |
-| `/fivetran-connector-sdk:connector-sdk-submit` | `$connector_sdk_submit` | Submit a Connector SDK example or connector contribution in a pull request |
-| `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | Migrate a Fivetran Functions connector to Connector SDK |
-| `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
-| `/fivetran-connector-sdk:migrate-airbyte-connector` | `$migrate_airbyte_connector` | Migrate an Airbyte source connector to Connector SDK |
+| Command (Claude Code / Gemini CLI / Copilot CLI) | Codex CLI | Cursor skill | Purpose |
+|---|---|---|---|
+| `/fivetran-connector-sdk:build-connector` | `$build_connector` | `/build-connector` | Research an API and generate a new connector |
+| `/fivetran-connector-sdk:test-connector` | `$test_connector` | `/test-connector` | Run and validate an existing connector locally |
+| `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | `/deploy-connector` | Deploy a connector to your Fivetran account |
+| `/fivetran-connector-sdk:evaluate-connector` | `$evaluate_connector` | `/evaluate-connector` | Code review and quality report |
+| `/fivetran-connector-sdk:connector-sdk-submit` | `$connector_sdk_submit` | `/connector-sdk-submit` | Submit a Connector SDK example or connector contribution in a pull request |
+| `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | `/migrate-functions-connector` | Migrate a Fivetran Functions connector to Connector SDK |
+| `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | `/migrate-meltano-connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
+| `/fivetran-connector-sdk:migrate-airbyte-connector` | `$migrate_airbyte_connector` | `/migrate-airbyte-connector` | Migrate an Airbyte source connector to Connector SDK |
 
 For code fixes or modifications, describe the problem in natural language — the agent routes to the `connector-fixer` subagent automatically.
 
@@ -271,6 +279,14 @@ copilot/                            GitHub Copilot CLI plugin (mostly generated)
   commands/{build,test,deploy,evaluate}-connector.md
   tools/, sdk-reference.md
 
+cursor/                             Cursor plugin (mostly generated)
+  .cursor-plugin/plugin.json
+  agents/connector-{validator,generator,fixer}.md
+  skills/{build,test,deploy,evaluate}-connector/SKILL.md
+  skills/connector-sdk-submit/SKILL.md
+  workflows/{validator,generator,fixer}.md
+  tools/, sdk-reference.md
+
 gemini-extension.json               Gemini CLI extension manifest (root-only requirement)
 GEMINI.md                           Gemini context file
 commands/{build,test,deploy}-connector.toml   Gemini slash commands
@@ -282,6 +298,7 @@ tools/                              Gemini tools (generated copy of canonical/to
 .claude-plugin/marketplace.json     Claude Code marketplace pointing to ./claude-code
 .agents/plugins/marketplace.json    Codex marketplace pointing to ./codex
 .github/plugin/marketplace.json     Copilot CLI marketplace pointing to ./copilot
+.cursor-plugin/marketplace.json     Cursor marketplace pointing to ./cursor
 
 ```
 
@@ -293,16 +310,17 @@ Only edit files under **`canonical/`** and the agent-specific static integration
 
 | Editing... | Run after | Affects |
 |---|---|---|
-| `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all four agents |
-| `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents |
-| `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all four agents |
-| `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all four agents |
+| `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all five agents |
+| `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude, Codex, Gemini, Copilot, and Cursor agent/workflow outputs |
+| `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all five agents |
+| `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all five agents |
 | `canonical/hooks/log-skill-use.sh` | `bash scripts/sync-plugins.sh` | Claude Code, Codex, Gemini |
 | `README.md` | (no sync needed) | root docs |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml`, `hooks/hooks.json` | (no sync needed) | Gemini only |
 | `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/commands/*.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
 | `codex/AGENTS.md`, `codex/README.md`, `codex/.codex-plugin/plugin.json`, `codex/hooks.json` | (no sync needed) | Codex only |
 | `copilot/AGENTS.md`, `copilot/README.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
+| `cursor/.cursor-plugin/plugin.json`, `cursor/README.md`, `.cursor-plugin/marketplace.json` | (no sync needed) | Cursor only |
 
 Generated files have a `<!-- GENERATED FILE — DO NOT EDIT -->` banner at the top. Edits to them will be overwritten on the next sync.
 
