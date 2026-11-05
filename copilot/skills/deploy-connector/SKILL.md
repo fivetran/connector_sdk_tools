@@ -56,7 +56,9 @@ If the test fails, classify the error (INFRA / FIRST_RUN / CODE) and — for COD
 
 ## Step 3: Deploy
 
-Run `fivetran version` first. On SDK 3.0.0+ the CLI is stateless. For a **new** connection, the
+Check the SDK version with the same executable the wrapper uses: the connector's own
+`.venv/bin/fivetran version` (`.venv\Scripts\fivetran.exe version` on Windows), or bare
+`fivetran version` only if the connector has no `.venv`. On SDK 3.0.0+ the CLI is stateless. For a **new** connection, the
 Python version and agent ID are optional: the user can provide them, otherwise the SDK default and
 the destination's default agent are used. A **redeploy** must be given them explicitly: a Python
 version from the `--python-version` flag, `FIVETRAN_PYTHON_VERSION`, or an options file profile,
