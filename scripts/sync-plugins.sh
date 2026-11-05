@@ -469,6 +469,7 @@ echo "Filling AI build marker placeholders..."
 fill_plugin_markers claude-code "$CLAUDE_DIR/.claude-plugin/plugin.json" "$CLAUDE_DIR"
 fill_plugin_markers codex "$CODEX_DIR/.codex-plugin/plugin.json" "$CODEX_DIR"
 fill_plugin_markers copilot ".github/plugin/marketplace.json" "$COPILOT_DIR"
+fill_plugin_markers cursor "$CURSOR_DIR/.cursor-plugin/plugin.json" "$CURSOR_DIR"
 # Gemini tree is the repo root, so only its generated paths are scanned.
 fill_plugin_markers gemini gemini-extension.json skills agents tools hooks sdk-reference.md
 
