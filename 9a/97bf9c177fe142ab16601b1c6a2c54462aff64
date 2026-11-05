@@ -1,0 +1,39 @@
+canonical/skills/connector-sdk-submit/SKILL.md
+  61d16e65ade385c6 86-87
+scripts/sync-plugins.sh
+  61d16e65ade385c6 379-415
+canonical/skills/build-connector/SKILL.md
+  61d16e65ade385c6 119
+canonical/workflows/fixer.md
+  61d16e65ade385c6 5-6
+canonical/skills/migrate-airbyte-connector/SKILL.md
+  61d16e65ade385c6 117-121
+CHANGELOG.md
+  61d16e65ade385c6 7-10
+canonical/skills/migrate-meltano-connector/SKILL.md
+  61d16e65ade385c6 105-109
+canonical/workflows/generator.md
+  61d16e65ade385c6 56-61
+canonical/skills/migrate-functions-connector/SKILL.md
+  61d16e65ade385c6 73-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "9a97bf9c177fe142ab16601b1c6a2c54462aff64",
+  "prompts": {
+    "61d16e65ade385c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ddddf34e-6647-44ba-a6f6-64915a99efae",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 83,
+      "total_deletions": 17,
+      "accepted_lines": 68,
+      "overriden_lines": 0
+    }
+  }
+}
