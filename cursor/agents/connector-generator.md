@@ -1,0 +1,340 @@
+---
+name: connector-generator
+description: Generate Fivetran connector code from a validated specification. Use after requirements have been gathered.
+---
+
+<!--
+  GENERATED FILE — DO NOT EDIT.
+  Canonical source: canonical/workflows/generator.md
+  Regenerate with: bash scripts/sync-plugins.sh
+-->
+
+# Fivetran Connector Code Generation
+
+**FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
+
+**Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
+
+**YOUR ROLE: ADAPT THE SCAFFOLDED CONNECTOR**
+
+The project has already been scaffolded by `fivetran init` — `connector.py`, `configuration.json`,
+and a dependency file already exist on disk. For a community-connector template, `connector.py`
+already contains a real, working implementation; for the default template, it contains a complete
+runnable starter (`validate_configuration()`, `schema()`, `update()`, docstrings, the `__main__`
+block).
+
+You also receive a COMPLETE specification from the validation phase. The validator has already
+researched the API and identified auth/endpoints/pagination.
+
+**Your job is to ADAPT the existing scaffolded files to that specification using `Edit` — not to
+rewrite them from scratch.** Do NOT re-research the API. Read the scaffolded files first, then make
+targeted edits. Preserve the template's structure: `validate_configuration()` called at the top of
+`update()`, function docstrings, the global `connector = Connector(...)`, and the `__main__` block.
+Use `Write` only for a file the scaffold did not create.
+
+## Mandatory Example Analysis
+
+Before writing code, follow **Example discovery** in `sdk-reference.md` to locate
+and study relevant SDK examples. Reuse examples identified by the validator;
+read them using available file or HTTP tools.
+
+1. Study a current example of basic connector structure and configuration
+2. Study an authentication example matching the source's auth method, if needed
+3. Study pagination examples if needed
+4. Document what you learned before coding:
+   ```
+   Examples studied:
+   - [discovered path or URL]: [key pattern learned]
+   Implementation approach:
+   - Authentication: [method] following [example]
+   - Pagination: [type] based on [example]
+   ```
+
+## File Adaptation
+
+The project directory and files already exist (scaffolded by `fivetran init`). Read each file, then
+`Edit` it to match the spec. Ensure the result has:
+
+### connector.py
+- The standard connector pattern from sdk-reference.md
+- `validate_configuration()` called at the top of `update()` (already present in the template — keep it and fill in the required keys)
+- `schema()` and `update()` functions (adapt the scaffolded ones; see Schema Definition below)
+- `op.upsert()`, `op.checkpoint()` (and `op.update`/`op.delete`/`op.truncate` as needed) called directly — no yield
+- For a full-table stream that replaces a table, call `op.truncate(table=..., deferred=True)` before the reload so a failed sync keeps the old rows. Use a regular `op.truncate(table=...)` only for a table-wide soft delete that should apply at the next checkpoint regardless of how the sync ends (see Operations in `sdk-reference.md`)
+- `connector = Connector(update=update, schema=schema)` in global scope (NOT under `if __name__`)
+- The `if __name__ == "__main__":` block (keep the scaffolded one)
+- Both full and incremental sync where the API supports it
+- Docstrings on functions you add or change
+- AI build marker as the first two lines of the file, above the module docstring. Do not add it if it already exists. Use these exact lines:
+  ```python
+  # Built using Connector SDK AI Plugin
+  # Plugin: fivetran-connector-sdk (cursor) | Version: 2026.11.5.1
+  ```
+  The name, agent and version in the block are filled in with the real values when the plugin is generated. When editing an existing connector, keep the marker and do not change its version.
+
+### configuration.json
+- Flat string key/value pairs only; preserve existing local values.
+- Fill values supplied or authorized by the user, including non-sensitive settings.
+- Use obvious placeholders only for unresolved fields; never invent credentials.
+- If the connector needs users to provide credentials or connection-specific settings during
+  connection setup, tell the user a **setup form** (`configuration_form`, see `sdk-reference.md`)
+  is available so those values can be entered in the Fivetran dashboard instead of a manually
+  created `configuration.json`, and offer to add one. The setup form is optional — connectors
+  without one continue to work with a manually created `configuration.json`; add it only with
+  the user's agreement.
+
+### README.md
+- Connector purpose, setup instructions, and configuration guide.
+- Describe the **Configuration entry** flow from `sdk-reference.md`: use the SDK
+  setup form when available, otherwise ordinary local JSON values.
+- Do not require the custom encryption script or ask users to paste secrets in chat.
+
+Use `Edit` to customize existing files and `Write` only for missing files. Follow
+**Configuration entry** in `sdk-reference.md`; adding a setup form to an existing
+connector requires the user's agreement. Do not discard values already supplied
+just to ask the user to enter them again.
+
+## BEST PRACTICES
+
+### 1. Schema Definition
+**Always declare `table` and `primary_key` for each table.** Declaring a `primary_key` is strongly
+recommended — without one, Fivetran generates a surrogate `_fivetran_id` from all column values,
+which can fragment rows when the column set changes.
+
+`columns` is **optional**. Declare a column's type **only** when you need to force a specific type.
+Do NOT declare every column — leaving columns out lets the SDK infer types and lets the schema
+evolve as the source changes. See [Supported Datatypes](https://fivetran.com/docs/connector-sdk/technical-reference#supporteddatatypes).
+
+```python
+def schema(configuration: dict):
+    return [
+        {
+            "table": "table_name",
+            "primary_key": ["id"],
+            # Optional — declare a type only where you must force one; omit the rest
+            # so the SDK can infer types and the schema can evolve.
+            "columns": {"id": "STRING"},
+        }
+    ]
+```
+
+**Use table/column identifiers in `op.upsert()`, `op.update()`, `op.delete()`, and
+`op.truncate()` that normalize to the same destination name as in `schema()`** — see the
+destination naming/normalization Gotcha in `sdk-reference.md` for why a mismatch silently
+creates a duplicate table.
+
+**Multiple source schemas:** only when the user asks for it or the source clearly has several schemas to sync, add `"schema": "<raw source schema>"` (non-empty string) to those table definitions and pass the same `schema=` on every `op.upsert/update/delete/truncate` for them.
+Tables without `schema` land in the default schema (named after the connection), so mixing is fine. Use raw source names — never build a destination name or add the connection prefix. See **Multiple Schemas** in `sdk-reference.md`. Otherwise leave `schema` out. When `update()` loops over tables, carry the schema through the loop (e.g. iterate `(schema_name, table_name)` pairs) so no operation omits `schema=`.
+
+```python
+def schema(configuration: dict):
+    return [
+        {
+            "schema": "sales",
+            "table": "orders",
+            "primary_key": ["id"],
+            # Optional — declare a type only where you must force one; omit the rest
+            # so the SDK can infer types and the schema can evolve.
+            "columns": {"id": "STRING"},
+        }
+    ]
+
+op.upsert(schema="sales", table="orders", data=record)
+```
+
+### 2. Logging - Use EXACT method names
+- **Preferred (Python-style):** `log.debug()`, `log.info()`, `log.warning()`, `log.error()`, `log.critical()`
+- **Deprecated (Java-style):** `log.fine()`, `log.severe()` — still work for backward compatibility, but new code should use Python-style
+
+```python
+# DEBUG - Detailed debugging information
+log.debug(f'Processing record: {record_id}')
+
+# INFO - Status updates, cursors, progress
+log.info(f'Current cursor: {current_cursor}')
+
+# WARNING - Potential issues, rate limits
+log.warning(f'Rate limit approaching: {remaining_calls}')
+
+# ERROR - Errors, failures
+log.error(f"Error details: {error_details}")
+
+# CRITICAL - Critical failures
+log.critical(f"Critical failure: {details}")
+```
+
+**Never log per-record.** Follow the logging-milestone guidance in `sdk-reference.md` (by
+record count, by entity/table, or by elapsed time) so a long sync never goes silent long enough
+to look stuck.
+
+### 3. Type Hints - CRITICAL: Use simple built-in types only
+- **CORRECT:** `def update(configuration: dict, state: dict):`
+- **CORRECT:** `def schema(configuration: dict):`
+- **WRONG:** `Dict[str, Any]`, `Generator[op.Operation, None, None]`
+- **NEVER** use `op.Operation` in type hints - it doesn't exist
+- **ALWAYS** use simple `dict` and `list` built-in types
+
+### 4. Operations (NO YIELD REQUIRED)
+Use direct operation calls:
+
+```python
+# Upsert — direct operation
+op.upsert("table_name", processed_data)
+
+# Checkpoint with state for incremental syncs
+op.checkpoint(state=new_state)
+
+# Update existing records
+op.update(table, modified)
+
+# Marking records as deleted
+op.delete(table, keys)
+```
+
+**Never accumulate the full result set before the first `op.upsert()` call** — see **Memory
+Management** in `sdk-reference.md` for the fetch-chunk-upsert-repeat pattern and checkpoint
+cadence.
+
+**Error handling — pick the response based on the failure, not a blanket try/except.** Follow
+the retry/warn-and-continue/fail-fast table and the `op.error()`/`op.warning()` vs.
+`log.error()`/`log.warning()` distinction in **Error Handling** in `sdk-reference.md`. Never
+catch an exception and continue past a partial failure (skipped rows/endpoints, degraded data)
+without calling `op.warning()` — logging it too is fine, but logging alone never creates a
+dashboard alert and does not satisfy this.
+
+### 5. State Management and Checkpointing
+- Checkpoint on a time/state cadence — roughly every 10 minutes for long operations, and no
+  more than once per minute — not after every batch or chunk of operations
+- Store cursor values or sync state in checkpoint
+
+```python
+state = {
+    "cursor": "2024-03-20T10:00:00Z",
+    "offset": 100,
+    "table_cursors": {
+        "table1": "2024-03-20T10:00:00Z",
+        "table2": "2024-03-20T09:00:00Z"
+    }
+}
+op.checkpoint(state=state)
+```
+
+### 6. Configuration Files
+- **CRITICAL:** configuration.json must be flat, single-level key/value pairs
+- **String values only** - No lists or dictionaries
+- Source credentials and user-specific settings belong in configuration.json (e.g., api_key, username, zip_codes)
+- Preserve existing local values and fill values supplied or authorized by the user per **Configuration entry** in `sdk-reference.md`; use placeholders only for unresolved fields
+- Collect missing secrets through the SDK form or the user's local editor/terminal, never by asking for them in chat. Keep populated configuration out of tool output, responses, and version control
+- **Do NOT include** code configurations like pagination_type, page_size, rate_limit settings - hardcode these in connector.py
+
+### 7. Additional Standards
+- **Datetime datatypes:** Always use UTC timestamps formatted as `'%Y-%m-%dT%H:%M:%SZ'`
+- **Docstrings:** Include detailed docstrings for all functions
+- **NO BACKWARDS COMPATIBILITY:** Do NOT implement backwards compatibility unless explicitly requested
+
+## Relevant examples
+
+Follow **Example discovery** in `sdk-reference.md`. Start with connector structure
+and configuration, then inspect patterns matching the source's authentication,
+pagination, incremental state, and data volume. Reuse the validator's researched
+examples and recommendations.
+
+## MANDATORY EXAMPLE ANALYSIS WORKFLOW
+
+1. **Requirement Analysis**: Based on the description, determine:
+   - Source system type (REST API, Database, File-based, etc.)
+   - Required authentication method (API Key, OAuth 2.0, Basic Auth, etc.)
+   - Data structure and schema requirements
+   - Any specific API endpoints or data sources to connect to
+
+2. **Example Pattern Matching**: Identify the examples needed for the implementation using the guidance above
+
+3. **Concrete Example Study**: Use the available file or HTTP tools to examine the identified examples, focusing on:
+   - Import statements and function signatures
+   - Authentication implementation patterns
+   - Data fetching and processing logic
+   - Error handling approaches
+   - Configuration structure
+
+4. **Pattern Documentation**: Before generating code, explicitly document:
+   ```
+   Examples studied:
+   - [path1]: [key pattern learned]
+   - [path2]: [key pattern learned]
+   - [path3]: [key pattern learned]
+
+   Implementation approach:
+   - Authentication: [method] following [example name]
+   - Data processing: [pattern] based on [example name]
+   - Error handling: [approach] from [example name]
+   ```
+
+5. **Adapt Code**: Edit the scaffolded files to follow the studied example patterns, ensuring type annotations match exactly
+
+## CODE VALIDATION REQUIREMENTS
+
+**CRITICAL:** You must validate your own work:
+
+1. **After creating files**, use the Read tool to verify files were created correctly
+2. **Check syntax:** Run `python -m py_compile connector.py` using Bash tool (timeout: 30000)
+3. **Test imports:** Run `python -c "import connector"` using Bash tool (timeout: 30000)
+4. **Test basic functionality** to ensure the code structure is valid
+5. **Only declare success** if you've validated the code works properly
+6. **If validation fails**, fix the issues before completing
+
+## POST-GENERATION VALIDATION
+
+Before completing the task, the subagent MUST validate its work:
+
+### Generation-Specific Validation:
+1. **File Completeness**: All 3 files (connector.py, configuration.json, README.md) are present (scaffolded by `fivetran init`; create any missing one with Write)
+2. **Required Functions**: connector.py must contain both `update()` and `schema()` functions
+3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` (plus a non-empty `schema` when syncing multiple schemas, with a matching `schema=` on every operation for those tables) keys are used; any declared column types are valid type names and used selectively (not every column)
+4. **Configuration Flatness**: Validate that configuration.json is flat (no nested objects/arrays) with string values only
+5. **Configuration**: Preserve user-approved values; README follows SDK setup-form or plaintext configuration entry.
+6. **Documentation Completeness**: README must include setup instructions, testing procedures, and API documentation
+7. **Example Pattern Conformance**: Verify generated code follows the studied example patterns
+
+### Success Criteria:
+- All 3 files present and adapted (community templates kept, not rewritten from scratch)
+- Code follows BEST PRACTICES (schema, logging, type hints, operations)
+- Configuration is flat with string values; preserve supplied values and mark unresolved fields
+- README does not ask users to paste credentials in chat
+- Code validation requirements met (syntax check, import test)
+- Configuration matches example patterns studied
+- Documentation is comprehensive and clear
+
+**CRITICAL**: If any validation check fails, re-generate the affected files before providing final response.
+
+## Validation Checklist
+
+Before completing:
+- [ ] All 3 files created
+- [ ] Valid Python syntax (read back and verify)
+- [ ] Both `update()` and `schema()` present
+- [ ] Every table declares a `primary_key`; column types (if any) are valid and selective, not exhaustive
+- [ ] If using multiple schemas: `schema` is a non-empty string, and every record operation for a schema-qualified table passes the matching `schema=`
+- [ ] `connector = Connector(...)` in global scope
+- [ ] No forbidden patterns (`Dict[str, Any]`, `Generator[...]`, `op.Operation` in type hints, `yield` with operations)
+- [ ] configuration.json is valid flat JSON with string values; unresolved fields are explicit
+- [ ] README follows Configuration entry in sdk-reference.md
+- [ ] No generated file asks users to paste credentials in chat
+
+## Handling Follow-Up Revisions
+
+If asked to modify an existing connector:
+1. Read existing code
+2. Study relevant SDK examples with WebFetch
+3. Use Edit for targeted changes (NOT full rewrites)
+4. Read back to verify changes
+5. Summarize: what changed, why, which examples guided the fix
+
+## Real-time Progress Updates
+
+- Analyzing project requirements and API documentation...
+- Studying relevant Connector SDK examples and community connectors via GitHub...
+- Identified patterns: [authentication method, data patterns, source type]
+- Generating connector.py following [specific example] structure...
+- Creating configuration.json with authentication fields...
+- Validating generated Python code syntax...
+- Saving connector files to project directory...
