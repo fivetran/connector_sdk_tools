@@ -180,6 +180,9 @@ op.truncate(table, deferred=True)   # deferred: applied only if update() succeed
 | Every column declared with a type | Keep types only where a specific type must be forced; omit the rest for inference/evolution |
 | Invalid schema key or type name | Use only `schema` (multi-schema only)/`table`/`primary_key`/`columns` keys and valid SDK type names |
 | Operation on a schema-qualified table omits `schema=` (or `schema` is empty) | Pass the same non-empty `schema=` as in `schema()`; without it the data lands in the default schema's table |
+| Redeploy fails with `--python-version is required` (SDK 3.0.0+; new connections use the SDK default) | Pass `--python-version`, set `FIVETRAN_PYTHON_VERSION`, or set `python_version` in the options file profile (see **Stateless CLI & Options File** in `sdk-reference.md`) |
+| Redeploy fails with `--hybrid-deployment-agent-id is required` (SDK 3.0.0+; new connections use the destination's default agent) | Pass `--hybrid-deployment-agent-id`, set `FIVETRAN_HD_AGENT_ID`, or set `hybrid_deployment_agent_id` in the options file profile (see **Stateless CLI & Options File** in `sdk-reference.md`) |
+| `migration failed: 404` on deploy | Non-fatal; the one-time options-file migration is retried on the next deploy |
 | `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
 | `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |

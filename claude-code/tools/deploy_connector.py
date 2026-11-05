@@ -13,6 +13,7 @@ Usage:
     python deploy_connector.py "<connector_directory>" --start-sync --connection-id "<id>"
     python deploy_connector.py "<connector_directory>" --destination "<name>" --connection "<name>" --package-id "<package-id>"
     python deploy_connector.py "<connector_directory>" --connection-id "<id>" --package-id "<package-id>"
+    python deploy_connector.py "<connector_directory>" --destination "<name>" --connection "<name>" --python-version 3.12
     python deploy_connector.py --help
 """
 import argparse
@@ -645,6 +646,17 @@ def find_fivetran_executable(connector_dir: Path) -> str:
     return shutil.which("fivetran") or "fivetran"
 
 
+# Optional `fivetran deploy` flags forwarded unchanged; the SDK resolves and validates them.
+_PASSTHROUGH_FLAGS = (
+    "--python-version",
+    "--options-file",
+    "--profile",
+    "--proxy-id",
+    "--proxy-host-config-key",
+    "--hybrid-deployment-agent-id",
+)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Deploy a connector to Fivetran")
     parser.add_argument("connector_directory", help="Path to the connector directory")
@@ -662,7 +674,28 @@ def main():
                              "package ID instead of uploading local code. With --connection-id, this replaces "
                              "the connection's code with the target package's; this wrapper always passes "
                              "--force, so the underlying CLI's confirmation prompt is auto-accepted.")
+    parser.add_argument("--python-version",
+                        help="Python version for the deployed connector (e.g. 3.12). Forwarded to "
+                             "`fivetran deploy`; required by SDK 3.0.0+ when redeploying unless FIVETRAN_PYTHON_VERSION, "
+                             "or the options file provides it; a new connection uses the SDK default.")
+    parser.add_argument("--options-file",
+                        help="Path to a Connector SDK options file (SDK 3.0.0+). Forwarded to `fivetran deploy`.")
+    parser.add_argument("--profile",
+                        help="Options-file profile to use (SDK 3.0.0+). Forwarded to `fivetran deploy`.")
+    parser.add_argument("--proxy-id",
+                        help="Proxy Agent ID to route connector traffic through. Forwarded to `fivetran deploy`.")
+    parser.add_argument("--proxy-host-config-key",
+                        help="Configuration key that holds the host to proxy. Forwarded to `fivetran deploy`.")
+    parser.add_argument("--hybrid-deployment-agent-id",
+                        help="Hybrid Deployment agent ID. Forwarded to `fivetran deploy`; a new connection uses the "
+                             "destination's default agent, a redeploy on a Hybrid Deployment destination requires it.")
     args = parser.parse_args()
+    for flag in _PASSTHROUGH_FLAGS:
+        value = getattr(args, flag.lstrip("-").replace("-", "_"))
+        # An empty value (e.g. an unset shell variable) must not silently fall back to
+        # another source of the same field.
+        if value is not None and not value.strip():
+            parser.error(f"{flag} cannot be empty.")
     if args.connection_id and (args.connection or args.destination):
         parser.error("--connection-id cannot be combined with --connection or --destination; "
                      "the existing connection determines both.")
@@ -763,6 +796,18 @@ def main():
 
         if args.package_id:
             cmd.extend(["--package-id", args.package_id])
+
+        for flag in _PASSTHROUGH_FLAGS:
+            value = getattr(args, flag.lstrip("-").replace("-", "_"))
+            if flag == "--options-file":
+                # The child runs with cwd=connector_dir, so a relative path from the flag or from
+                # FIVETRAN_OPTIONS_FILE would resolve there. Resolve it once against the caller's
+                # cwd and always pass it as the flag, which takes precedence over the env var.
+                value = value or (os.environ.get("FIVETRAN_OPTIONS_FILE") or "").strip() or None
+                if value:
+                    value = os.path.abspath(os.path.expanduser(value))
+            if value:
+                cmd.extend([flag, value])
 
         connection_id = args.connection_id
         global _active_deploy_subprocess
