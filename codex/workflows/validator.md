@@ -93,7 +93,7 @@ The generator needs ALL of the following:
 - Table name, primary key field(s), key response fields
 
 **Sync Strategy:**
-- Determine from API capabilities — incremental if cursor field available, full refresh otherwise
+- Determine from API capabilities — incremental if cursor field available, full refresh otherwise (a full refresh that replaces a table uses `op.truncate`; see **Operations** in `sdk-reference.md`)
 - Do NOT ask the user about this
 
 **Pagination:**

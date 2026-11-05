@@ -166,7 +166,8 @@ operation on them (see **Multiple Schemas**), e.g. `op.upsert(schema="sales", ta
 | `op.upsert(table="t", data=record)` | Insert or update a record by primary key |
 | `op.update(table="t", modified=record)` | Update an existing record only (no new rows) |
 | `op.delete(table="t", keys={"id": "123"})` | Soft-delete a record (`_fivetran_deleted = TRUE`) |
-| `op.truncate(table="t")` | Soft-delete all rows synced before this call; flushed at the next checkpoint |
+| `op.truncate(table="t")` | Regular truncate: soft-delete all rows synced before this call; applied at the next checkpoint, even if the sync fails later |
+| `op.truncate(table="t", deferred=True)` | Deferred truncate: same rows, but applied only after `update()` returns successfully; a failed sync deletes nothing |
 | `op.checkpoint(state=state)` | Save sync progress (and flush buffered data to the destination) |
 | `op.error(message="...", trace=None)` | Fail the sync immediately with a custom, dashboard-visible message (title: **Connector SDK Code Error**). Only one per sync — code stops running after the call. |
 | `op.warning(message="...")` | Surface a non-critical, dashboard-visible warning without stopping the sync. Max 10 per sync; extras are dropped. |
@@ -175,6 +176,28 @@ operation on them (see **Multiple Schemas**), e.g. `op.upsert(schema="sales", ta
 logs only — they do **not** create a dashboard alert or affect the sync outcome. Use
 `op.error()`/`op.warning()` (optionally alongside logging) whenever the issue should be visible
 to the user on the Fivetran dashboard, not just in logs.
+
+**Regular vs. deferred truncate:** both soft-delete (`_fivetran_deleted = TRUE`) every row of the
+table synced before the call; rows sent after the call are not affected. They differ in *when* it is applied.
+
+- **Regular** (`op.truncate(table="t")`): applied at the next `op.checkpoint()`. If the sync fails
+  later, the rows stay deleted and the table may be only partly reloaded. Use it for a table-wide
+  soft delete that should happen no matter how the rest of the sync goes.
+- **Deferred** (`op.truncate(table="t", deferred=True)`): applied only after `update()` returns
+  successfully. If the sync fails, nothing is deleted. Use it to replace a table's contents with a
+  full reload: call it first, then upsert every row. A second deferred call for the same table (and
+  `schema`) replaces the first. If the sync fails after a checkpoint that follows the call, the next
+  sync applies it when it succeeds, with the time of the original call. If the state is reset
+  (a re-sync), it is dropped.
+- Both accept `schema=` for a schema-qualified table. `deferred` needs an SDK version that supports
+  it; older versions raise `TypeError`.
+
+```python
+op.truncate(table="t", deferred=True)   # old rows are marked deleted only if update() succeeds
+for record in fetch_all_records():
+    op.upsert(table="t", data=record)
+    # checkpoint as usual
+```
 
 ### Error Handling — Choose the Right Response
 
@@ -264,6 +287,12 @@ connector = Connector(
   `--configuration configuration.json`; those values are stored securely and can pre-populate or
   update the connection's configuration — for an existing connection, omitting `--configuration`
   keeps the existing stored values.
+- **Connection creation via setup form (visible packages):** marking a reusable package `visible`
+  (`[tool.package-metadata].visible = true` in `pyproject.toml`, see **Reusable Packages — 1:N**
+  below) makes it appear in the Fivetran dashboard so users can create connections from it and
+  enter configuration through its setup form. A visible package **must** define
+  `configuration_form()` — the platform rejects (HTTP 4xx) a `package create`/`package update` for
+  a visible package without one (`A visible package must implement configuration_form()`).
 - Full reference: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-setup-form
 
 ### Unstructured File Uploads
@@ -372,6 +401,22 @@ own copy — useful when the same connector code should run identically across m
   `--yes` reasoning as `package create`.
 - **`fivetran package list [--limit <n>]`** — prints a `PACKAGE ID` / `CONNECTIONS` table for every
   package in the account (paginated internally; `--limit` caps the total rows returned).
+  When the package-management API exposes `package_name`/`visible`, the table also includes
+  `PACKAGE NAME` and `VISIBLE` columns; packages without those fields keep the compact
+  `PACKAGE ID` / `CONNECTIONS` layout.
+- **Visible packages (connection creation via setup form)** — set `[tool.package-metadata].visible
+  = true` (a native TOML boolean, not the quoted string `"true"`) in `pyproject.toml` to make a
+  reusable package appear in the Fivetran dashboard so users can create connections from it via its
+  setup form. A visible package **must** implement `configuration_form()`; `package create`/`package
+  update` are rejected server-side (HTTP 4xx, `A visible package must implement
+  configuration_form()`) otherwise. A connection already on a visible package can't be redeployed in
+  place — see the guard below.
+- **Setup-form metadata validation** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and validates package metadata. It never edits the file.
+  - `[project].name`: a valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit. If **missing**, the platform falls back to the package ID. If **invalid** (does not meet the rules), **deployment fails**.
+  - `[tool.package-metadata].visible`: must be a native TOML boolean (`true` or `false`), not a string (e.g. not the quoted string `"true"`). If **non-boolean**, **deployment fails**.
+  - `[tool.package-metadata].python_version`: must be a supported Python version for the connector SDK. If **unsupported**, **deployment fails**.
+  - `[tool.package-metadata].proxy_host_config_key` (Proxy Agent packages): names the `configuration` key that holds the proxy `host:port` endpoint(s), and that key must be defined in the connector's `configuration_form()`. If it is omitted from `pyproject.toml`, the setup form falls back to the default `host`/`hosts` keys, so one of those default keys must instead be defined in `configuration_form()`
+
 - **`fivetran deploy --package-id <id> --destination <dest> --connection <name>`** — binds a
   connection to an existing package instead of uploading local code; no `connector.py` is required
   in the current directory for this form. For a new connection, this is equivalent to a normal
@@ -391,6 +436,10 @@ own copy — useful when the same connector code should run identically across m
   package '<id>' is shared with other connections`. Rebind explicitly with `--package-id <id>` to
   a *different* package to proceed with leaving the group intentionally (rebinding to the same
   package ID is the no-op described above, not a way to "proceed").
+  The guard also refuses (exit 1) when the connection's current package is `visible`, because a visible
+  package can only be redeployed with a new package: `cannot update connection '<name>'; its package '<id>'
+  is visible and can only be redeployed with a new package`. Use `--package-id <id>` to deploy a new package
+  version.
 - Package IDs returned by `package create` are account-scoped and reusable across any number of
   connections in that account.
 

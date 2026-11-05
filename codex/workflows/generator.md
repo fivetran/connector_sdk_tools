@@ -55,10 +55,17 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - `validate_configuration()` called at the top of `update()` (already present in the template — keep it and fill in the required keys)
 - `schema()` and `update()` functions (adapt the scaffolded ones; see Schema Definition below)
 - `op.upsert()`, `op.checkpoint()` (and `op.update`/`op.delete`/`op.truncate` as needed) called directly — no yield
+- For a full-table stream that replaces a table, call `op.truncate(table=..., deferred=True)` before the reload so a failed sync keeps the old rows. Use a regular `op.truncate(table=...)` only for a table-wide soft delete that should apply at the next checkpoint regardless of how the sync ends (see Operations in `sdk-reference.md`)
 - `connector = Connector(update=update, schema=schema)` in global scope (NOT under `if __name__`)
 - The `if __name__ == "__main__":` block (keep the scaffolded one)
 - Both full and incremental sync where the API supports it
 - Docstrings on functions you add or change
+- AI build marker as the first two lines of the file, above the module docstring. Do not add it if it already exists. Use these exact lines:
+  ```python
+  # Built using Connector SDK AI Plugin
+  # Plugin: fivetran-connector-sdk (codex) | Version: 2026.11.5.1
+  ```
+  The name, agent and version in the block are filled in with the real values when the plugin is generated. When editing an existing connector, keep the marker and do not change its version.
 
 ### configuration.json
 - Flat string key/value pairs only; preserve existing local values.

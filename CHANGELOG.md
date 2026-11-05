@@ -2,13 +2,26 @@
 
 Changes for the Fivetran AI coding agent tools in this repository.
 
-## October 2026
+## November 2026
 
-### fivetran-connector-sdk-tools 2026.10.28.1
+### fivetran-connector-sdk-tools 2026.11.5.1
 
 - Documented Record-and-Replay Regression Testing (Private Preview) in sdk-reference.md: the `@action` decorator and `match`, `fivetran debug --record`/`--replay`/`--max-records`/`--yes`, the `fixtures/<scenario>/` layout, JSON-serializable data, error messages, and the limits (unrecorded reads, repeated identical calls, thread ordering, and sensitive data stored in fixtures).
 - run_connector.py now accepts `--record <scenario>`, `--max-records`, `--replay <scenario>`, and `--yes` and forwards them to `fivetran debug`, so recording and replay keep decrypting configuration; invalid combinations and scenario names are rejected before the run, with tests.
 - test-connector gained a record, replay, analyse differences, and iterate workflow; connector-fixer replays existing scenarios before and after a change and asks whether a difference is a regression or intended; connector-generator and build-connector add `@action` only on request; evaluate-connector checks `@action` usage and warns about sensitive data in `fixtures/`.
+
+### fivetran-connector-sdk-tools 2026.11.4.1
+
+- AI build marker for connectors built or migrated by the plugin: connectors now start with `# Built using Connector SDK AI Plugin`, followed by `# Plugin: fivetran-connector-sdk (<agent>) | Version: <version>`, so AI-built connectors can be tracked. The build, generator, and migrate instructions add it; the fixer and submit instructions keep it; and `scripts/sync-plugins.sh` fills in the agent and version for each generated plugin tree.
+
+### fivetran-connector-sdk-tools 2026.11.3.1
+
+- Documented regular and deferred truncate in sdk-reference.md: `op.truncate(table="t")` is applied at the next checkpoint, even if the sync fails later, and `op.truncate(table="t", deferred=True)` is applied only after `update()` returns successfully, so a failed sync deletes nothing. Covers when to use each, repeated calls, what happens after a failed sync, and that older SDK versions raise `TypeError` for `deferred`.
+- connector-fixer lists `deferred` in its operations, fixes the `TypeError` an older SDK raises for it, and has a "Replacing a Table's Contents" revision pattern; test-connector reports soft-deleted rows when a connector truncates; connector-validator points full refreshes at `op.truncate`.
+- connector-generator prefers `deferred=True` before a full-table reload; evaluate-connector flags a regular truncate followed by a reload of the same table as a good-to-have finding; the Meltano and Airbyte migrators ask for a regular-or-deferred decision on full-table and overwrite streams; the Functions migrator maps `softDelete` to a regular truncate.
+- Connection creation via setup form (visible packages). Documented in sdk-reference.md and deploy-connector's SKILL.md that `[tool.package-metadata].visible = true` in `pyproject.toml` marks a package as visible so it appears in the Fivetran dashboard for users to create connections from via its setup form, and that a visible package **must** implement `configuration_form()`. Also documented the `[tool.package-metadata].proxy_host_config_key` field: it names the `configuration` key holding the Proxy Agent `host:port` endpoint(s) (which must be defined in `configuration_form()`), and when omitted the setup form falls back to the default `host`/`hosts` keys, so one of those must be defined in the form instead.
+
+## October 2026
 
 ### fivetran-connector-sdk-tools 2026.10.27.1
 

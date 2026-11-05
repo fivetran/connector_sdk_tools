@@ -124,6 +124,8 @@ Windows PowerShell:
 ### On Success
 Report which tables were synced and how many rows each.
 
+If the connector calls `op.truncate`, also report how many rows in each affected table are soft-deleted (`SELECT COUNT(*) FROM "<schema>"."<table>" WHERE _fivetran_deleted`). Row counts include soft-deleted rows. A regular truncate marks rows at the next checkpoint. A deferred truncate (`deferred=True`) marks them only after `update()` returns successfully, so a run that failed leaves them unmarked. A later run applies it once it succeeds, unless `fivetran reset` cleared it.
+
 ### On Failure — Classify the Error
 
 **INFRA error** (infrastructure/network — do NOT change code):
