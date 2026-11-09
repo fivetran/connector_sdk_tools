@@ -674,10 +674,10 @@ def main():
                              "package ID instead of uploading local code. With --connection-id, this replaces "
                              "the connection's code with the target package's; this wrapper always passes "
                              "--force, so the underlying CLI's confirmation prompt is auto-accepted.")
-    parser.add_argument("--python-version",
-                        help="Python version for the deployed connector (e.g. 3.12). Forwarded to "
+    parser.add_argument("--python-version", "--python", dest="python_version",
+                        help="Python version for the deployed connector (e.g. 3.12; alias --python). Forwarded to "
                              "`fivetran deploy`; required by SDK 3.0.0+ when redeploying unless FIVETRAN_PYTHON_VERSION, "
-                             "or the options file provides it; a new connection uses the SDK default.")
+                             "the options file, or pyproject.toml provides it; a new connection uses the SDK default.")
     parser.add_argument("--options-file",
                         help="Path to a Connector SDK options file (SDK 3.0.0+). Forwarded to `fivetran deploy`.")
     parser.add_argument("--profile",
