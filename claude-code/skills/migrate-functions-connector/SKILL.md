@@ -79,7 +79,7 @@ Edit the CSDK project files:
 - Start the file with the AI build marker. Do not add it if it already exists:
   ```python
   # Built using Connector SDK AI Plugin
-  # Plugin: fivetran-connector-sdk (claude-code) | Version: 2026.11.5.1
+  # Plugin: fivetran-connector-sdk (claude-code) | Version: 2026.11.9.1
   ```
 - Keep the scaffolded structure where present: `validate_configuration()`, `schema()`, `update()`, global `connector = Connector(...)`, and `if __name__ == "__main__": connector.debug()`.
 - Port source extraction logic into Python helper functions.

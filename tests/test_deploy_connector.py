@@ -44,6 +44,7 @@ class DeployTests(unittest.TestCase):
             "    with open('configuration.json') as stream:\n"
             "        pathlib.Path('submitted-config.json').write_text(json.dumps(json.load(stream)))\n"
             "pathlib.Path('environment-config.json').write_text(json.dumps(os.getenv('FIVETRAN_CONFIGURATION')))\n"
+            "pathlib.Path('environment-options-file.json').write_text(json.dumps(os.getenv('FIVETRAN_OPTIONS_FILE')))\n"
             "pathlib.Path('invocation.json').write_text(json.dumps(sys.argv[1:]))\n"
             "print('Connection ID: existing_id')\n"
         )
@@ -220,6 +221,58 @@ class DeployTests(unittest.TestCase):
     def test_no_package_id_omits_the_flag(self):
         self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
         self.assertNotIn("--package-id", self.invocation())
+
+    def test_passthrough_flags_are_forwarded(self):
+        flags = {
+            "--python-version": "3.12",
+            "--options-file": "/tmp/options.toml",
+            "--profile": "prod",
+            "--proxy-id": "proxy_1",
+            "--proxy-host-config-key": "host",
+            "--hybrid-deployment-agent-id": "agent_1",
+        }
+        argv = [part for item in flags.items() for part in item]
+        self.assertEqual(self.run_main("--connection-id", "existing_id", *argv), 0)
+        args = self.invocation()
+        for flag, value in flags.items():
+            self.assertEqual(args[args.index(flag) + 1], value)
+
+    def test_relative_options_file_is_resolved_against_callers_cwd(self):
+        self.assertEqual(self.run_main("--connection-id", "existing_id", "--options-file", "settings.toml"), 0)
+        args = self.invocation()
+        self.assertEqual(args[args.index("--options-file") + 1], os.path.abspath("settings.toml"))
+
+    def test_relative_options_file_env_var_is_resolved_against_callers_cwd(self):
+        with patch.dict(os.environ, {"FIVETRAN_OPTIONS_FILE": "settings.toml"}):
+            self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        self.assertNotIn("--options-file", self.invocation())
+        self.assertEqual(json.loads((self.project / "environment-options-file.json").read_text()),
+                         os.path.abspath("settings.toml"))
+
+    def test_passthrough_flags_are_omitted_when_unset(self):
+        self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        args = self.invocation()
+        for flag in ("--python-version", "--options-file", "--profile", "--proxy-id",
+                     "--proxy-host-config-key", "--hybrid-deployment-agent-id"):
+            self.assertNotIn(flag, args)
+
+    def test_blank_passthrough_flag_is_rejected(self):
+        for flag in ("--python-version", "--options-file", "--profile", "--proxy-id",
+                     "--proxy-host-config-key", "--hybrid-deployment-agent-id"):
+            with self.subTest(flag=flag):
+                self.assertEqual(self.run_main("--connection-id", "existing_id", flag, ""), 2)
+                self.assertFalse((self.project / "invocation.json").exists())
+
+    def test_python_alias_is_forwarded_as_python_version(self):
+        self.assertEqual(self.run_main("--connection-id", "existing_id", "--python", "3.12"), 0)
+        args = self.invocation()
+        self.assertEqual(args[args.index("--python-version") + 1], "3.12")
+        self.assertNotIn("--python", args)
+
+    def test_python_version_env_var_is_inherited(self):
+        with patch.dict(os.environ, {"FIVETRAN_PYTHON_VERSION": "3.13"}):
+            self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
+        self.assertNotIn("--python-version", self.invocation())
 
     def test_new_deploy_without_connection_id_keeps_sync_guidance(self):
         executable = self.project / ".venv/bin/fivetran"
