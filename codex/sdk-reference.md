@@ -198,6 +198,10 @@ table synced before the call; rows sent after the call are not affected. They di
 - Both accept `schema=` for a schema-qualified table. `deferred` needs an SDK version that supports
   it; older versions raise `TypeError`.
 
+A re-sync from the Fivetran dashboard clears the connection's state. When the re-sync finishes
+successfully, every row of an included table that the connection did not send again is soft-deleted
+(`_fivetran_deleted = TRUE`). The connector does not need `op.truncate` for that.
+
 ```python
 op.truncate(table="t", deferred=True)   # old rows are marked deleted only if update() succeeds
 for record in fetch_all_records():
