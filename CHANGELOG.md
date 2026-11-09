@@ -8,6 +8,7 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 - Documented the Connector SDK 3.0.0 stateless CLI: field resolution order (flag, environment variable, options file, SDK default), the options file and one-time automatic migration, and the `--python-version` (and Hybrid Deployment agent ID) now required on redeploy (new connections use the SDK and destination defaults), in sdk-reference.md and deploy-connector.
 - Documented the `pyproject.toml` `[tool.package-metadata]` default for `python_version`, the first-deploy auto-selection of the migrated profile, and the server drift warning.
+- Documented options-file profile behavior (no inheritance, failure cases), that migration always writes to `~/.fivetran/connector_sdk/options.toml`, that `--package-id` ignores `pyproject.toml` defaults, and that `naming` is new-connection only and not a `deploy_connector.py` flag.
 - `deploy_connector.py` now accepts `--python` as an alias of `--python-version` and forwards `--python-version`, `--options-file`, `--profile`, `--proxy-id`, `--proxy-host-config-key` and `--hybrid-deployment-agent-id` to `fivetran deploy`; deploy-connector gained SDK 3.0.0 guidance and troubleshooting.
 
 ### fivetran-connector-sdk-tools 2026.11.5.1
