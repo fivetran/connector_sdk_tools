@@ -1,0 +1,25 @@
+tests/test_run_connector.py
+  f7e9ab83e3f5976e 292-297,306-307,314-318
+canonical/tools/run_connector.py
+  f7e9ab83e3f5976e 563-564,614-617
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "c0923ea6eb97a1af85a3024ad76f496ca1d6680b",
+  "prompts": {
+    "f7e9ab83e3f5976e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7ea20ee2-7d80-43ba-81c1-b56a5b6e72b6",
+        "model": "claude-haiku-5-5"
+      },
+      "human_author": "unknown",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 10,
+      "accepted_lines": 20,
+      "overriden_lines": 0
+    }
+  }
+}
