@@ -44,6 +44,7 @@ class DeployTests(unittest.TestCase):
             "    with open('configuration.json') as stream:\n"
             "        pathlib.Path('submitted-config.json').write_text(json.dumps(json.load(stream)))\n"
             "pathlib.Path('environment-config.json').write_text(json.dumps(os.getenv('FIVETRAN_CONFIGURATION')))\n"
+            "pathlib.Path('environment-options-file.json').write_text(json.dumps(os.getenv('FIVETRAN_OPTIONS_FILE')))\n"
             "pathlib.Path('invocation.json').write_text(json.dumps(sys.argv[1:]))\n"
             "print('Connection ID: existing_id')\n"
         )
@@ -244,8 +245,9 @@ class DeployTests(unittest.TestCase):
     def test_relative_options_file_env_var_is_resolved_against_callers_cwd(self):
         with patch.dict(os.environ, {"FIVETRAN_OPTIONS_FILE": "settings.toml"}):
             self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)
-        args = self.invocation()
-        self.assertEqual(args[args.index("--options-file") + 1], os.path.abspath("settings.toml"))
+        self.assertNotIn("--options-file", self.invocation())
+        self.assertEqual(json.loads((self.project / "environment-options-file.json").read_text()),
+                         os.path.abspath("settings.toml"))
 
     def test_passthrough_flags_are_omitted_when_unset(self):
         self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)

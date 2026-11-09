@@ -767,6 +767,12 @@ def main():
 
     config_pipe = ConfigPipe(connector_dir, config) if config is not None else None
     subprocess_env = os.environ.copy()
+    inherited_options_file = (subprocess_env.get("FIVETRAN_OPTIONS_FILE") or "").strip()
+    if inherited_options_file:
+        # Keep the inherited path as an env var (an SDK 2.x CLI rejects an injected
+        # --options-file) but resolve it against the caller's cwd, since the child runs in
+        # connector_dir.
+        subprocess_env["FIVETRAN_OPTIONS_FILE"] = os.path.abspath(os.path.expanduser(inherited_options_file))
     if args.no_configuration:
         # --no-configuration promises the connection's stored configuration is left
         # untouched; an inherited FIVETRAN_CONFIGURATION would let the SDK submit
@@ -799,13 +805,10 @@ def main():
 
         for flag in _PASSTHROUGH_FLAGS:
             value = getattr(args, flag.lstrip("-").replace("-", "_"))
-            if flag == "--options-file":
-                # The child runs with cwd=connector_dir, so a relative path from the flag or from
-                # FIVETRAN_OPTIONS_FILE would resolve there. Resolve it once against the caller's
-                # cwd and always pass it as the flag, which takes precedence over the env var.
-                value = value or (os.environ.get("FIVETRAN_OPTIONS_FILE") or "").strip() or None
-                if value:
-                    value = os.path.abspath(os.path.expanduser(value))
+            if flag == "--options-file" and value:
+                # The child runs with cwd=connector_dir, so resolve a relative path against the
+                # caller's cwd first.
+                value = os.path.abspath(os.path.expanduser(value))
             if value:
                 cmd.extend([flag, value])
 
