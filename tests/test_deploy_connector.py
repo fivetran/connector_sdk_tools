@@ -263,6 +263,12 @@ class DeployTests(unittest.TestCase):
                 self.assertEqual(self.run_main("--connection-id", "existing_id", flag, ""), 2)
                 self.assertFalse((self.project / "invocation.json").exists())
 
+    def test_python_alias_is_forwarded_as_python_version(self):
+        self.assertEqual(self.run_main("--connection-id", "existing_id", "--python", "3.12"), 0)
+        args = self.invocation()
+        self.assertEqual(args[args.index("--python-version") + 1], "3.12")
+        self.assertNotIn("--python", args)
+
     def test_python_version_env_var_is_inherited(self):
         with patch.dict(os.environ, {"FIVETRAN_PYTHON_VERSION": "3.13"}):
             self.assertEqual(self.run_main("--connection-id", "existing_id"), 0)

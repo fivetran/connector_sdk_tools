@@ -304,11 +304,14 @@ From 3.0.0 the CLI no longer infers deploy settings from the existing connection
 before 3.0.0 the old behavior applies and none of this does.
 
 - **Resolution order (highest first):** CLI flag → environment variable (e.g.
-  `FIVETRAN_PYTHON_VERSION`) → options file profile → SDK default (if none exists and the field is required, deploy fails).
-  `proxy_id`, `proxy_host_config_key` and `package_id` have no env var.
+  `FIVETRAN_PYTHON_VERSION`) → options file profile → `[tool.package-metadata]` in `pyproject.toml`
+  (`python_version` and `proxy_host_config_key` only, Python 3.11+) → SDK default. If none exists and
+  the field is required, deploy fails. `proxy_id`, `proxy_host_config_key` and `package_id` have no
+  env var.
 - **Required for deploy:** destination and connection always. For a **redeploy**, also the Python
   version, and the Hybrid Deployment agent ID when the connection is on a Hybrid Deployment
-  destination; if one cannot be resolved, deploy exits (e.g. `--python-version is required; provide
+  destination, including when it uses the destination's default agent; if one cannot be resolved,
+  deploy exits (e.g. `--python-version is required; provide
   it via the --python-version flag, the FIVETRAN_PYTHON_VERSION environment variable, or the options
   file`). For a **new connection**, an unset Python version uses the SDK default and an unset agent
   ID uses the destination's default agent.
@@ -328,10 +331,17 @@ before 3.0.0 the old behavior applies and none of this does.
 - **Proxy Agent:** `proxy_id` has no env var. If it resolves from neither `--proxy-id` nor the
   profile, the connection reverts to direct networking, so add `proxy_id` to every profile that
   uses a Proxy Agent. `--proxy-id` cannot be combined with `--hybrid-deployment-agent-id`.
+- **First deploy after upgrading:** the migration runs first, and with no `--profile` the CLI selects
+  the migrated profile matching the connection, so that one redeploy works without flags. It then
+  writes the resolved values back to that profile. Later deploys need `--profile <group_id>-<connection>`
+  or a `[default]` profile.
+- **Drift warning:** the CLI warns when a resolved value differs from the connection's current server
+  value, because the deploy overwrites it.
 - **New connection:** pass `--destination` and `--connection`; Python version and agent ID are
-  optional (SDK default and destination default agent). **Redeploy:** nothing is carried over from
-  the existing connection, so pass `--python-version` (and `--hybrid-deployment-agent-id` for a
-  Hybrid Deployment destination) or have an options file profile supply them.
+  optional (SDK default and destination default agent). **Redeploy:** apart from the migrated profile
+  above, nothing is carried over from the existing connection, so pass `--python-version` (and `--hybrid-deployment-agent-id` for a
+  Hybrid Deployment destination) or have an options file profile (or, for the Python version,
+  `pyproject.toml`) supply them.
 - Applies to `fivetran deploy` only. Full reference:
   https://fivetran.com/docs/connector-sdk/getting-started/connector-sdk-commands
 
