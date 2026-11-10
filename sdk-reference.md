@@ -23,10 +23,12 @@
 | `fivetran init` | Create new project from the default template |
 | `fivetran init --template connectors/<name>` | Start from a community connector |
 | `fivetran debug` | Test locally, produces `warehouse.db` (DuckDB) |
+| `fivetran debug --record <scenario>` / `--replay <scenario>` | Record a run against the live source, then replay it without calling the source and compare the output (Public Preview, see **Record-and-Replay Regression Testing** below) |
 | `fivetran package` | Build a deployable ZIP without uploading |
 | `fivetran deploy --api-key <key> --destination <dest> --connection <name>` | Deploy to Fivetran |
-| `fivetran deploy --python <ver>` | Deploy on a specific Python version (default: 3.14) |
-| `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent |
+| `fivetran deploy --python-version <ver>` | Deploy on a specific Python version (alias `--python`). In SDK 3.0.0+ a new connection uses the SDK default when unset; a redeploy requires it from some source (see **Stateless CLI & Options File**) |
+| `fivetran deploy --options-file <path> --profile <name>` | Read deploy settings from an options file profile (SDK 3.0.0+) |
+| `fivetran deploy --hybrid-deployment-agent-id <id>` | Deploy via a Hybrid Deployment agent. In SDK 3.0.0+ a new connection uses the destination's default agent when unset; redeploying a connection on a Hybrid Deployment destination fails without it |
 | `fivetran deploy --package-id <id>` | Bind/rebind a connection to an existing reusable package instead of uploading code (Private Preview, see **Reusable Packages (1:N)** below) |
 | `fivetran package create` | Upload the current project as a new reusable package; server assigns the package ID (Private Preview) |
 | `fivetran package update <package-id>` | Replace the code artifact for an existing reusable package (Private Preview) |
@@ -38,14 +40,14 @@
 
 **Note**: `fivetran init` without `--template` creates a complete, working connector — not empty boilerplate.
 
-**`fivetran deploy` arguments**: authentication is required via `--api-key` or the inherited `FIVETRAN_API_KEY` environment variable; `--connection` is required; `--destination` is optional only if your account has a single destination. The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `community_connectors`, `examples/<path>` from `connector_sdk`, and no flag uses the default `_template_connector`.
+**`fivetran deploy` arguments**: authentication is required via `--api-key` or the inherited `FIVETRAN_API_KEY` environment variable; `--connection` is required; `--destination` is optional only if your account has a single destination. In SDK 3.0.0+, a redeploy also needs `--python-version` (and `--hybrid-deployment-agent-id` on a Hybrid Deployment destination) from some source; a new connection falls back to defaults (see **Stateless CLI & Options File**). The connection name must begin with `_` or a lowercase letter and contain only `_`, lowercase letters, or digits. `--template` routing: `connectors/<name>` pulls from `community_connectors`, `examples/<path>` from `connector_sdk`, and no flag uses the default `_template_connector`.
 
 ## Runtime Environment
 
 - **Memory:** 4 GB RAM in production; local `fivetran debug` enforces the same 4 GB limit (see
   **Memory Management** below)
 - **Python Versions:** 3.10, 3.11, 3.12, 3.13, **3.14 (default)**
-  - Specify a non-default version with `fivetran deploy --python <version>`
+  - Specify the version with `fivetran deploy --python-version <version>` (alias `--python`); SDK 3.0.0+ requires it on a redeploy (a new connection uses the default; see **Stateless CLI & Options File**)
   - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
 - **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`
 
@@ -197,6 +199,10 @@ table synced before the call; rows sent after the call are not affected. They di
 - Both accept `schema=` for a schema-qualified table. `deferred` needs an SDK version that supports
   it; older versions raise `TypeError`.
 
+A re-sync from the Fivetran dashboard clears the connection's state. When the re-sync finishes
+successfully, every row of an included table that the connection did not send again is soft-deleted
+(`_fivetran_deleted = TRUE`). The connector does not need `op.truncate` for that.
+
 ```python
 op.truncate(table="t", deferred=True)   # old rows are marked deleted only if update() succeeds
 for record in fetch_all_records():
@@ -291,7 +297,8 @@ connector = Connector(
   the package so Fivetran can render the form for the connection. You can still deploy with
   `--configuration configuration.json`; those values are stored securely and can pre-populate or
   update the connection's configuration — for an existing connection, omitting `--configuration`
-  keeps the existing stored values.
+  keeps the existing stored configuration values (this applies to configuration only; other deploy
+  settings follow **Stateless CLI & Options File**).
 - **Connection creation via setup form (visible packages):** marking a reusable package `visible`
   (`[tool.package-metadata].visible = true` in `pyproject.toml`, see **Reusable Packages — 1:N**
   below) makes it appear in the Fivetran dashboard so users can create connections from it and
@@ -299,6 +306,64 @@ connector = Connector(
   `configuration_form()` — the platform rejects (HTTP 4xx) a `package create`/`package update` for
   a visible package without one (`A visible package must implement configuration_form()`).
 - Full reference: https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-setup-form
+
+### Stateless CLI & Options File (SDK 3.0.0+)
+
+From 3.0.0 the CLI no longer infers deploy settings from the existing connection. Each
+`fivetran deploy` resolves its settings from explicit sources. Check `fivetran version` first;
+before 3.0.0 the old behavior applies and none of this does.
+
+- **Resolution order (highest first):** CLI flag → environment variable (e.g.
+  `FIVETRAN_PYTHON_VERSION`) → options file profile → `[tool.package-metadata]` in `pyproject.toml`
+  (`python_version` and `proxy_host_config_key` only, Python 3.11+; ignored with `--package-id`) →
+  SDK default. If none exists and
+  the field is required, deploy fails. `proxy_id`, `proxy_host_config_key` and `package_id` have no
+  env var.
+- **Required for deploy:** destination and connection always. For a **redeploy**, also the Python
+  version, and the Hybrid Deployment agent ID when the connection is on a Hybrid Deployment
+  destination, including when it uses the destination's default agent; if one cannot be resolved,
+  deploy exits (e.g. `--python-version is required; provide
+  it via the --python-version flag, the FIVETRAN_PYTHON_VERSION environment variable, or the options
+  file`). For a **new connection**, an unset Python version uses the SDK default and an unset agent
+  ID uses the destination's default agent.
+- **Options file:** TOML with named profiles (selected by `--profile`, default `default`). Lookup
+  order: `--options-file`, `FIVETRAN_OPTIONS_FILE`, `./options.toml`, then
+  `~/.fivetran/connector_sdk/options.toml`. It is excluded from the deploy package and needs Python 3.11+; on
+  Python 3.10 the CLI skips it and resolves from flags, env vars and defaults only. Storable fields:
+  `destination`, `connection`, `python_version`, `naming`, `hybrid_deployment_agent_id`, `proxy_id`,
+  `proxy_host_config_key`, `package_id`. Never store the API key there. `naming` applies only when
+  creating a connection (ignored with a warning on redeploy) and `deploy_connector.py` has no
+  `--naming` flag, so set it in a profile or with `FIVETRAN_NAMING`.
+- **Profile behavior:** profiles are independent; a named profile does not inherit from `[default]`.
+  A field missing from the selected profile continues down the resolution order and is never looked
+  up in another profile. Deploy fails if the named profile does not exist (including `--profile`
+  with no options file), if a path from `--options-file` or `FIVETRAN_OPTIONS_FILE` does not exist,
+  if the TOML is invalid, or if a profile has an unsupported field. With no `[default]` and no
+  `--profile`, no profile is selected and settings come from the other sources.
+- **Automatic migration:** when no options file exists (and Python is 3.11+), the first deploy
+  copies the account's previously saved connection settings into
+  `~/.fivetran/connector_sdk/options.toml` (always this path, even with `--options-file`), one
+  profile per connection named `<group_id>-<connection_name>`, plus a commented-out `[default]`
+  that is not applied, then continues. Set `CI=true` to skip it. It is all-or-nothing: if
+  fetching any connection fails (e.g. a `404` from the migration endpoint), no file is written, a
+  warning is logged, the deploy continues with flags and env vars, and migration retries on the
+  next deploy.
+- **Proxy Agent:** `proxy_id` has no env var. If it resolves from neither `--proxy-id` nor the
+  profile, the connection reverts to direct networking, so add `proxy_id` to every profile that
+  uses a Proxy Agent. `--proxy-id` cannot be combined with `--hybrid-deployment-agent-id`.
+- **First deploy after upgrading:** the migration runs first, and with no `--profile` the CLI selects
+  the migrated profile matching the connection, so that one redeploy works without flags. It then
+  writes the resolved values back to that profile. Later deploys need `--profile <group_id>-<connection>`
+  or a `[default]` profile.
+- **Drift warning:** the CLI warns when a resolved value differs from the connection's current server
+  value, because the deploy overwrites it.
+- **New connection:** pass `--destination` and `--connection`; Python version and agent ID are
+  optional (SDK default and destination default agent). **Redeploy:** apart from the migrated profile
+  above, nothing is carried over from the existing connection, so pass `--python-version` (and `--hybrid-deployment-agent-id` for a
+  Hybrid Deployment destination) or have an options file profile (or, for the Python version,
+  `pyproject.toml`) supply them.
+- Applies to `fivetran deploy` only. Full reference:
+  https://fivetran.com/docs/connector-sdk/getting-started/connector-sdk-commands
 
 ### Unstructured File Uploads
 
@@ -357,12 +422,12 @@ network, so no inbound firewall ports need to open. Not supported with Hybrid De
   this repo's configuration.json contract is flat strings only, so use a single `host:port` under
   the key `host`, or multiple endpoints as one comma-separated string under the key `hosts` (e.g.
   `"hosts": "db-primary.internal.com:5432,db-replica.internal.com:5432"`) — both are
-  auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time.
+  auto-detected. A custom key name can be passed via `--proxy-host-config-key` at deploy time, or
+  (SDK 3.0.0+) set as `proxy_host_config_key` in an options file profile.
 - Deploy with `fivetran deploy --proxy-id <PROXY_AGENT_ID> [--proxy-host-config-key <key>] ...`
   — a real, working flag on the installed SDK (hidden from `--help`, not unsupported). This
-  plugin's `deploy_connector.py` wrapper doesn't forward `--proxy-id`/`--proxy-host-config-key`;
-  for a Proxy Agent connection, call `fivetran deploy` directly instead of the wrapper (see
-  **Alternative: Manual Packaging** in deploy-connector).
+  plugin's `deploy_connector.py` wrapper forwards `--proxy-id` and `--proxy-host-config-key`
+  unchanged to `fivetran deploy`.
 - `fivetran debug` and `fivetran configuration --test` don't route through the Proxy Agent —
   neither can validate end-to-end connectivity locally, even though `add_test()` setup tests
   otherwise run fine locally (see **Setup Form** above). A Proxy Agent connectivity check in
@@ -447,6 +512,74 @@ own copy — useful when the same connector code should run identically across m
   version.
 - Package IDs returned by `package create` are account-scoped and reusable across any number of
   connections in that account.
+
+### Record-and-Replay Regression Testing (Public Preview)
+
+Record a connector run once against the live source, then replay it without calling the source to
+check that code changes don't change the connector's output. Runs only locally, through
+`fivetran debug`; it can't run on a deployed connection.
+
+**Mark source reads with `@action`** — decorate every function that reads from the source (API
+request, database query, file download). Only decorated calls are recorded.
+
+```python
+from fivetran_connector_sdk import action
+
+@action("customers_page", match=lambda page: {"page": page})
+def fetch_customers_page(page):
+    response = requests.get(url, params={"page": page}, timeout=30)
+    response.raise_for_status()
+    return response.json()
+```
+
+- `name` (required) — stable name for the call site. Repeated calls to the same function share
+  one name; two different functions can't share a name (record and replay fail at start).
+- `match` (optional) — receives the function's arguments (defaults applied) and returns the dict
+  of arguments to store and match on during replay. Without it, all arguments are stored. Use it
+  to leave out values that change every run (timestamps, request IDs) or that are sensitive. It
+  must accept the same arguments as the function; not supported with `*args`/`**kwargs`.
+- Arguments (or the `match` dict) and return values must be JSON-serializable (dicts, lists,
+  strings, numbers, booleans, `None`); convert anything else inside the function, e.g. return
+  `response.json()`, not the response.
+- Calls that share a `name` and matched arguments can't be told apart: replay returns the first
+  recorded result for each. Include an argument that differs, such as a page number or cursor.
+- Not recorded: anything read without `@action` (current time, random values, local files). Make
+  the output deterministic or wrap the read in `@action`.
+- With recording and replay off, `@action` calls the function unchanged. In a deployed
+  connection it has no effect, so it can stay in production code.
+
+**Commands** (run from the project folder; a scenario name is letters, digits, `-`, `_`):
+
+| Command | What it does |
+|---------|--------------|
+| `fivetran debug --record <scenario> [--max-records N] [--yes]` | Runs against the live source and saves the `@action` calls, `warehouse.db`, and `state.json` to `fixtures/<scenario>/`. `--max-records` stops the sync after N `op.upsert`/`op.update`/`op.delete` calls (default 100). `--yes` overwrites an existing scenario without prompting. |
+| `fivetran debug --replay <scenario>` | Reruns the connector from the recorded starting state with each `@action` call answered from the recording, then compares the result with the recording. Exits non-zero and lists the differences if it doesn't match. |
+
+In this plugin, run these through `tools/run_connector.py` (`--record`, `--replay`, `--max-records`,
+`--yes`) so encrypted configuration is still decrypted; see the test-connector skill.
+
+- `--record` and `--replay` can't be combined; `--max-records` only works with `--record` (replay
+  reads the cap from the recording). `--state` is ignored for both.
+- Recording starts from the project's `files/state.json` and `files/warehouse.db` (copied to
+  `fixtures/<scenario>/record_start/`) and writes to `fixtures/<scenario>/`, not to `files/`. A
+  failed or interrupted recording is discarded. An `@action` call that raises is not recorded.
+- Layout: `record_start/` (starting snapshot), `record_data/fixture.jsonl` (captured calls),
+  `record_end/` (the `warehouse.db` and `state.json` that replays are compared with).
+- A replay writes to `.fixtures_replay/<scenario>/` (added to `.gitignore`), recreated each run.
+- Replay fails with `No recorded interaction for '<name>' with arguments` when the code makes a
+  call the recording doesn't contain. If the change is intended, record again; if an argument
+  changes on every run, remove it with `match`.
+- **Sensitive data**: only argument names are masked (`*api_key`, `*token`, `*secret`,
+  `*password`, `*credential`, `*configuration`). Whatever the source returns is stored as is in
+  `fixture.jsonl`, and in the `warehouse.db` and `state.json` snapshots. Review `fixtures/`
+  before committing it, and commit it only if the data is synthetic or sanitized.
+- Several threads reading at once can finish in a different order each run, which makes a replay
+  differ, especially with `--max-records`. Keep the order deterministic.
+- Troubleshooting messages: `No recording found for scenario` (record first), `fixture_version ...
+  is not supported` / `fixture.jsonl ... is empty` / `has an invalid header line` (record again),
+  `is used by two different functions` (rename one), `Another record or replay run is in
+  progress` (wait), `non-JSON-serializable argument|result` (convert or use `match`).
+- Full reference: https://fivetran.com/docs/connector-sdk/testing/regression-testing
 
 ## Advanced Patterns
 

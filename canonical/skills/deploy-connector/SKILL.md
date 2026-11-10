@@ -50,6 +50,19 @@ If the test fails, classify the error (INFRA / FIRST_RUN / CODE) and — for COD
 
 ## Step 3: Deploy
 
+Check the SDK version with the same executable the wrapper uses: the connector's own
+`.venv/bin/fivetran version` (`.venv\Scripts\fivetran.exe version` on Windows), or bare
+`fivetran version` only if the connector has no `.venv`. On SDK 3.0.0+ the CLI is stateless. For a
+**new** connection, the Python version and agent ID are optional: the user can provide them,
+otherwise the SDK default and the destination's default agent are used. A **redeploy** needs the
+Python version from the `--python-version` flag, `FIVETRAN_PYTHON_VERSION`, an options file
+profile, or `[tool.package-metadata].python_version` in `pyproject.toml`. On a Hybrid Deployment
+destination it also needs `--hybrid-deployment-agent-id`, even when the connection uses the
+destination's default agent (see **Stateless CLI & Options File** in `sdk-reference.md`). The first
+deploy after upgrading auto-selects the migrated profile for the connection, so it may need
+neither. Do not ask up front: try the deploy, and if it fails with a missing-field error, ask the
+user for the Python version (3.10–3.14) and agent ID and re-run with them. Before 3.0.0, omit them.
+
 For an existing connection, use its ID so the tool reuses its current name and
 destination without listing destinations or prompting:
 
@@ -71,6 +84,9 @@ give the user a chance to stop you before the deploy call runs.
 
 The tool reads `FIVETRAN_API_KEY`, passes local configuration through a named
 pipe when present, and invokes `fivetran deploy --destination <name> --connection <name> --force`.
+It also forwards these optional flags unchanged: `--python-version`, `--options-file`, `--profile`,
+`--proxy-id`, `--proxy-host-config-key`, `--hybrid-deployment-agent-id`. Environment variables such
+as `FIVETRAN_PYTHON_VERSION` and `FIVETRAN_OPTIONS_FILE` are inherited.
 For an existing connection it reads connection details and then that connection's
 group details. Do not combine `--connection-id` with name or destination overrides.
 
@@ -131,7 +147,21 @@ This calls `PATCH /v1/connections/{id}` with `{"paused": false}`; Fivetran then 
 To update a deployed connection, use `--connection-id <id>`. This preserves its
 name and destination even when the recovered project directory has a different
 name. Redeployment replaces code and supplied configuration; it does not itself
-unpause the connection.
+unpause the connection. On SDK 3.0.0+ other settings (Python version, proxy, hybrid agent) are not
+carried over from the existing connection: supply them via flags, env vars, the options file, or (Python version only) `pyproject.toml`. The
+first deploy after upgrading uses the migrated profile instead. Otherwise a redeploy fails without
+the Python version, and without the agent ID on a Hybrid Deployment destination.
+
+### Troubleshooting (SDK 3.0.0+)
+
+- `--python-version is required` (redeploy) — pass `--python-version <ver>`, set `FIVETRAN_PYTHON_VERSION`,
+  add it to the options file profile, or set `python_version` under `[tool.package-metadata]` in `pyproject.toml`.
+- `--hybrid-deployment-agent-id is required` (redeploy on a Hybrid Deployment destination) — pass
+  `--hybrid-deployment-agent-id <id>`, set `FIVETRAN_HD_AGENT_ID`, or add `hybrid_deployment_agent_id`
+  to the options file profile.
+- `migration failed: 404 ... connector-sdk/migration/connections` — non-fatal. The one-time import of
+  existing connection settings into `~/.fivetran/connector_sdk/options.toml` is all-or-nothing: no
+  file is written and it is retried on the next deploy; supply the values explicitly meanwhile.
 
 If the connection's current code package is shared with other connections (see **Reusable
 Packages (1:N)** below), a normal redeploy is refused. A plain redeploy always uploads a
