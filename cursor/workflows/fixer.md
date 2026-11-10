@@ -115,6 +115,13 @@ such as authentication, pagination, incremental sync, or performance.
 - **Adding or removing `schema` on existing table definitions** (multiple-schema support): this moves the table between the default schema and a named one (e.g. `analytics.orders` → `analytics_sales.orders`) and Fivetran does not move existing data. Tell the user a re-sync is required before applying.
 - After any schema/PK change, re-test from a clean slate: `fivetran reset --force` then re-run the connector (this simulates an initial sync).
 
+**Regression-tested connectors (Public Preview).** If the project has a `fixtures/` folder, or the user uses record-and-replay, protect the change with a replay:
+- Before editing, replay the existing scenarios to get a baseline; if one already fails, tell the user before changing code.
+- After editing, replay each scenario with `tools/run_connector.py ... --replay <scenario>` (see **Regression testing: record and replay** in `skills/test-connector/SKILL.md`). A difference is either a regression to fix or the intended change; ask the user which, and record the scenario again only with their agreement.
+- Schema or primary-key changes can cause warehouse/output differences without invalidating recorded source interactions; changes to an `@action` name or matched arguments can cause `No recorded interaction`. Inspect the actual failure and record again only after the user confirms the new behavior is intended.
+- Keep `@action` on source reads you add or move, with a unique `name` per function, and `match=` that leaves out sensitive or per-run values.
+- Do not hand-edit `fixtures/`, and do not read its contents into the conversation.
+
 ### 4. Implement
 - Use Edit tool for targeted changes following studied example patterns
 - Document each change with explanation
@@ -175,6 +182,10 @@ op.truncate(table, deferred=True)   # deferred: applied only if update() succeed
 | Every column declared with a type | Keep types only where a specific type must be forced; omit the rest for inference/evolution |
 | Invalid schema key or type name | Use only `schema` (multi-schema only)/`table`/`primary_key`/`columns` keys and valid SDK type names |
 | Operation on a schema-qualified table omits `schema=` (or `schema` is empty) | Pass the same non-empty `schema=` as in `schema()`; without it the data lands in the default schema's table |
+| Redeploy fails with `--python-version is required` (SDK 3.0.0+; new connections use the SDK default) | Pass `--python-version`, set `FIVETRAN_PYTHON_VERSION`, set `python_version` in the options file profile or under `[tool.package-metadata]` in `pyproject.toml` (see **Stateless CLI & Options File** in `sdk-reference.md`) |
+| Redeploy fails with `--hybrid-deployment-agent-id is required` (SDK 3.0.0+; new connections use the destination's default agent) | Pass `--hybrid-deployment-agent-id`, set `FIVETRAN_HD_AGENT_ID`, or set `hybrid_deployment_agent_id` in the options file profile (see **Stateless CLI & Options File** in `sdk-reference.md`) |
+| `migration failed: 404` on deploy | Non-fatal; the one-time options-file migration is retried on the next deploy |
+| Redeploy asks for settings after the first post-upgrade deploy | Only that first deploy auto-selects the migrated profile; later deploys need `--profile <group_id>-<connection>` or a `[default]` profile |
 | `yield op.upsert(...)` | Remove yield, call directly — the generator pattern was removed from the SDK |
 | Non-string config values | Convert all to strings |
 | `state["key"]` on the first sync | Use `state.get("key", default)`; the initial state is `{}` |
