@@ -113,7 +113,8 @@ Cursor does not currently provide a non-interactive `agent plugin install` comma
 To refresh the marketplace for an updated plugin version:
 
 ```bash
-agent plugin marketplace update https://github.com/fivetran/connector_sdk_tools
+agent plugin marketplace remove fivetran-connector-sdk-ai
+agent plugin marketplace add https://github.com/fivetran/connector_sdk_tools
 ```
 
 Then run `agent` and enter `/plugin` to apply the available plugin update.
