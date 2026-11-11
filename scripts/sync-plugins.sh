@@ -36,6 +36,13 @@
 #   copilot/skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md    (Copilot CLI)
 #   copilot/skills/connector-sdk-submit/SKILL.md                                                                      (Copilot CLI)
 #   copilot/tools/*                                          (Copilot CLI)
+#   cursor/sdk-reference.md                                  (Cursor)
+#   cursor/agents/connector-{validator,generator,fixer}.md   (Cursor)
+#   cursor/skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md     (Cursor)
+#   cursor/skills/connector-sdk-submit/SKILL.md                                                                       (Cursor)
+#   cursor/workflows/{validator,generator,fixer}.md          (Cursor)
+#   cursor/tools/*                                           (Cursor)
+#   cursor/hooks/log-skill-use.sh                            (Cursor)
 
 set -euo pipefail
 
@@ -107,6 +114,8 @@ if [[ "$BUMP_VERSION" == true ]]; then
   update_version_in_file "codex/.codex-plugin/plugin.json" "$NEW_VERSION"
   update_version_in_file "gemini-extension.json" "$NEW_VERSION"
   update_version_in_file ".github/plugin/marketplace.json" "$NEW_VERSION"
+  update_version_in_file "cursor/.cursor-plugin/plugin.json" "$NEW_VERSION"
+  update_version_in_file ".cursor-plugin/marketplace.json" "$NEW_VERSION"
 else
   echo "Skipping version bump (pass --bump to increment the version)."
 fi
@@ -121,6 +130,7 @@ CLAUDE_DIR="claude-code"
 CODEX_DIR="codex"
 GEMINI_DIR="."
 COPILOT_DIR="copilot"
+CURSOR_DIR="cursor"
 SKILLS=(build-connector test-connector deploy-connector evaluate-connector connector-sdk-submit migrate-functions-connector migrate-meltano-connector migrate-airbyte-connector)
 
 # --- Helpers ---
@@ -257,15 +267,49 @@ EOF
   esac
 }
 
+cursor_frontmatter() {
+  case "$1" in
+    validator)
+      cat <<'EOF'
+---
+name: connector-validator
+description: Research API documentation and gather complete requirements for building a Fivetran connector. Use when researching data sources before code generation.
+---
+EOF
+      ;;
+    generator)
+      cat <<'EOF'
+---
+name: connector-generator
+description: Generate Fivetran connector code from a validated specification. Use after requirements have been gathered.
+---
+EOF
+      ;;
+    fixer)
+      cat <<'EOF'
+---
+name: connector-fixer
+description: Debug and fix errors in a Fivetran connector. Use when tests fail or the user reports connector issues.
+---
+EOF
+      ;;
+    *)
+      echo "Unknown role: $1" >&2
+      exit 1
+      ;;
+  esac
+}
+
 assemble_agent() {
   local role="$1"        # validator | generator | fixer
-  local target="$2"      # claude | gemini | copilot
+  local target="$2"      # claude | gemini | copilot | cursor
   local src="$WORKFLOWS_DIR/${role}.md"
   local dest
   case "$target" in
     claude)  dest="$CLAUDE_DIR/agents/connector-${role}.md" ;;
     gemini)  dest="$GEMINI_DIR/agents/connector-${role}.md" ;;
     copilot) dest="$COPILOT_DIR/agents/connector-${role}.md" ;;
+    cursor)  dest="$CURSOR_DIR/agents/connector-${role}.md" ;;
     *) echo "Unknown target: $target" >&2; exit 1 ;;
   esac
   mkdir -p "$(dirname "$dest")"
@@ -332,6 +376,7 @@ copy_with_banner "$SDK_REF" "$CLAUDE_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$CODEX_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$GEMINI_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$COPILOT_DIR/sdk-reference.md"
+copy_with_banner "$SDK_REF" "$CURSOR_DIR/sdk-reference.md"
 
 echo "Assembling Claude subagent files..."
 for role in validator generator fixer; do
@@ -348,10 +393,21 @@ for role in validator generator fixer; do
   assemble_agent "$role" copilot
 done
 
+echo "Assembling Cursor agent files..."
+for role in validator generator fixer; do
+  assemble_agent "$role" cursor
+done
+
 echo "Copying workflow files into Codex plugin..."
 mkdir -p "$CODEX_DIR/workflows"
 for role in validator generator fixer; do
   copy_with_banner "$WORKFLOWS_DIR/${role}.md" "$CODEX_DIR/workflows/${role}.md"
+done
+
+echo "Copying workflow files into Cursor plugin..."
+mkdir -p "$CURSOR_DIR/workflows"
+for role in validator generator fixer; do
+  copy_with_banner "$WORKFLOWS_DIR/${role}.md" "$CURSOR_DIR/workflows/${role}.md"
 done
 
 echo "Syncing canonical skills..."
@@ -361,6 +417,7 @@ for skill in "${SKILLS[@]}"; do
   copy_skill_with_banner "$src" "$CODEX_DIR/skills/${skill}/SKILL.md"
   copy_skill_with_banner "$src" "$GEMINI_DIR/skills/${skill}/SKILL.md"
   copy_skill_with_banner "$src" "$COPILOT_DIR/skills/${skill}/SKILL.md"
+  copy_skill_with_banner "$src" "$CURSOR_DIR/skills/${skill}/SKILL.md"
 done
 
 echo "Copying tools..."
@@ -368,11 +425,13 @@ copy_tools "$CLAUDE_DIR/tools"
 copy_tools "$CODEX_DIR/tools"
 copy_tools "$GEMINI_DIR/tools"
 copy_tools "$COPILOT_DIR/tools"
+copy_tools "$CURSOR_DIR/tools"
 
 echo "Copying hooks..."
 copy_hooks "$CLAUDE_DIR/hooks"
 copy_hooks "$CODEX_DIR/hooks"
 copy_hooks "$GEMINI_DIR/hooks"
+copy_hooks "$CURSOR_DIR/hooks"
 # Copilot CLI has no lifecycle hook system (no UserPromptSubmit/PostToolUse events);
 # it uses commands/ markdown files only, so hooks are not synced there.
 
@@ -410,6 +469,7 @@ echo "Filling AI build marker placeholders..."
 fill_plugin_markers claude-code "$CLAUDE_DIR/.claude-plugin/plugin.json" "$CLAUDE_DIR"
 fill_plugin_markers codex "$CODEX_DIR/.codex-plugin/plugin.json" "$CODEX_DIR"
 fill_plugin_markers copilot ".github/plugin/marketplace.json" "$COPILOT_DIR"
+fill_plugin_markers cursor "$CURSOR_DIR/.cursor-plugin/plugin.json" "$CURSOR_DIR"
 # Gemini tree is the repo root, so only its generated paths are scanned.
 fill_plugin_markers gemini gemini-extension.json skills agents tools hooks sdk-reference.md
 

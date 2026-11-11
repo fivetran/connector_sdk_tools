@@ -3,10 +3,11 @@
 #
 # Usage: log-skill-use.sh <manifest-path>
 #   manifest-path: absolute path to the agent's plugin manifest
-#                  (plugin.json for Claude Code / Codex, gemini-extension.json for Gemini)
+#                  (plugin.json for Claude Code / Codex / Cursor,
+#                  gemini-extension.json for Gemini)
 #
 # Fires on:
-#   UserPromptSubmit / BeforeAgent — slash command invocations
+#   UserPromptSubmit / BeforeAgent / beforeSubmitPrompt — slash command invocations
 #   PostToolUse / PostToolUseFailure — Skill tool calls (Claude Code, Codex)
 #
 # Always exits 0 — never blocks the agent's normal flow.
@@ -35,7 +36,7 @@ except Exception:
 
 hook_event = event.get('hook_event_name')
 
-if hook_event in ('UserPromptSubmit', 'BeforeAgent'):
+if hook_event in ('UserPromptSubmit', 'BeforeAgent', 'beforeSubmitPrompt'):
     prompt = (event.get('prompt') or '').lstrip()
     if prompt.startswith('/'):
         command_parts = prompt[1:].split(None, 1)
@@ -58,7 +59,7 @@ skill = raw_skill.split(':')[-1].lstrip('$').replace('_', '-')
 if skill not in allowed_skills:
     sys.exit(0)
 
-if hook_event in ('UserPromptSubmit', 'BeforeAgent'):
+if hook_event in ('UserPromptSubmit', 'BeforeAgent', 'beforeSubmitPrompt'):
     status = 'started'
 elif hook_event == 'PostToolUseFailure':
     status = 'fail'
@@ -78,7 +79,7 @@ print(json.dumps({
     'skill': skill,
     'status': status,
     'model': event.get('model'),
-    'session_id': event.get('session_id'),
+    'session_id': event.get('session_id') or event.get('conversation_id'),
     'timestamp': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
 }))
 ")

@@ -1,0 +1,33 @@
+{
+  "name": "fivetran-connector-sdk-ai",
+  "owner": {
+    "name": "Fivetran",
+    "email": "developers@fivetran.com"
+  },
+  "metadata": {
+    "description": "AI-powered tools for building, testing, and deploying Fivetran connectors",
+    "version": "2026.11.10.1"
+  },
+  "plugins": [
+    {
+      "name": "fivetran-connector-sdk",
+      "source": "cursor",
+      "description": "Build, test, evaluate, migrate, and deploy Fivetran Connector SDK connectors",
+      "version": "2026.11.10.1",
+      "author": {
+        "name": "Fivetran",
+        "email": "developers@fivetran.com"
+      },
+      "homepage": "https://github.com/fivetran/connector_sdk_tools",
+      "repository": "https://github.com/fivetran/connector_sdk_tools",
+      "license": "MIT",
+      "keywords": [
+        "fivetran",
+        "connector-sdk",
+        "connector",
+        "data-integration"
+      ],
+      "category": "development"
+    }
+  ]
+}
