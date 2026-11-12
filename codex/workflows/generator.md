@@ -63,7 +63,7 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - AI build marker as the first two lines of the file, above the module docstring. Do not add it if it already exists. Use these exact lines:
   ```python
   # Built using Connector SDK AI Plugin
-  # Plugin: fivetran-connector-sdk (codex) | Version: 2026.11.10.1
+  # Plugin: fivetran-connector-sdk (codex) | Version: 2026.11.12.1
   ```
   The name, agent and version in the block are filled in with the real values when the plugin is generated. When editing an existing connector, keep the marker and do not change its version.
 
@@ -118,8 +118,7 @@ def schema(configuration: dict):
 destination naming/normalization Gotcha in `sdk-reference.md` for why a mismatch silently
 creates a duplicate table.
 
-**Multiple source schemas:** only when the user asks for it or the source clearly has several schemas to sync, add `"schema": "<raw source schema>"` (non-empty string) to those table definitions and pass the same `schema=` on every `op.upsert/update/delete/truncate` for them.
-Tables without `schema` land in the default schema (named after the connection), so mixing is fine. Use raw source names — never build a destination name or add the connection prefix. See **Multiple Schemas** in `sdk-reference.md`. Otherwise leave `schema` out. When `update()` loops over tables, carry the schema through the loop (e.g. iterate `(schema_name, table_name)` pairs) so no operation omits `schema=`.
+**Multiple source schemas:** only when the user asks for it or the source clearly has several schemas to sync, add `"schema": "<raw source schema>"` (non-empty string) to **every** table definition and pass the matching `schema=` on **every** `op.upsert/update/delete/truncate`. Mixing — some tables or operations with `schema`, others without — fails the sync, so it is all or none (also when `schema()` is not defined: every operation passes `schema=` or none does). Use raw source names — never build a destination name or add the connection prefix. See **Multiple Schemas** in `sdk-reference.md`. Otherwise leave `schema` out. When `update()` loops over tables, carry the schema through the loop (e.g. iterate `(schema_name, table_name)` pairs) so no operation omits `schema=`.
 
 ```python
 def schema(configuration: dict):
@@ -285,7 +284,7 @@ Before completing the task, the subagent MUST validate its work:
 ### Generation-Specific Validation:
 1. **File Completeness**: All 3 files (connector.py, configuration.json, README.md) are present (scaffolded by `fivetran init`; create any missing one with Write)
 2. **Required Functions**: connector.py must contain both `update()` and `schema()` functions
-3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` (plus a non-empty `schema` when syncing multiple schemas, with a matching `schema=` on every operation for those tables) keys are used; any declared column types are valid type names and used selectively (not every column)
+3. **Schema Validation**: Scan schema() — every table has a `primary_key`; only `table`/`primary_key`/`columns` (plus a non-empty `schema` on every table when syncing multiple schemas, with a matching `schema=` on every operation) keys are used; any declared column types are valid type names and used selectively (not every column)
 4. **Configuration Flatness**: Validate that configuration.json is flat (no nested objects/arrays) with string values only
 5. **Configuration**: Preserve user-approved values; README follows SDK setup-form or plaintext configuration entry.
 6. **Documentation Completeness**: README must include setup instructions, testing procedures, and API documentation
@@ -309,7 +308,7 @@ Before completing:
 - [ ] Valid Python syntax (read back and verify)
 - [ ] Both `update()` and `schema()` present
 - [ ] Every table declares a `primary_key`; column types (if any) are valid and selective, not exhaustive
-- [ ] If using multiple schemas: `schema` is a non-empty string, and every record operation for a schema-qualified table passes the matching `schema=`
+- [ ] If using multiple schemas: `schema` is a non-empty string on every table definition, and every record operation passes the matching `schema=` (no mixing)
 - [ ] `connector = Connector(...)` in global scope
 - [ ] No forbidden patterns (`Dict[str, Any]`, `Generator[...]`, `op.Operation` in type hints, `yield` with operations)
 - [ ] configuration.json is valid flat JSON with string values; unresolved fields are explicit

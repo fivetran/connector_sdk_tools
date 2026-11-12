@@ -138,7 +138,7 @@ A single connector can sync tables from several source schemas (e.g. a database 
 or the source clearly has multiple schemas to sync** — single-schema connectors need no change.
 If the installed SDK rejects `schema`, it is likely out of date — tell the user to upgrade rather than working around it.
 
-Add an optional `schema` key (a non-empty string) to table definitions, and pass the optional `schema=` keyword argument (also a non-empty string) on the record operations (`op.upsert`, `op.update`, `op.delete`, `op.truncate`) for those tables:
+Add a `schema` key (a non-empty string) to **every** table definition, and pass the matching `schema=` keyword argument (also a non-empty string) on **every** record operation (`op.upsert`, `op.update`, `op.delete`, `op.truncate`):
 
 ```python
 def schema(configuration: dict):
@@ -152,21 +152,27 @@ def update(configuration: dict, state: dict):
     op.checkpoint(state=state)
 ```
 
-- **Mixing is allowed:** `schema` is optional per table and per operation. Tables and operations without `schema` land in the default schema, which is named after the connection. `schema` must be a non-empty string — never `""` or `None`.
+- **All or none — mixing fails the sync:** a connector either uses `schema` everywhere or nowhere.
+  If `schema()` is defined, either every table definition has `schema` and every record operation
+  passes `schema=`, or no table definition has it and no operation passes it. If `schema()` is not
+  defined, either every operation passes `schema=` or none does. Without `schema`, tables land in
+  the default schema, which is named after the connection. `schema` must be a non-empty string —
+  never `""` or `None`.
 - **Exact `(schema, table)` match:** a definition applies only to its own pair and is never
   borrowed from another schema, so `sales.orders` and `support.orders` can have different columns
-  and primary keys. An operation without `schema=` targets the default-schema table, not a schema-qualified one with the same name, so always pass `schema=` on operations for tables declared with `schema`.
+  and primary keys. Operations must pass the same `schema` as their table definition.
 - **`schema()` may be incomplete or absent:** an operation may reference an undeclared schema or
   table; Fivetran creates it and infers columns (with `_fivetran_id` if no primary key is
-  declared). A genuinely distinct undeclared schema is allowed.
-- **Migration warning:** adding or removing `schema` on an existing table (moving it out of or into the default schema) changes its destination layout (e.g. `analytics.orders` → `analytics_sales.orders`).
+  declared). A genuinely distinct undeclared schema is allowed, but the operation must still pass
+  `schema=` (and the declared tables must all have `schema`).
+- **Migration warning:** adding or removing `schema` on an existing connector (moving its tables out of or into the default schema) changes its destination layout (e.g. `analytics.orders` → `analytics_sales.orders`).
   Fivetran does not move existing destination data — the user must re-sync. Warn before making
   this change to a connector that is already deployed.
 
 ### Operations
 
-Call operations directly. For tables defined with a `schema`, add `schema="..."` to each record
-operation on them (see **Multiple Schemas**), e.g. `op.upsert(schema="sales", table="t", data=record)`, `op.delete(schema="sales", table="t", keys={...})`.
+Call operations directly. On a connector that uses `schema`, add `schema="..."` to every record
+operation (see **Multiple Schemas**), e.g. `op.upsert(schema="sales", table="t", data=record)`, `op.delete(schema="sales", table="t", keys={...})`.
 
 | Operation | Description |
 |-----------|-------------|
@@ -196,7 +202,7 @@ table synced before the call; rows sent after the call are not affected. They di
   `schema`) replaces the first. If the sync fails after a checkpoint that follows the call, the next
   sync applies it when it succeeds, with the time of the original call. If the state is reset
   (a re-sync), it is dropped.
-- Both accept `schema=` for a schema-qualified table. `deferred` needs an SDK version that supports
+- Both accept `schema=` (required on every operation if the connector uses `schema`). `deferred` needs an SDK version that supports
   it; older versions raise `TypeError`.
 
 A re-sync from the Fivetran dashboard clears the connection's state. When the re-sync finishes
@@ -719,7 +725,7 @@ above rather than silently changing keys or discarding usable local values.
 ## Gotchas
 
 - **`requests` is bundled** — don't add it to requirements.txt
-- **`warehouse.db` is DuckDB, not SQLite** — use `duckdb.connect('files/warehouse.db')`, tables are in the `tester` schema unless the connector defines `schema` for that table (see **Multiple Schemas**), in which case it lands in its own schema (with the same name normalization applied to schema names)
+- **`warehouse.db` is DuckDB, not SQLite** — use `duckdb.connect('files/warehouse.db')`, tables are in the `tester` schema unless the connector uses `schema` (see **Multiple Schemas**), in which case each table lands in its own schema (with the same name normalization applied to schema names)
 - **`fivetran reset` prompts for confirmation** — use `--force` in scripts/agents
 - **Datetime fields** — always use UTC, format as `'%Y-%m-%dT%H:%M:%SZ'`
 - **Never use `exit()`, `sys.exit()`, or `os._exit()`** — the SDK statically scans `connector.py`
