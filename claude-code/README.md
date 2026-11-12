@@ -4,7 +4,7 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 
 ## Prerequisites
 - Python 3.10-3.14
-- [Claude Code](https://claude.com/claude-code) installed
+- [Claude Code](https://claude.com/claude-code) 2.1.233 or later
 - [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
 - A Fivetran account (https://fivetran.com)
 
