@@ -1,12 +1,12 @@
 ---
-name: connector-sdk-submit
+name: submit-to-community-catalog
 description: Prepare a Community Connector or Fivetran Connector SDK example for a first pull request by applying the target repository's GitHub review instructions, sanitizing configuration.json, and running Black and Flake8.
 argument-hint: "Connector directory name or path (e.g., 'github_connector' or './github_connector')"
 ---
 
 <!--
   GENERATED FILE — DO NOT EDIT.
-  Canonical source: canonical/skills/connector-sdk-submit/SKILL.md
+  Canonical source: canonical/skills/submit-to-community-catalog/SKILL.md
   Regenerate with: bash scripts/sync-plugins.sh
 -->
 

@@ -80,7 +80,7 @@ To fix or modify an existing connector, describe the problem or change in natura
 | `skills/test-connector/` | Run and validate connector tests |
 | `skills/deploy-connector/` | Package and deploy to Fivetran |
 | `skills/evaluate-connector/` | Static code review and scored report |
-| `skills/connector-sdk-submit/` | Submit a Connector SDK example or connector contribution in a pull request |
+| `skills/submit-to-community-catalog/` | Submit a Connector SDK example or connector contribution in a pull request |
 | `skills/migrate-functions-connector/` | Migrate Fivetran Functions connectors to Connector SDK |
 | `skills/migrate-meltano-connector/` | Migrate Meltano extractors or Singer taps to Connector SDK |
 | `skills/migrate-airbyte-connector/` | Migrate Airbyte source connectors to Connector SDK |
