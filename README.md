@@ -137,7 +137,7 @@ Once installed, in your connector project directory:
 | `/fivetran-connector-sdk:test-connector` | `$test_connector` | `/test-connector` | Run and validate an existing connector locally |
 | `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | `/deploy-connector` | Deploy a connector to your Fivetran account |
 | `/fivetran-connector-sdk:evaluate-connector` | `$evaluate_connector` | `/evaluate-connector` | Code review and quality report |
-| `/fivetran-connector-sdk:submit-to-community-catalog` | `$connector_sdk_submit` | `/submit-to-community-catalog` | Submit a Connector SDK example or connector contribution in a pull request |
+| `/fivetran-connector-sdk:submit-to-community-catalog` | `$submit_to_community_catalog` | `/submit-to-community-catalog` | Submit a Connector SDK example or connector contribution in a pull request |
 | `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | `/migrate-functions-connector` | Migrate a Fivetran Functions connector to Connector SDK |
 | `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | `/migrate-meltano-connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
 | `/fivetran-connector-sdk:migrate-airbyte-connector` | `$migrate_airbyte_connector` | `/migrate-airbyte-connector` | Migrate an Airbyte source connector to Connector SDK |
