@@ -44,7 +44,7 @@ Reuse existing configuration values and collect only missing values. Use the pro
 | `test-connector` | Run and validate an existing connector locally |
 | `deploy-connector` | Deploy a connector to Fivetran |
 | `evaluate-connector` | Review connector correctness and quality |
-| `connector-sdk-submit` | Prepare and submit a Connector SDK contribution |
+| `submit-to-community-catalog` | Prepare and submit a Connector SDK contribution |
 | `migrate-functions-connector` | Migrate a Fivetran Functions connector |
 | `migrate-meltano-connector` | Migrate a Meltano extractor or Singer tap |
 | `migrate-airbyte-connector` | Migrate an Airbyte source connector |
@@ -65,7 +65,7 @@ The plugin includes agents for API validation, connector generation, and connect
 | `skills/test-connector/` | Run and validate a connector locally |
 | `skills/deploy-connector/` | Package and deploy a connector to Fivetran |
 | `skills/evaluate-connector/` | Static code review and scored quality report |
-| `skills/connector-sdk-submit/` | Prepare a Connector SDK example or connector contribution for submission |
+| `skills/submit-to-community-catalog/` | Prepare a Connector SDK example or connector contribution for submission |
 | `skills/migrate-functions-connector/` | Migrate a Fivetran Functions connector |
 | `skills/migrate-meltano-connector/` | Migrate a Meltano extractor or Singer tap |
 | `skills/migrate-airbyte-connector/` | Migrate an Airbyte source connector |
