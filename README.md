@@ -333,7 +333,7 @@ Only edit files under **`canonical/`** and the agent-specific static integration
 | `canonical/hooks/log-skill-use.sh` | `bash scripts/sync-plugins.sh` | Claude Code, Codex, Gemini, and Cursor |
 | `README.md` | (no sync needed) | root docs |
 | `GEMINI.md`, `gemini-extension.json`, `commands/*.toml`, `hooks/hooks.json` | (no sync needed) | Gemini only |
-| `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/commands/*.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
+| `claude-code/CLAUDE.md`, `claude-code/README.md`, `claude-code/hooks/hooks.json` | (no sync needed) | Claude Code only |
 | `codex/AGENTS.md`, `codex/README.md`, `codex/.codex-plugin/plugin.json`, `codex/hooks.json` | (no sync needed) | Codex only |
 | `copilot/AGENTS.md`, `copilot/README.md`, `copilot/commands/*.md` | (no sync needed) | Copilot CLI only |
 | `cursor/.cursor-plugin/plugin.json`, `cursor/README.md`, `.cursor-plugin/marketplace.json` | (no sync needed) | Cursor only |
