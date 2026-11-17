@@ -61,6 +61,17 @@ done
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# --- Guard: no commands/ in the Claude Code plugin ---
+# Claude Code turns both skills/<name>/SKILL.md and commands/<name>.md into the
+# slash command /<plugin>:<name>. Since 2.1.233 the palette no longer dedupes a
+# skill and a command that share a name, so every workflow shows up twice
+# (anthropics/claude-code#88050). Skills are the single source for Claude Code.
+if [[ -d "claude-code/commands" ]]; then
+  echo "ERROR: claude-code/commands/ must not exist; it duplicates skills/ in the Claude Code slash menu." >&2
+  echo "Remove it; the skills in claude-code/skills/ already provide /fivetran-connector-sdk:<name>." >&2
+  exit 1
+fi
+
 # --- Version management ---
 # Format: YYYY.M.D.N  (e.g. 2026.6.25.1)
 # N auto-increments when multiple releases happen on the same calendar day.
