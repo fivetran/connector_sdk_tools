@@ -4,6 +4,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.17.1
+
+- Documented the mixed schema behavior for multiple schema connectors to clearly explain the rejection and error handling when conflicting schemas are detected.
+- Resolved an issue in Claude Code that caused duplicate list entries to appear when a skill and a command shared the exact same name.
+
 ### fivetran-connector-sdk-tools 2026.11.10.1
 
 - Added a Cursor CLI plugin with the existing Connector SDK skills, specialized agents, workflows, SDK reference, and shared tools.
