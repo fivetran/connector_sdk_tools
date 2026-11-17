@@ -112,7 +112,7 @@ such as authentication, pagination, incremental sync, or performance.
 **Schema- and state-changing revisions — warn the user before applying:**
 - **Changing a table's `primary_key`** (or changing a declared column's data type): the destination table must be dropped and the connection fully re-synced to preserve data integrity. Tell the user to drop the table in the destination and run **Resync all historical data** on the connection's Setup tab. Adding new tables or new columns does NOT require a re-sync.
 - **Changing the shape of `state`/cursor keys**: old checkpoints won't match the new structure. Provide fallback defaults for missing keys (`state.get(...)`) and handle migration so the first sync after the change doesn't reprocess or skip data.
-- **Adding or removing `schema` on existing table definitions** (multiple-schema support): this moves the table between the default schema and a named one (e.g. `analytics.orders` → `analytics_sales.orders`) and Fivetran does not move existing data. Tell the user a re-sync is required before applying.
+- **Adding or removing `schema` on existing table definitions** (multiple-schema support): this moves the tables between the default schema and named ones (e.g. `analytics.orders` → `analytics_sales.orders`) and Fivetran does not move existing data. Tell the user a re-sync is required before applying.
 - After any schema/PK change, re-test from a clean slate: `fivetran reset --force` then re-run the connector (this simulates an initial sync).
 
 **Regression-tested connectors (Public Preview).** If the project has a `fixtures/` folder, or the user uses record-and-replay, protect the change with a replay:
@@ -181,7 +181,7 @@ op.truncate(table, deferred=True)   # deferred: applied only if update() succeed
 | Missing `primary_key` in schema | Add `primary_key` for each table (avoids surrogate `_fivetran_id`) |
 | Every column declared with a type | Keep types only where a specific type must be forced; omit the rest for inference/evolution |
 | Invalid schema key or type name | Use only `schema` (multi-schema only)/`table`/`primary_key`/`columns` keys and valid SDK type names |
-| Operation on a schema-qualified table omits `schema=` (or `schema` is empty) | Pass the same non-empty `schema=` as in `schema()`; without it the data lands in the default schema's table |
+| Sync fails because `schema` is mixed (some tables/operations have it, others don't) or `schema` is empty | All or none: put a non-empty `schema` on every table definition and pass the matching `schema=` on every record operation, or remove it everywhere (if `schema()` is not defined, every operation passes `schema=` or none does) |
 | Redeploy fails with `--python-version is required` (SDK 3.0.0+; new connections use the SDK default) | Pass `--python-version`, set `FIVETRAN_PYTHON_VERSION`, set `python_version` in the options file profile or under `[tool.package-metadata]` in `pyproject.toml` (see **Stateless CLI & Options File** in `sdk-reference.md`) |
 | Redeploy fails with `--hybrid-deployment-agent-id is required` (SDK 3.0.0+; new connections use the destination's default agent) | Pass `--hybrid-deployment-agent-id`, set `FIVETRAN_HD_AGENT_ID`, or set `hybrid_deployment_agent_id` in the options file profile (see **Stateless CLI & Options File** in `sdk-reference.md`) |
 | `migration failed: 404` on deploy | Non-fatal; the one-time options-file migration is retried on the next deploy |
