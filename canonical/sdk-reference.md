@@ -41,7 +41,7 @@
 
 - **Memory:** 4 GB RAM in production; local `fivetran debug` enforces the same 4 GB limit (see
   **Memory Management** below)
-- **Python Versions:** 3.10, 3.11, 3.12, 3.13, **3.14 (default)**
+- **Python Versions:** 3.11, 3.12, 3.13, **3.14 (default)**, 3.15
   - Specify the version with `fivetran deploy --python-version <version>` (alias `--python`); SDK 3.0.0+ requires it on a redeploy (a new connection uses the default; see **Stateless CLI & Options File**)
   - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
 - **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`
@@ -316,7 +316,7 @@ before 3.0.0 the old behavior applies and none of this does.
 
 - **Resolution order (highest first):** CLI flag → environment variable (e.g.
   `FIVETRAN_PYTHON_VERSION`) → options file profile → `[tool.package-metadata]` in `pyproject.toml`
-  (`python_version` and `proxy_host_config_key` only, Python 3.11+; ignored with `--package-id`) →
+  (`python_version` and `proxy_host_config_key` only; ignored with `--package-id`) →
   SDK default. If none exists and
   the field is required, deploy fails. `proxy_id`, `proxy_host_config_key` and `package_id` have no
   env var.
@@ -329,8 +329,7 @@ before 3.0.0 the old behavior applies and none of this does.
   ID uses the destination's default agent.
 - **Options file:** TOML with named profiles (selected by `--profile`, default `default`). Lookup
   order: `--options-file`, `FIVETRAN_OPTIONS_FILE`, `./options.toml`, then
-  `~/.fivetran/connector_sdk/options.toml`. It is excluded from the deploy package and needs Python 3.11+; on
-  Python 3.10 the CLI skips it and resolves from flags, env vars and defaults only. Storable fields:
+  `~/.fivetran/connector_sdk/options.toml`. It is excluded from the deploy package. Storable fields:
   `destination`, `connection`, `python_version`, `naming`, `hybrid_deployment_agent_id`, `proxy_id`,
   `proxy_host_config_key`, `package_id`. Never store the API key there. `naming` applies only when
   creating a connection (ignored with a warning on redeploy) and `deploy_connector.py` has no
@@ -341,7 +340,7 @@ before 3.0.0 the old behavior applies and none of this does.
   with no options file), if a path from `--options-file` or `FIVETRAN_OPTIONS_FILE` does not exist,
   if the TOML is invalid, or if a profile has an unsupported field. With no `[default]` and no
   `--profile`, no profile is selected and settings come from the other sources.
-- **Automatic migration:** when no options file exists (and Python is 3.11+), the first deploy
+- **Automatic migration:** when no options file exists, the first deploy
   copies the account's previously saved connection settings into
   `~/.fivetran/connector_sdk/options.toml` (always this path, even with `--options-file`), one
   profile per connection named `<group_id>-<connection_name>`, plus a commented-out `[default]`
