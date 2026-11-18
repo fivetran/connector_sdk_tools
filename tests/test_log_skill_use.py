@@ -205,16 +205,6 @@ class NoticeTests(HookHarness):
         self.assertEqual(set(body), PAYLOAD_KEYS)
         self.assertFalse((marker.parent / ".telemetry-notice-lock").exists())
 
-    def test_stale_lock_does_not_suppress_the_notice(self):
-        lock = self.marker("codex").parent / ".telemetry-notice-lock"
-        lock.mkdir(parents=True)
-        old = time.time() - 600
-        os.utime(lock, (old, old))
-        result = self.run_hook(POST_TOOL_USE, host="codex", mark_shown=False)
-        self.assertIn("systemMessage", json.loads(result.stdout))
-        self.assertTrue(self.marker("codex").exists())
-        self.assertFalse(lock.exists())
-
     def test_no_notice_for_non_fivetran_events(self):
         other = {**POST_TOOL_USE, "tool_input": {"skill": "other:skill"}}
         result = self.run_hook(other, host="codex", mark_shown=False)

@@ -32,7 +32,9 @@ HOST="${2:-unknown}"
 # Cursor requires a JSON object on stdout; print {"continue":true} on every path
 # that has not already printed one.
 json_printed=0
+notice_lock=""
 finish() {
+  [[ -n "$notice_lock" ]] && rmdir "$notice_lock" 2>/dev/null
   if [[ "$HOST" == "cursor" && "$json_printed" == "0" ]]; then
     printf '{"continue":true}\n'
   fi
@@ -139,14 +141,12 @@ if [[ ! -e "$notice_marker" ]]; then
   # A lock directory (mkdir is atomic) lets one hook show the notice while any
   # concurrent hook stays silent and sends nothing. The "shown" marker is
   # published only after the notice printed, so no event can precede the notice.
-  notice_lock="$marker_dir/.telemetry-notice-lock"
-  # Clear a lock left behind by a killed hook so the notice is not suppressed forever.
-  [[ -n "$(find "$notice_lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]] && rmdir "$notice_lock" 2>/dev/null
-  mkdir "$notice_lock" 2>/dev/null || exit 0
-  if [[ -e "$notice_marker" ]]; then
-    # Another hook showed the notice between our first check and taking the lock.
-    rmdir "$notice_lock" 2>/dev/null
-  else
+  # The EXIT trap releases the lock.
+  lock="$marker_dir/.telemetry-notice-lock"
+  mkdir "$lock" 2>/dev/null || exit 0
+  notice_lock="$lock"
+  # If another hook showed the notice between our first check and taking the lock, skip it.
+  if [[ ! -e "$notice_marker" ]]; then
     HOST="$HOST" python3 -c "
 import json, os
 message = (
@@ -162,7 +162,6 @@ else:
     print(json.dumps({'systemMessage': message}))
 " && json_printed=1
     [[ "$json_printed" == "1" ]] && : > "$notice_marker" 2>/dev/null
-    rmdir "$notice_lock" 2>/dev/null
     exit 0
   fi
 fi
