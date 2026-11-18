@@ -1,0 +1,23 @@
+CHANGELOG.md
+  efaebcce3ceb7e18 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "8cca0a8cffe8f87cd6b7903f0f6381c5e374f9dd",
+  "prompts": {
+    "efaebcce3ceb7e18": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0859afdf-572e-409b-991e-9d31cb26058f",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
