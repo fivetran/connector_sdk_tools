@@ -1,0 +1,23 @@
+canonical/feature-index.md
+  efaebcce3ceb7e18 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "9dbdecf726cb7f06e2a69dd1d36f90bc1d34161d",
+  "prompts": {
+    "efaebcce3ceb7e18": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0859afdf-572e-409b-991e-9d31cb26058f",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
