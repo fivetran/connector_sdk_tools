@@ -67,7 +67,7 @@ destination it also needs `--hybrid-deployment-agent-id`, even when the connecti
 destination's default agent (see **Stateless CLI & Options File** in `sdk-reference.md`). The first
 deploy after upgrading auto-selects the migrated profile for the connection, so it may need
 neither. Do not ask up front: try the deploy, and if it fails with a missing-field error, ask the
-user for the Python version (3.10–3.14) and agent ID and re-run with them. Before 3.0.0, omit them.
+user for the Python version (3.10–3.15) and agent ID and re-run with them. Before 3.0.0, omit them.
 
 For an existing connection, use its ID so the tool reuses its current name and
 destination without listing destinations or prompting:

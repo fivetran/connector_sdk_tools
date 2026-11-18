@@ -4,6 +4,10 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.18.2
+
+- Added Python 3.15 to the supported runtime versions. The options file and package-level defaults no longer mention a Python 3.10 fallback, because the CLI now requires Python 3.11 or later.
+
 ### fivetran-connector-sdk-tools 2026.11.18.1
 
 - Renamed `connector-sdk-submit` to `submit-to-community-catalog` across plugin manifests, skills, commands, and documentation.

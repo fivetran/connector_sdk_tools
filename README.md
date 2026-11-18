@@ -2,7 +2,7 @@ AI-assisted tools for building, testing, and deploying [Fivetran Connector SDK](
 
 ## Prerequisites
 
-- **Python 3.10–3.14**
+- **Python 3.10–3.15**
 - **A supported coding agent** (Claude Code, Codex CLI, Gemini CLI, GitHub Copilot CLI, or Cursor CLI — see install options below)
 - **Fivetran Connector SDK** — `pip install fivetran-connector-sdk`
 
