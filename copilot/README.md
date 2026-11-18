@@ -4,7 +4,7 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 
 ## Prerequisites
 
-- Python 3.10-3.15
+- Python 3.11-3.15
 - [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli) installed (`copilot` v1.0.57+)
 - [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
 - A Fivetran account (https://fivetran.com)

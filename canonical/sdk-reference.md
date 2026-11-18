@@ -40,7 +40,7 @@
 
 - **Memory:** 4 GB RAM in production; local `fivetran debug` enforces the same 4 GB limit (see
   **Memory Management** below)
-- **Python Versions:** 3.10, 3.11, 3.12, 3.13, **3.14 (default)**, 3.15
+- **Python Versions:** 3.11, 3.12, 3.13, **3.14 (default)**, 3.15
   - Specify the version with `fivetran deploy --python-version <version>` (alias `--python`); SDK 3.0.0+ requires it on a redeploy (a new connection uses the default; see **Stateless CLI & Options File**)
   - Check https://fivetran.com/docs/connector-sdk/technical-reference for latest
 - **Pre-installed Packages:** `requests`, `fivetran_connector_sdk`

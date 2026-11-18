@@ -4,7 +4,7 @@ Build, test, fix, and deploy Fivetran connectors with AI assistance, directly in
 
 ## Prerequisites
 
-- Python 3.10-3.14
+- Python 3.11-3.15
 - [Codex CLI](https://github.com/openai/codex) installed
 - [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
 - A Fivetran account (https://fivetran.com)
