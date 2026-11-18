@@ -16,6 +16,8 @@ argument-hint: "Describe the connector (e.g., 'Stripe API connector for payments
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 You are building a complete Fivetran connector from the user's description. This skill orchestrates the build; detailed per-phase logic lives in the plugin's workflow files.
 
 ## Phase 0: Determine the Best Build Approach

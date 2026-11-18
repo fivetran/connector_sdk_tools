@@ -16,6 +16,8 @@ argument-hint: "Path or description of the Meltano project or Singer tap to migr
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, operation names, schema constraints, configuration rules, and testing requirements.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Use this workflow to convert Meltano extractor logic into a Connector SDK project. Meltano migration references:
 - Meltano project/config docs: https://docs.meltano.com/concepts/project/
 - Meltano plugin docs: https://docs.meltano.com/concepts/plugins/
@@ -111,7 +113,7 @@ Edit the CSDK project files:
 - Start the file with the AI build marker. Do not add it if it already exists:
   ```python
   # Built using Connector SDK AI Plugin
-  # Plugin: fivetran-connector-sdk (cursor) | Version: 2026.11.18.3
+  # Plugin: fivetran-connector-sdk (cursor) | Version: 2026.11.18.4
   ```
 - Keep the scaffolded structure where present: `validate_configuration()`, `schema()`, `update()`, global `connector = Connector(...)`, and `if __name__ == "__main__": connector.debug()`.
 - Port extraction logic directly into Python helper functions.

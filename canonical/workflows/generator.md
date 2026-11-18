@@ -2,6 +2,8 @@
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 **Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 **YOUR ROLE: ADAPT THE SCAFFOLDED CONNECTOR**

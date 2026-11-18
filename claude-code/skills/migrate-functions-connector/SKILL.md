@@ -16,6 +16,8 @@ argument-hint: "Path or description of the Functions connector to migrate"
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, operation names, schema constraints, configuration rules, and testing requirements.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Use this workflow to convert an existing Fivetran Functions connector into a Connector SDK project. Functions connector examples and migration references:
 - Official docs: https://fivetran.com/docs/connectors/functions
 - Public examples: https://github.com/fivetran/functions
@@ -79,7 +81,7 @@ Edit the CSDK project files:
 - Start the file with the AI build marker. Do not add it if it already exists:
   ```python
   # Built using Connector SDK AI Plugin
-  # Plugin: fivetran-connector-sdk (claude-code) | Version: 2026.11.18.3
+  # Plugin: fivetran-connector-sdk (claude-code) | Version: 2026.11.18.4
   ```
 - Keep the scaffolded structure where present: `validate_configuration()`, `schema()`, `update()`, global `connector = Connector(...)`, and `if __name__ == "__main__": connector.debug()`.
 - Port source extraction logic into Python helper functions.
