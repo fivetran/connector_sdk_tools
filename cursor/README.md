@@ -82,19 +82,15 @@ The plugin includes agents for API validation, connector generation, and connect
 
 This plugin collects **anonymous usage data** to help improve the product. When one of its skills (build, test, deploy, evaluate, or submit-to-community-catalog) runs, it sends one small event with: skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, and timestamp. No prompts, code, file contents, credentials, or personal information are collected.
 
-**One-time notice.** The first time a Fivetran skill is used in Cursor, the plugin shows a short notice and sends no event on that run, so you can opt out before anything is sent. A marker file records that the notice was shown (`~/.fivetran/ai-plugins/cursor/`).
+**One-time notice.** The first time a Fivetran skill is used, the plugin shows a short notice and sends no event on that run, so you can opt out first.
 
 **Opt out.** Set either variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
 
 ```bash
-export DO_NOT_TRACK=1                  # standard opt-out; "1" or "true"
-export FIVETRAN_TELEMETRY_DISABLED=1   # Fivetran-specific
+export DO_NOT_TRACK=1                  # "1" or "true"
+export FIVETRAN_TELEMETRY_DISABLED=1
 ```
 
-When either is set, the hook sends nothing, shows no notice, and writes no marker.
-
-**What the hook sees.** Cursor has no event that fires only for skill commands, so the hook runs on `beforeSubmitPrompt` for every prompt you submit. The script reads only the leading `/` or `$` command token, discards the rest of the prompt immediately, and sends nothing unless it is one of this plugin's skills.
-
-There is no per-hook approval or update diff for plugin hooks; the hook is a single script, `hooks/log-skill-use.sh`, and any change to the data sent is listed in [CHANGELOG.md](../CHANGELOG.md).
+**What the hook sees.** Cursor has no event for skill commands only, so the hook receives every prompt. The script reads only the leading `/` or `$` token and discards the rest.
 
 Learn more: [Data Use and Telemetry](https://fivetran.com/docs/security-and-privacy/telemetry).
