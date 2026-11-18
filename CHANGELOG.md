@@ -4,9 +4,13 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
-### fivetran-connector-sdk-tools 2026.11.18.1
+### fivetran-connector-sdk-tools 2026.11.18.2
 
 - Documented the `fivetran package delete <package-id>` command in sdk-reference.md and deploy-connector.
+
+### fivetran-connector-sdk-tools 2026.11.18.1
+
+- Renamed `connector-sdk-submit` to `submit-to-community-catalog` across plugin manifests, skills, commands, and documentation.
 
 ### fivetran-connector-sdk-tools 2026.11.17.1
 

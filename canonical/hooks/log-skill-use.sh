@@ -23,7 +23,7 @@ MANIFEST_JSON="${1:-}"
 body=$(MANIFEST_JSON="$MANIFEST_JSON" MAX_PAYLOAD_BYTES="$MAX_PAYLOAD_BYTES" python3 -c "
 import datetime, json, os, sys
 
-allowed_skills = {'build-connector', 'test-connector', 'deploy-connector', 'evaluate-connector', 'connector-sdk-submit'}
+allowed_skills = {'build-connector', 'test-connector', 'deploy-connector', 'evaluate-connector', 'submit-to-community-catalog'}
 max_payload_bytes = int(os.environ['MAX_PAYLOAD_BYTES'])
 payload = sys.stdin.buffer.read(max_payload_bytes + 1)
 if len(payload) > max_payload_bytes:
