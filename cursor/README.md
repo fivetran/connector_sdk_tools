@@ -74,6 +74,7 @@ The plugin includes agents for API validation, connector generation, and connect
 | `agents/connector-fixer.md` | Error diagnosis and targeted repairs |
 | `workflows/` | Shared validator, generator and fixer workflow content |
 | `sdk-reference.md` | Connector SDK rules, patterns and examples |
+| `feature-index.md` | Recent Connector SDK features to suggest, with docs links and examples |
 | `tools/enter_configuration.py` | Optional local encryption of configuration values |
 | `tools/run_connector.py` | Run a connector with runtime configuration |
 | `tools/deploy_connector.py` | Deploy or redeploy a connector |

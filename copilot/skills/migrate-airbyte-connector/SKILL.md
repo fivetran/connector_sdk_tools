@@ -16,6 +16,8 @@ argument-hint: "Path or description of the Airbyte source connector to migrate"
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, operation names, schema constraints, configuration rules, and testing requirements.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Use this workflow to convert Airbyte source connector logic into a Connector SDK project. Airbyte migration references:
 - Airbyte protocol docs: https://docs.airbyte.com/platform/understanding-airbyte/airbyte-protocol/
 - Airbyte connector specification reference: https://docs.airbyte.com/platform/connector-development/connector-specification-reference
@@ -123,7 +125,7 @@ Edit the CSDK project files:
 - Start the file with the AI build marker. Do not add it if it already exists:
   ```python
   # Built using Connector SDK AI Plugin
-  # Plugin: fivetran-connector-sdk (copilot) | Version: 2026.11.18.3
+  # Plugin: fivetran-connector-sdk (copilot) | Version: 2026.11.18.4
   ```
 - Keep the scaffolded structure where present: `validate_configuration()`, `schema()`, `update()`, global `connector = Connector(...)`, and `if __name__ == "__main__": connector.debug()`.
 - Port extraction logic directly into Python helper functions.

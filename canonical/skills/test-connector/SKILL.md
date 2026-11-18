@@ -10,6 +10,8 @@ argument-hint: "Connector directory name (e.g., 'github_connector')"
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules and patterns.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Test the connector specified by the user.
 
 **If no connector name is provided:**

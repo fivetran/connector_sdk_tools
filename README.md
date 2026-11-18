@@ -264,6 +264,7 @@ configuration handling belongs to the SDK and Fivetran platform.
 ```
 canonical/                          edit these (source of truth)
   sdk-reference.md
+  feature-index.md
   workflows/{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
   skills/submit-to-community-catalog/SKILL.md
@@ -276,7 +277,7 @@ claude-code/                        Claude Code plugin (mostly generated)
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
   skills/submit-to-community-catalog/SKILL.md
-  tools/, sdk-reference.md
+  tools/, sdk-reference.md, feature-index.md
 
 codex/                              Codex CLI plugin (mostly generated)
   .codex-plugin/plugin.json
@@ -284,7 +285,7 @@ codex/                              Codex CLI plugin (mostly generated)
   hooks.json
   skills/{build,test,deploy}-connector/SKILL.md
   workflows/{validator,generator,fixer}.md
-  tools/, sdk-reference.md
+  tools/, sdk-reference.md, feature-index.md
 
 copilot/                            GitHub Copilot CLI plugin (mostly generated)
   AGENTS.md
@@ -292,7 +293,7 @@ copilot/                            GitHub Copilot CLI plugin (mostly generated)
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
   skills/submit-to-community-catalog/SKILL.md
   commands/{build,test,deploy,evaluate}-connector.md
-  tools/, sdk-reference.md
+  tools/, sdk-reference.md, feature-index.md
 
 cursor/                             Cursor plugin (mostly generated)
   .cursor-plugin/plugin.json
@@ -301,7 +302,7 @@ cursor/                             Cursor plugin (mostly generated)
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
   skills/submit-to-community-catalog/SKILL.md
   workflows/{validator,generator,fixer}.md
-  tools/, sdk-reference.md
+  tools/, sdk-reference.md, feature-index.md
 
 gemini-extension.json               Gemini CLI extension manifest (root-only requirement)
 GEMINI.md                           Gemini context file
@@ -327,6 +328,7 @@ Only edit files under **`canonical/`** and the agent-specific static integration
 | Editing... | Run after | Affects |
 |---|---|---|
 | `canonical/sdk-reference.md` | `bash scripts/sync-plugins.sh` | all five agents |
+| `canonical/feature-index.md` | `bash scripts/sync-plugins.sh` | all five agents |
 | `canonical/workflows/*.md` | `bash scripts/sync-plugins.sh` | Claude agents, Codex workflows, Gemini agents, Copilot agents, Cursor agents and workflows |
 | `canonical/skills/*/SKILL.md` | `bash scripts/sync-plugins.sh` | all five agents |
 | `canonical/tools/*` | `bash scripts/sync-plugins.sh` | all five agents |

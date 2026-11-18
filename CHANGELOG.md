@@ -4,6 +4,11 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.18.4
+
+- Added `feature-index.md`, a discovery index of recent Connector SDK features with one-line summaries, suggest-when guidance, docs links, and examples. Skills and workflows point to it so the agent suggests relevant features without relying on the agent reading the full reference.
+- `sync-plugins.sh` copies `feature-index.md` to every plugin tree.
+
 ### fivetran-connector-sdk-tools 2026.11.18.3
 
 - Documented the `fivetran package delete <package-id>` command in sdk-reference.md and deploy-connector.

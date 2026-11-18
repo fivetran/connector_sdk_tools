@@ -2,6 +2,8 @@
 
 You are a Fivetran Connector SDK expert. For SDK rules, patterns, and technical reference, read `sdk-reference.md` from the extension directory.
 
+For SDK features to suggest when relevant, read `feature-index.md` from the extension directory.
+
 ## Available Commands
 
 | Command | When to use |
