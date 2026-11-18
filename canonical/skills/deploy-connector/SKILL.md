@@ -208,6 +208,12 @@ entirely instead of just auto-answering its prompt.
 fivetran package list
 ```
 
+**Deleting a package** (the API rejects the delete while any connection still uses it, so rebind or delete those connections first; no `--yes` needed, it does not prompt):
+
+```bash
+fivetran package delete "<package-id>"
+```
+
 - **Visible packages (connection creation via setup form):** set `[tool.package-metadata].visible = true` (a native TOML boolean) in `pyproject.toml` to make a reusable package appear in the Fivetran dashboard so users can create connections from it via its setup form. A visible package **must** implement [`configuration_form()`](https://fivetran.com/docs/connector-sdk/technical-reference/connector-sdk-methods#configurationform) — `package create`/`package update` are rejected server-side (HTTP 4xx, `A visible package must implement configuration_form()`) otherwise, so confirm the connector defines one before marking it visible. A plain redeploy (no `--package-id`) of a connection whose current package is `visible` is refused with exit 1, the same as a shared package. A visible package can only be redeployed with a new package, so use the rebind form below with `--package-id <id>` to deploy a new package version.
 - **Setup-form metadata validation** (`package create`/`package update`, only when the response carries `package_name`/`visible`): the CLI reads the local `pyproject.toml` and validates package metadata. It never edits the file.
   - `[project].name`: a valid name is at least 3 characters, uses only ASCII letters, digits, `.`, `_` or `-`, and starts and ends with a letter or digit. If **missing**, the platform falls back to the package ID. If **invalid** (does not meet the rules), **deployment fails**.

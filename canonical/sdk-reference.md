@@ -27,6 +27,7 @@
 | `fivetran package create` | Upload the current project as a new reusable package; server assigns the package ID (Private Preview) |
 | `fivetran package update <package-id>` | Replace the code artifact for an existing reusable package (Private Preview) |
 | `fivetran package list` | List packages in the account with their connection counts (Private Preview) |
+| `fivetran package delete <package-id>` | Delete a reusable package; the API rejects the delete while any connection uses it (Private Preview) |
 | `fivetran reset --force` | Reset local state (clear warehouse.db) |
 | `fivetran version` | Print the installed SDK version |
 
@@ -473,6 +474,10 @@ own copy — useful when the same connector code should run identically across m
   When the package-management API exposes `package_name`/`visible`, the table also includes
   `PACKAGE NAME` and `VISIBLE` columns; packages without those fields keep the compact
   `PACKAGE ID` / `CONNECTIONS` layout.
+- **`fivetran package delete <package-id>`** — deletes the package and prints `deleted package: <id>`.
+  The API rejects the delete if any connection still uses the package (rebind or delete those
+  connections first; `package list` shows the connection count). Only the package creator or an
+  account admin can delete a package.
 - **Visible packages (connection creation via setup form)** — set `[tool.package-metadata].visible
   = true` (a native TOML boolean, not the quoted string `"true"`) in `pyproject.toml` to make a
   reusable package appear in the Fivetran dashboard so users can create connections from it via its
