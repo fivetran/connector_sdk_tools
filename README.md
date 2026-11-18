@@ -137,7 +137,7 @@ Once installed, in your connector project directory:
 | `/fivetran-connector-sdk:test-connector` | `$test_connector` | `/test-connector` | Run and validate an existing connector locally |
 | `/fivetran-connector-sdk:deploy-connector` | `$deploy_connector` | `/deploy-connector` | Deploy a connector to your Fivetran account |
 | `/fivetran-connector-sdk:evaluate-connector` | `$evaluate_connector` | `/evaluate-connector` | Code review and quality report |
-| `/fivetran-connector-sdk:connector-sdk-submit` | `$connector_sdk_submit` | `/connector-sdk-submit` | Submit a Connector SDK example or connector contribution in a pull request |
+| `/fivetran-connector-sdk:submit-to-community-catalog` | `$submit_to_community_catalog` | `/submit-to-community-catalog` | Submit a Connector SDK example or connector contribution in a pull request |
 | `/fivetran-connector-sdk:migrate-functions-connector` | `$migrate_functions_connector` | `/migrate-functions-connector` | Migrate a Fivetran Functions connector to Connector SDK |
 | `/fivetran-connector-sdk:migrate-meltano-connector` | `$migrate_meltano_connector` | `/migrate-meltano-connector` | Migrate a Meltano extractor or Singer tap to Connector SDK |
 | `/fivetran-connector-sdk:migrate-airbyte-connector` | `$migrate_airbyte_connector` | `/migrate-airbyte-connector` | Migrate an Airbyte source connector to Connector SDK |
@@ -266,7 +266,7 @@ canonical/                          edit these (source of truth)
   sdk-reference.md
   workflows/{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
-  skills/connector-sdk-submit/SKILL.md
+  skills/submit-to-community-catalog/SKILL.md
   tools/{enter_configuration,run_connector,deploy_connector}.py
   hooks/log-skill-use.sh
 
@@ -275,7 +275,7 @@ claude-code/                        Claude Code plugin (mostly generated)
   CLAUDE.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy}-connector/SKILL.md
-  skills/connector-sdk-submit/SKILL.md
+  skills/submit-to-community-catalog/SKILL.md
   tools/, sdk-reference.md
 
 codex/                              Codex CLI plugin (mostly generated)
@@ -290,7 +290,7 @@ copilot/                            GitHub Copilot CLI plugin (mostly generated)
   AGENTS.md
   agents/connector-{validator,generator,fixer}.md
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
-  skills/connector-sdk-submit/SKILL.md
+  skills/submit-to-community-catalog/SKILL.md
   commands/{build,test,deploy,evaluate}-connector.md
   tools/, sdk-reference.md
 
@@ -299,7 +299,7 @@ cursor/                             Cursor plugin (mostly generated)
   agents/connector-{validator,generator,fixer}.md
   hooks/{hooks.json,log-skill-use.sh}
   skills/{build,test,deploy,evaluate}-connector/SKILL.md
-  skills/connector-sdk-submit/SKILL.md
+  skills/submit-to-community-catalog/SKILL.md
   workflows/{validator,generator,fixer}.md
   tools/, sdk-reference.md
 
@@ -308,7 +308,7 @@ GEMINI.md                           Gemini context file
 commands/{build,test,deploy}-connector.toml   Gemini slash commands
 agents/connector-{validator,generator,fixer}.md   Gemini agents (generated)
 skills/{build,test,deploy}-connector/SKILL.md     Gemini skills (generated)
-skills/connector-sdk-submit/SKILL.md              Gemini submission skill (generated)
+skills/submit-to-community-catalog/SKILL.md              Gemini submission skill (generated)
 tools/                              Gemini tools (generated copy of canonical/tools/)
 
 .claude-plugin/marketplace.json     Claude Code marketplace pointing to ./claude-code
