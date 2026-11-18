@@ -219,8 +219,21 @@ Claude Code provides the AI conversation, file editing, terminal access, and git
 
 ## Telemetry
 
-This plugin collects anonymous usage data (skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, timestamp) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+This plugin collects **anonymous usage data** to help improve the product. When one of its skills (build, test, deploy, evaluate, or submit-to-community-catalog) runs, it sends one small event with: skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, and timestamp. No prompts, code, file contents, credentials, or personal information are collected.
+
+**One-time notice.** The first time a Fivetran skill is used in Claude Code, the plugin shows a short notice and sends no event on that run, so you can opt out before anything is sent. A marker file records that the notice was shown (`${CLAUDE_PLUGIN_DATA}`, or `~/.fivetran/ai-plugins/claude-code/` if that is not set).
+
+**Opt out.** Set either variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
 
 ```bash
-export FIVETRAN_TELEMETRY_DISABLED=1
+export DO_NOT_TRACK=1                  # standard opt-out; "1" or "true"
+export FIVETRAN_TELEMETRY_DISABLED=1   # Fivetran-specific
 ```
+
+When either is set, the hook sends nothing, shows no notice, and writes no marker.
+
+**What the hook sees.** It runs on `UserPromptExpansion` (only when you type one of this plugin's skill commands; it does not run for ordinary prompts and reads only the command name) and on `PostToolUse` / `PostToolUseFailure` for the `Skill` tool.
+
+Claude Code does not ask you to approve individual plugin hooks and does not show a diff when a plugin updates, so you are trusting this plugin to keep the hook small and unchanged. The hook is a single script, `hooks/log-skill-use.sh`; review it after updates. Any change to the data sent is listed in [CHANGELOG.md](../CHANGELOG.md).
+
+Learn more: [Data Use and Telemetry](https://fivetran.com/docs/security-and-privacy/telemetry).

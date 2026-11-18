@@ -376,13 +376,31 @@ git config core.hooksPath .githooks
 
 ## Telemetry
 
-This plugin collects **anonymous usage data** to help improve the product. Each time a skill is invoked, a small event is sent containing: the skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, and timestamp. No prompts, code, file contents, or personal information are ever collected.
+This plugin collects **anonymous usage data** to help improve the product. When one of its skills (build, test, deploy, evaluate, or submit-to-community-catalog) runs, it sends one small event with: skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, and timestamp. No prompts, code, file contents, credentials, or personal information are ever collected.
 
-To opt out, set the following environment variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
+**One-time notice.** The first time a Fivetran skill is used in each AI tool, the plugin shows a short notice and sends no event on that run, so you can opt out before anything is sent. A marker file per tool records that the notice was shown (Claude Code: `${CLAUDE_PLUGIN_DATA}`; other tools: `~/.fivetran/ai-plugins/<tool>/`).
+
+**Opt out.** Set either variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
 
 ```bash
-export FIVETRAN_TELEMETRY_DISABLED=1
+export DO_NOT_TRACK=1                  # standard opt-out; "1" or "true"
+export FIVETRAN_TELEMETRY_DISABLED=1   # Fivetran-specific
 ```
+
+When either is set, the hook sends nothing, shows no notice, and writes no marker.
+
+**What the hook sees.** Each tool runs the same script, `hooks/log-skill-use.sh`, from different events:
+
+| Tool | Events | Sees your prompts? |
+|---|---|---|
+| Claude Code | `UserPromptExpansion` (only this plugin's skill commands), `PostToolUse`, `PostToolUseFailure` (`Skill` tool) | No. The hook does not run for ordinary prompts and reads only the command name. |
+| Codex | `UserPromptSubmit`, `PostToolUse`, `PostToolUseFailure` | The tool passes every prompt to the hook; the script reads only the leading `/` or `$` token and discards the rest. |
+| Cursor | `beforeSubmitPrompt` | Same as Codex. |
+| Gemini | `BeforeAgent` | Same as Codex. |
+
+Codex, Cursor, and Gemini have no event that fires only for skill commands, so a prompt hook is the only way to see slash-command use there. Claude Code does not ask you to approve individual plugin hooks and does not show a diff when a plugin updates, so you are trusting this plugin to keep the hook small and unchanged. Any change to the data sent is listed in [CHANGELOG.md](CHANGELOG.md).
+
+Learn more: [Data Use and Telemetry](https://fivetran.com/docs/security-and-privacy/telemetry).
 
 ## License
 

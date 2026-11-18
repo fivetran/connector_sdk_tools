@@ -4,6 +4,14 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.18.4
+
+- Telemetry now honors the standard `DO_NOT_TRACK=1` (or `true`) opt-out in addition to `FIVETRAN_TELEMETRY_DISABLED=1`.
+- Added a one-time telemetry notice that explains what is collected, how to opt out, and links to the Data Use and Telemetry docs page. It is shown the first time a Fivetran skill is used in each AI tool (Claude Code, Codex, Cursor, Gemini). No event is sent on that run, so events start with the next skill use.
+- Claude Code: the slash-command hook now runs on `UserPromptExpansion` for this plugin's skill commands only, instead of `UserPromptSubmit`, so the hook no longer runs for ordinary prompts and reads only the command name. Codex, Cursor, and Gemini have no equivalent event and keep a prompt hook that reads only the leading `/` or `$` token; the READMEs now say so.
+- The README for each tool documents what its hook sees, that Claude Code has no per-hook approval or update diff, and that any change to the telemetry data is listed here.
+- The data sent is unchanged: plugin name and version, skill, status, model, session ID, and timestamp.
+
 ### fivetran-connector-sdk-tools 2026.11.18.3
 
 - Documented the `fivetran package delete <package-id>` command in sdk-reference.md and deploy-connector.
