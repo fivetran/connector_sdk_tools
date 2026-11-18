@@ -4,7 +4,7 @@ AI-assisted workflows for building, testing, evaluating, migrating, and deployin
 
 ## Prerequisites
 
-- Python 3.10–3.14
+- Python 3.11–3.15
 - [Cursor CLI](https://cursor.com/docs/cli/overview)
 - [Fivetran Connector SDK](https://pypi.org/project/fivetran-connector-sdk/) — `pip install fivetran-connector-sdk`
 - A [Fivetran account](https://fivetran.com/)
