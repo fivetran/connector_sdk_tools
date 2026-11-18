@@ -306,6 +306,7 @@ cursor/                             Cursor plugin (mostly generated)
 
 gemini-extension.json               Gemini CLI extension manifest (root-only requirement)
 GEMINI.md                           Gemini context file
+sdk-reference.md, feature-index.md    Gemini reference copies (generated)
 commands/{build,test,deploy}-connector.toml   Gemini slash commands
 agents/connector-{validator,generator,fixer}.md   Gemini agents (generated)
 skills/{build,test,deploy}-connector/SKILL.md     Gemini skills (generated)

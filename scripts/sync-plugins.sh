@@ -27,6 +27,7 @@
 #   codex/tools/*
 #   codex/hooks/log-skill-use.sh
 #   sdk-reference.md                                         (Gemini)
+#   feature-index.md                                         (Gemini)
 #   agents/connector-{validator,generator,fixer}.md          (Gemini)
 #   skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md            (Gemini)
 #   skills/submit-to-community-catalog/SKILL.md                                                                            (Gemini)
