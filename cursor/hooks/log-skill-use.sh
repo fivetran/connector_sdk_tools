@@ -136,9 +136,13 @@ notice_marker="$marker_dir/telemetry-notice-shown"
 if [[ ! -e "$notice_marker" ]]; then
   [[ -n "${HOME:-}" ]] || exit 0
   mkdir -p "$marker_dir" 2>/dev/null || exit 0
-  # noclobber makes creation atomic: when hooks race, only the run that creates
-  # the marker shows the notice.
-  ( set -C; : > "$notice_marker" ) 2>/dev/null || exit 0
+  # A lock directory (mkdir is atomic) lets one hook show the notice while any
+  # concurrent hook stays silent and sends nothing. The "shown" marker is
+  # published only after the notice printed, so no event can precede the notice.
+  notice_lock="$marker_dir/.telemetry-notice-lock"
+  # Clear a lock left behind by a killed hook so the notice is not suppressed forever.
+  [[ -n "$(find "$notice_lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]] && rmdir "$notice_lock" 2>/dev/null
+  mkdir "$notice_lock" 2>/dev/null || exit 0
   HOST="$HOST" python3 -c "
 import json, os
 message = (
@@ -153,9 +157,8 @@ if os.environ['HOST'] == 'cursor':
 else:
     print(json.dumps({'systemMessage': message}))
 " && json_printed=1
-  # If the notice could not be printed, remove the marker so it is shown next time
-  # instead of events starting without the user having seen it.
-  [[ "$json_printed" == "1" ]] || rm -f "$notice_marker"
+  [[ "$json_printed" == "1" ]] && : > "$notice_marker" 2>/dev/null
+  rmdir "$notice_lock" 2>/dev/null
   exit 0
 fi
 

@@ -169,8 +169,32 @@ class NoticeTests(HookHarness):
             env={**os.environ, "HOME": str(self.home), "PATH": f"{self.bin}:{os.environ['PATH']}",
                  "CURL_LOG": str(self.curl_log), "DO_NOT_TRACK": "", "FIVETRAN_TELEMETRY_DISABLED": ""})
             for _ in range(6)]
-        outputs = [p.communicate(json.dumps(POST_TOOL_USE))[0] for p in procs]
+        # Feed and close every stdin before waiting on any process, so the hooks overlap.
+        for proc in procs:
+            proc.stdin.write(json.dumps(POST_TOOL_USE))
+            proc.stdin.close()
+        outputs = [proc.stdout.read() for proc in procs]
+        for proc in procs:
+            proc.wait()
         self.assertEqual(sum("systemMessage" in out for out in outputs), 1)
+
+    def test_hook_waits_silently_while_another_hook_shows_the_notice(self):
+        lock = self.marker("codex").parent / ".telemetry-notice-lock"
+        lock.mkdir(parents=True)
+        result = self.run_hook(POST_TOOL_USE, host="codex", mark_shown=False)
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+        self.assertEqual(self.sent(expect=False), [])
+        self.assertFalse(self.marker("codex").exists())
+
+    def test_stale_lock_does_not_suppress_the_notice(self):
+        lock = self.marker("codex").parent / ".telemetry-notice-lock"
+        lock.mkdir(parents=True)
+        old = time.time() - 600
+        os.utime(lock, (old, old))
+        result = self.run_hook(POST_TOOL_USE, host="codex", mark_shown=False)
+        self.assertIn("systemMessage", json.loads(result.stdout))
+        self.assertTrue(self.marker("codex").exists())
+        self.assertFalse(lock.exists())
 
     def test_no_notice_for_non_fivetran_events(self):
         other = {**POST_TOOL_USE, "tool_input": {"skill": "other:skill"}}
