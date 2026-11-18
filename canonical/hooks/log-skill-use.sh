@@ -32,9 +32,7 @@ HOST="${2:-unknown}"
 # Cursor requires a JSON object on stdout; print {"continue":true} on every path
 # that has not already printed one.
 json_printed=0
-notice_lock=""
 finish() {
-  [[ -n "$notice_lock" ]] && rmdir "$notice_lock" 2>/dev/null
   if [[ "$HOST" == "cursor" && "$json_printed" == "0" ]]; then
     printf '{"continue":true}\n'
   fi
@@ -137,33 +135,36 @@ fi
 notice_marker="$marker_dir/telemetry-notice-shown"
 if [[ ! -e "$notice_marker" ]]; then
   [[ -n "${HOME:-}" ]] || exit 0
-  mkdir -p "$marker_dir" 2>/dev/null || exit 0
-  # A lock directory (mkdir is atomic) lets one hook show the notice while any
-  # concurrent hook stays silent and sends nothing. The "shown" marker is
-  # published only after the notice printed, so no event can precede the notice.
-  # The EXIT trap releases the lock.
-  lock="$marker_dir/.telemetry-notice-lock"
-  mkdir "$lock" 2>/dev/null || exit 0
-  notice_lock="$lock"
-  # If another hook showed the notice between our first check and taking the lock, skip it.
-  if [[ ! -e "$notice_marker" ]]; then
-    HOST="$HOST" python3 -c "
-import json, os
-message = (
-    'Fivetran Connector SDK plugin: telemetry notice\n'
-    'This plugin sends anonymous usage events when its skills run: skill name, plugin name and version, '
-    'status, model, session ID and timestamp. No prompts, code, credentials or file contents are collected.\n'
-    'To opt out, set DO_NOT_TRACK=1 or FIVETRAN_TELEMETRY_DISABLED=1 in your shell profile.\n'
-    'Learn more: https://fivetran.com/docs/security-and-privacy/telemetry'
-)
-if os.environ['HOST'] == 'cursor':
-    print(json.dumps({'continue': True, 'user_message': message}))
-else:
-    print(json.dumps({'systemMessage': message}))
-" && json_printed=1
-    [[ "$json_printed" == "1" ]] && : > "$notice_marker" 2>/dev/null
-    exit 0
-  fi
+  # Under an flock (released by the OS even if the hook is killed), the first hook prints
+  # the notice and then writes the marker. Concurrent hooks wait, then see the marker and
+  # send their event after the notice. Exit 3 = notice shown; any other failure = stay silent.
+  HOST="$HOST" MARKER="$notice_marker" python3 -c "
+import fcntl, json, os
+marker = os.environ['MARKER']
+os.makedirs(os.path.dirname(marker), exist_ok=True)
+with open(marker + '.lock', 'a') as lock:
+    fcntl.flock(lock, fcntl.LOCK_EX)
+    if os.path.exists(marker):
+        raise SystemExit(0)
+    message = (
+        'Fivetran Connector SDK plugin: telemetry notice\\n'
+        'This plugin sends anonymous usage events when its skills run: skill name, plugin name and version, '
+        'status, model, session ID and timestamp. No prompts, code, credentials or file contents are collected.\\n'
+        'To opt out, set DO_NOT_TRACK=1 or FIVETRAN_TELEMETRY_DISABLED=1 in your shell profile.\\n'
+        'Learn more: https://fivetran.com/docs/security-and-privacy/telemetry'
+    )
+    if os.environ['HOST'] == 'cursor':
+        print(json.dumps({'continue': True, 'user_message': message}), flush=True)
+    else:
+        print(json.dumps({'systemMessage': message}), flush=True)
+    open(marker, 'w').close()
+    raise SystemExit(3)
+"
+  case $? in
+    0) ;;
+    3) json_printed=1; exit 0 ;;
+    *) exit 0 ;;
+  esac
 fi
 
 curl -s -o /dev/null -X POST "$FIVETRAN_TELEMETRY_WEBHOOK_URL" \

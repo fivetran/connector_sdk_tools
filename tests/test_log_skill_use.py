@@ -176,34 +176,19 @@ class NoticeTests(HookHarness):
         outputs = [proc.stdout.read() for proc in procs]
         for proc in procs:
             proc.wait()
+            proc.stdout.close()
         self.assertEqual(sum("systemMessage" in out for out in outputs), 1)
+        # The hooks that waited for the lock send their event after the notice.
+        self.assertEqual(len(self.sent()), len(procs) - 1)
 
-    def test_hook_waits_silently_while_another_hook_shows_the_notice(self):
-        lock = self.marker("codex").parent / ".telemetry-notice-lock"
-        lock.mkdir(parents=True)
+    def test_abandoned_lock_file_does_not_suppress_the_notice(self):
+        # flock is released by the OS when a hook dies, so a leftover lock file is harmless.
+        lock = Path(str(self.marker("codex")) + ".lock")
+        lock.parent.mkdir(parents=True)
+        lock.touch()
         result = self.run_hook(POST_TOOL_USE, host="codex", mark_shown=False)
-        self.assertEqual((result.returncode, result.stdout), (0, ""))
-        self.assertEqual(self.sent(expect=False), [])
-        self.assertFalse(self.marker("codex").exists())
-
-    def test_marker_that_appears_after_the_first_check_means_no_second_notice(self):
-        # A stub `mkdir` creates the marker just before the hook takes the lock, which is the
-        # moment another hook can finish showing the notice. The late hook must not repeat it.
-        marker = self.marker("codex")
-        real_mkdir = subprocess.run(["which", "mkdir"], capture_output=True, text=True).stdout.strip()
-        stub = self.bin / "mkdir"
-        stub.write_text(
-            '#!/bin/bash\n'
-            'if [[ "${@: -1}" == *.telemetry-notice-lock ]]; then\n'
-            f'  : > "{marker}"\n'
-            'fi\n'
-            f'exec {real_mkdir} "$@"\n')
-        stub.chmod(0o755)
-        result = self.run_hook(POST_TOOL_USE, host="codex", mark_shown=False)
-        self.assertEqual((result.returncode, result.stdout), (0, ""))
-        [body] = self.sent()
-        self.assertEqual(set(body), PAYLOAD_KEYS)
-        self.assertFalse((marker.parent / ".telemetry-notice-lock").exists())
+        self.assertIn("systemMessage", json.loads(result.stdout))
+        self.assertTrue(self.marker("codex").exists())
 
     def test_no_notice_for_non_fivetran_events(self):
         other = {**POST_TOOL_USE, "tool_input": {"skill": "other:skill"}}
