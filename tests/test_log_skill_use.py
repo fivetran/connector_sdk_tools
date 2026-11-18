@@ -186,6 +186,25 @@ class NoticeTests(HookHarness):
         self.assertEqual(self.sent(expect=False), [])
         self.assertFalse(self.marker("codex").exists())
 
+    def test_marker_that_appears_after_the_first_check_means_no_second_notice(self):
+        # A stub `mkdir` creates the marker just before the hook takes the lock, which is the
+        # moment another hook can finish showing the notice. The late hook must not repeat it.
+        marker = self.marker("codex")
+        real_mkdir = subprocess.run(["which", "mkdir"], capture_output=True, text=True).stdout.strip()
+        stub = self.bin / "mkdir"
+        stub.write_text(
+            '#!/bin/bash\n'
+            'if [[ "${@: -1}" == *.telemetry-notice-lock ]]; then\n'
+            f'  : > "{marker}"\n'
+            'fi\n'
+            f'exec {real_mkdir} "$@"\n')
+        stub.chmod(0o755)
+        result = self.run_hook(POST_TOOL_USE, host="codex", mark_shown=False)
+        self.assertEqual((result.returncode, result.stdout), (0, ""))
+        [body] = self.sent()
+        self.assertEqual(set(body), PAYLOAD_KEYS)
+        self.assertFalse((marker.parent / ".telemetry-notice-lock").exists())
+
     def test_stale_lock_does_not_suppress_the_notice(self):
         lock = self.marker("codex").parent / ".telemetry-notice-lock"
         lock.mkdir(parents=True)

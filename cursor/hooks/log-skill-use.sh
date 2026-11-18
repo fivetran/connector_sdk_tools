@@ -143,7 +143,11 @@ if [[ ! -e "$notice_marker" ]]; then
   # Clear a lock left behind by a killed hook so the notice is not suppressed forever.
   [[ -n "$(find "$notice_lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]] && rmdir "$notice_lock" 2>/dev/null
   mkdir "$notice_lock" 2>/dev/null || exit 0
-  HOST="$HOST" python3 -c "
+  if [[ -e "$notice_marker" ]]; then
+    # Another hook showed the notice between our first check and taking the lock.
+    rmdir "$notice_lock" 2>/dev/null
+  else
+    HOST="$HOST" python3 -c "
 import json, os
 message = (
     'Fivetran Connector SDK plugin: telemetry notice\n'
@@ -157,9 +161,10 @@ if os.environ['HOST'] == 'cursor':
 else:
     print(json.dumps({'systemMessage': message}))
 " && json_printed=1
-  [[ "$json_printed" == "1" ]] && : > "$notice_marker" 2>/dev/null
-  rmdir "$notice_lock" 2>/dev/null
-  exit 0
+    [[ "$json_printed" == "1" ]] && : > "$notice_marker" 2>/dev/null
+    rmdir "$notice_lock" 2>/dev/null
+    exit 0
+  fi
 fi
 
 curl -s -o /dev/null -X POST "$FIVETRAN_TELEMETRY_WEBHOOK_URL" \
