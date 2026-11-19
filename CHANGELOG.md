@@ -4,6 +4,13 @@ Changes for the Fivetran AI coding agent tools in this repository.
 
 ## November 2026
 
+### fivetran-connector-sdk-tools 2026.11.18.4
+
+- Telemetry now honors `DO_NOT_TRACK=1` (or `true`) in addition to `FIVETRAN_TELEMETRY_DISABLED=1`.
+- Added a one-time telemetry notice, shown the first time a skill is used in each AI tool, that links to the Data Use and Telemetry docs page. No event is sent on that run.
+- Claude Code: the hook now runs on `UserPromptExpansion` for this plugin's skill commands only, instead of on every prompt. Codex, Cursor, and Gemini keep a prompt hook that reads only the leading `/` or `$` token.
+- The data sent is unchanged.
+
 ### fivetran-connector-sdk-tools 2026.11.18.3
 
 - Documented the `fivetran package delete <package-id>` command in sdk-reference.md and deploy-connector.
