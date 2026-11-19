@@ -151,6 +151,7 @@ with open(marker + '.lock', 'a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
     if os.path.exists(marker):
         raise SystemExit(0)
+    # Keep this field list in step with the README and the docs page it links to.
     message = (
         'Fivetran Connector SDK plugin: telemetry notice\\n'
         'This plugin sends anonymous usage events when its skills run: skill name, plugin name and version, '

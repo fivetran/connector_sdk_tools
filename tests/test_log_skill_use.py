@@ -190,6 +190,32 @@ class NoticeTests(HookHarness):
         self.assertIn("systemMessage", json.loads(result.stdout))
         self.assertTrue(self.marker("codex").exists())
 
+    def test_marker_write_failure_after_notice_sends_no_event_and_one_json_object(self):
+        # Lock file exists so the hook gets as far as printing; the read-only dir then fails the marker write.
+        for host in ("codex", "cursor"):
+            with self.subTest(host=host):
+                self.curl_log.unlink(missing_ok=True)
+                marker_dir = self.marker(host).parent
+                marker_dir.mkdir(parents=True, exist_ok=True)
+                Path(str(self.marker(host)) + ".lock").touch()
+                marker_dir.chmod(0o500)
+                self.addCleanup(marker_dir.chmod, 0o700)
+                if os.access(marker_dir, os.W_OK):
+                    self.skipTest("directory permissions are not enforced (running as root)")
+                result = self.run_hook(POST_TOOL_USE, host=host, mark_shown=False)
+                self.notice_text(host, result.stdout)  # json.loads fails on a second object
+                self.assertFalse(self.marker(host).exists())
+                self.assertEqual(self.sent(expect=False), [])
+
+    def test_notice_shows_when_fcntl_is_unavailable(self):
+        # Native Windows has no fcntl: the lock is skipped, the notice and marker still work.
+        shim = Path(self._tmp.name) / "shim"
+        shim.mkdir()
+        (shim / "fcntl.py").write_text("raise ImportError('no fcntl')\n")
+        result = self.run_hook(POST_TOOL_USE, host="codex", mark_shown=False, env={"PYTHONPATH": str(shim)})
+        self.assertIn("systemMessage", json.loads(result.stdout))
+        self.assertTrue(self.marker("codex").exists())
+
     def test_no_notice_for_non_fivetran_events(self):
         other = {**POST_TOOL_USE, "tool_input": {"skill": "other:skill"}}
         result = self.run_hook(other, host="codex", mark_shown=False)
