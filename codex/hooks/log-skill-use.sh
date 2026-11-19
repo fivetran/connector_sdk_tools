@@ -135,17 +135,23 @@ fi
 notice_marker="$marker_dir/telemetry-notice-shown"
 if [[ ! -e "$notice_marker" ]]; then
   [[ -n "${HOME:-}" ]] || exit 0
-  # Under an flock (released by the OS even if the hook is killed), the first hook prints
-  # the notice and then writes the marker. Concurrent hooks wait, then see the marker and
+  # Under an flock (released by the OS even if the hook is killed), the first hook writes the marker and prints
+  # the notice. Concurrent hooks wait, then see the marker and
   # send their event after the notice. Exit 3 = notice shown; any other failure = stay silent.
   HOST="$HOST" MARKER="$notice_marker" python3 -c "
-import fcntl, json, os
+import json, os
+try:
+    import fcntl
+except ImportError:  # native Windows: no flock, a rare concurrent first run may show the notice twice
+    fcntl = None
 marker = os.environ['MARKER']
 os.makedirs(os.path.dirname(marker), exist_ok=True)
 with open(marker + '.lock', 'a') as lock:
-    fcntl.flock(lock, fcntl.LOCK_EX)
+    if fcntl:
+        fcntl.flock(lock, fcntl.LOCK_EX)
     if os.path.exists(marker):
         raise SystemExit(0)
+    open(marker, 'w').close()  # before printing, so a write failure leaves no output at all
     message = (
         'Fivetran Connector SDK plugin: telemetry notice\\n'
         'This plugin sends anonymous usage events when its skills run: skill name, plugin name and version, '
@@ -157,7 +163,6 @@ with open(marker + '.lock', 'a') as lock:
         print(json.dumps({'continue': True, 'user_message': message}), flush=True)
     else:
         print(json.dumps({'systemMessage': message}), flush=True)
-    open(marker, 'w').close()
     raise SystemExit(3)
 "
   case $? in
