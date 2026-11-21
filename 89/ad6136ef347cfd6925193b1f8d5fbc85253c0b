@@ -1,0 +1,37 @@
+CHANGELOG.md
+  4c0ca72c13fd48e7 8
+  067245913934cffd 7,9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "89ad6136ef347cfd6925193b1f8d5fbc85253c0b",
+  "prompts": {
+    "067245913934cffd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "rollout-2026-11-22T01-03-39-01a1ff99-99f6-7912-b2ca-4ec9ac5335c6",
+        "model": "unknown"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 33,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "4c0ca72c13fd48e7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "03e3be06-6250-4827-a117-a2706c67af69",
+        "model": "claude-sonnet-5-5"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 61,
+      "total_deletions": 3,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
