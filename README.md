@@ -390,7 +390,7 @@ export DO_NOT_TRACK=1                  # "1" or "true"
 export FIVETRAN_TELEMETRY_DISABLED=1
 ```
 
-**What the hook sees.** Claude Code runs the hook only for this plugin's skill commands, so it never sees your prompts. Codex, Cursor, and Gemini have no such event, so their hooks receive every prompt. The script reads only the leading `/` or `$` token and discards the rest.
+**What the hook sees.** In Claude Code, ordinary prompts don't trigger the hook. It runs for this plugin's skill commands and after any `Skill` tool call, and ignores all but this plugin's five skills. Command arguments are never sent. Codex, Cursor, and Gemini have no such event, so their hooks receive every prompt. The script reads only the leading `/` or `$` token and discards the rest.
 
 Changes to the data sent are listed in [CHANGELOG.md](CHANGELOG.md).
 

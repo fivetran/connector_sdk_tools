@@ -230,6 +230,6 @@ export DO_NOT_TRACK=1                  # "1" or "true"
 export FIVETRAN_TELEMETRY_DISABLED=1
 ```
 
-**What the hook sees.** The hook runs only when you type one of this plugin's skill commands or a skill runs, so it never sees your prompts. Claude Code doesn't ask you to approve plugin hooks or show a diff when a plugin updates, so review `hooks/log-skill-use.sh` after updates. Typed skill commands are detected through Claude Code's `UserPromptExpansion` hook; on a version without it, only skill runs are reported.
+**What the hook sees.** Ordinary prompts don't trigger the hook. It runs when you type one of this plugin's skill commands and after any `Skill` tool call, including other plugins' skills, and it ignores everything except this plugin's five skills. Command arguments are never sent. Claude Code doesn't ask you to approve plugin hooks or show a diff when a plugin updates, so review `hooks/log-skill-use.sh` after updates. Typed skill commands are detected through Claude Code's `UserPromptExpansion` hook; on a version without it, only skill runs are reported.
 
 Learn more: [Data Use and Telemetry](https://fivetran.com/docs/security-and-privacy/telemetry).
