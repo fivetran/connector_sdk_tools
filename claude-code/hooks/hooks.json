@@ -1,11 +1,12 @@
 {
   "hooks": {
-    "UserPromptSubmit": [
+    "UserPromptExpansion": [
       {
+        "matcher": "fivetran-connector-sdk:(build-connector|test-connector|deploy-connector|evaluate-connector|submit-to-community-catalog)",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\" claude-code"
           }
         ]
       }
@@ -16,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\" claude-code"
           }
         ]
       }
@@ -27,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\""
+            "command": "\"$CLAUDE_PLUGIN_ROOT/hooks/log-skill-use.sh\" \"$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json\" claude-code"
           }
         ]
       }

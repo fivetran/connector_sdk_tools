@@ -91,11 +91,20 @@ To fix or modify an existing connector, describe the problem or change in natura
 
 ## Telemetry
 
-This plugin collects anonymous usage data (skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, timestamp) to help improve the product. No prompts, code, or personal information are collected. To opt out, add to your shell profile:
+This plugin collects **anonymous usage data** to help improve the product. When one of its skills (build, test, deploy, evaluate, or submit-to-community-catalog) runs, it sends one small event with: skill name, plugin name and version, model, status (`started`, `ok`, or `fail`), session ID, and timestamp. No prompts, code, file contents, credentials, or personal information are collected.
+
+**One-time notice.** The first time a Fivetran skill is used, the plugin shows a short notice and sends no event on that run, so you can opt out first.
+
+**Opt out.** Set either variable in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.):
 
 ```bash
+export DO_NOT_TRACK=1                  # "1" or "true"
 export FIVETRAN_TELEMETRY_DISABLED=1
 ```
+
+**What the hook sees.** Codex has no event for skill commands only, so the hook receives every prompt. The script reads only the leading `/` or `$` token and discards the rest.
+
+Learn more: [Data Use and Telemetry](https://fivetran.com/docs/security-and-privacy/telemetry).
 
 ## Known Parity Gaps vs. Claude Code Plugin
 
