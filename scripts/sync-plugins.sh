@@ -5,6 +5,7 @@
 #
 # Canonical sources (edit these):
 #   canonical/sdk-reference.md
+#   canonical/feature-index.md
 #   canonical/workflows/{validator,generator,fixer}.md
 #   canonical/skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md
 #   canonical/skills/submit-to-community-catalog/SKILL.md
@@ -26,6 +27,7 @@
 #   codex/tools/*
 #   codex/hooks/log-skill-use.sh
 #   sdk-reference.md                                         (Gemini)
+#   feature-index.md                                         (Gemini)
 #   agents/connector-{validator,generator,fixer}.md          (Gemini)
 #   skills/{build,test,deploy,evaluate,migrate-functions,migrate-meltano,migrate-airbyte}-connector/SKILL.md            (Gemini)
 #   skills/submit-to-community-catalog/SKILL.md                                                                            (Gemini)
@@ -133,6 +135,7 @@ fi
 
 CANONICAL="canonical"
 SDK_REF="$CANONICAL/sdk-reference.md"
+FEATURE_INDEX="$CANONICAL/feature-index.md"
 WORKFLOWS_DIR="$CANONICAL/workflows"
 SKILLS_DIR="$CANONICAL/skills"
 TOOLS_SRC="$CANONICAL/tools"
@@ -388,6 +391,13 @@ copy_with_banner "$SDK_REF" "$CODEX_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$GEMINI_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$COPILOT_DIR/sdk-reference.md"
 copy_with_banner "$SDK_REF" "$CURSOR_DIR/sdk-reference.md"
+
+echo "Syncing feature-index.md..."
+copy_with_banner "$FEATURE_INDEX" "$CLAUDE_DIR/feature-index.md"
+copy_with_banner "$FEATURE_INDEX" "$CODEX_DIR/feature-index.md"
+copy_with_banner "$FEATURE_INDEX" "$GEMINI_DIR/feature-index.md"
+copy_with_banner "$FEATURE_INDEX" "$COPILOT_DIR/feature-index.md"
+copy_with_banner "$FEATURE_INDEX" "$CURSOR_DIR/feature-index.md"
 
 echo "Assembling Claude subagent files..."
 for role in validator generator fixer; do

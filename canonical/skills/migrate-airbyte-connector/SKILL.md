@@ -10,6 +10,8 @@ argument-hint: "Path or description of the Airbyte source connector to migrate"
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, operation names, schema constraints, configuration rules, and testing requirements.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Use this workflow to convert Airbyte source connector logic into a Connector SDK project. Airbyte migration references:
 - Airbyte protocol docs: https://docs.airbyte.com/platform/understanding-airbyte/airbyte-protocol/
 - Airbyte connector specification reference: https://docs.airbyte.com/platform/connector-development/connector-specification-reference

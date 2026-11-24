@@ -10,6 +10,8 @@ argument-hint: "Path or description of the Meltano project or Singer tap to migr
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, operation names, schema constraints, configuration rules, and testing requirements.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Use this workflow to convert Meltano extractor logic into a Connector SDK project. Meltano migration references:
 - Meltano project/config docs: https://docs.meltano.com/concepts/project/
 - Meltano plugin docs: https://docs.meltano.com/concepts/plugins/

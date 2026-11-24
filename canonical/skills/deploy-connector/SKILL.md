@@ -9,6 +9,8 @@ description: Package and deploy a Fivetran connector to Fivetran. Use when the u
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules and patterns.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Package and deploy the connector in the current directory.
 
 ## Step 1: Pre-Deployment Validation

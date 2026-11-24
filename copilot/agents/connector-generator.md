@@ -13,6 +13,8 @@ description: Generate Fivetran connector code from a validated specification. Us
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, patterns, and **Example discovery** guidance.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 **Where to look:** patterns & examples → `connector_sdk` (exhaustive). Community connectors → `community_connectors`.
 
 **YOUR ROLE: ADAPT THE SCAFFOLDED CONNECTOR**
@@ -68,7 +70,7 @@ The project directory and files already exist (scaffolded by `fivetran init`). R
 - AI build marker as the first two lines of the file, above the module docstring. Do not add it if it already exists. Use these exact lines:
   ```python
   # Built using Connector SDK AI Plugin
-  # Plugin: fivetran-connector-sdk (copilot) | Version: 2026.11.18.3
+  # Plugin: fivetran-connector-sdk (copilot) | Version: 2026.11.24.1
   ```
   The name, agent and version in the block are filled in with the real values when the plugin is generated. When editing an existing connector, keep the marker and do not change its version.
 

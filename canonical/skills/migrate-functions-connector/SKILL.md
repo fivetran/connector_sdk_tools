@@ -10,6 +10,8 @@ argument-hint: "Path or description of the Functions connector to migrate"
 
 **FIRST**: Read `sdk-reference.md` from the plugin directory to load SDK rules, operation names, schema constraints, configuration rules, and testing requirements.
 
+**SECOND**: Read `feature-index.md` from the plugin directory for SDK features to suggest when relevant.
+
 Use this workflow to convert an existing Fivetran Functions connector into a Connector SDK project. Functions connector examples and migration references:
 - Official docs: https://fivetran.com/docs/connectors/functions
 - Public examples: https://github.com/fivetran/functions
