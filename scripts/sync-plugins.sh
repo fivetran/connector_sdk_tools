@@ -94,9 +94,9 @@ compute_version() {
   local prefix
   prefix="$(_today_prefix)"
 
-  # Read the current version from the Claude plugin manifest (source of truth).
+  # Read the current version from version.json (source of truth).
   local current_version=""
-  local manifest="claude-code/.claude-plugin/plugin.json"
+  local manifest="version.json"
   if [[ -f "$manifest" ]]; then
     current_version=$(grep '"version"' "$manifest" | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
   fi
@@ -123,6 +123,7 @@ update_version_in_file() {
 if [[ "$BUMP_VERSION" == true ]]; then
   NEW_VERSION="$(compute_version)"
   echo "Bumping plugin version to $NEW_VERSION..."
+  update_version_in_file "version.json" "$NEW_VERSION"
   update_version_in_file "claude-code/.claude-plugin/plugin.json" "$NEW_VERSION"
   update_version_in_file "codex/.codex-plugin/plugin.json" "$NEW_VERSION"
   update_version_in_file "gemini-extension.json" "$NEW_VERSION"

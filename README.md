@@ -357,7 +357,7 @@ The sync script fans canonical content out into each per-agent tree, prepending 
 
 #### Bumping the plugin version
 
-The version in all plugin manifests follows the format `YYYY.M.D.N` (UTC date, no zero-padding, plus a per-day iteration counter). Version updates are **opt-in**: pass `--bump` when you want to tag a new release:
+The version in all plugin manifests, and in `version.json` at the repo root, follows the format `YYYY.M.D.N` (UTC date, no zero-padding, plus a per-day iteration counter). Version updates are **opt-in**: pass `--bump` when you want to tag a new release:
 
 ```bash
 bash scripts/sync-plugins.sh --bump
@@ -365,7 +365,7 @@ git add -A
 git commit
 ```
 
-Without `--bump` the manifests are left untouched, which keeps routine syncs and the pre-commit hook idempotent — re-running the script never creates a spurious version diff.
+`version.json` is the single version all plugins share. Without `--bump` the manifests are left untouched, which keeps routine syncs and the pre-commit hook idempotent — re-running the script never creates a spurious version diff.
 
 ### Pre-commit hook
 
