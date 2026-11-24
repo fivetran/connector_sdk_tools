@@ -1,0 +1,23 @@
+canonical/skills/submit-to-community-catalog/SKILL.md
+  04b5c4720a5f6908 49-51,54,164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "287f1648cfadbfc4ffeac58c1af1f1124b341bc7",
+  "prompts": {
+    "04b5c4720a5f6908": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7f9e0d4f-be41-48a2-8543-72dac96d36e9",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "fivetran-JenasVimal <jenas.vimal@fivetran.com>",
+      "messages": [],
+      "total_additions": 11,
+      "total_deletions": 6,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
