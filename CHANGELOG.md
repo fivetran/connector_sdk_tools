@@ -7,7 +7,6 @@ Changes for the Fivetran AI coding agent tools in this repository.
 ### fivetran-connector-sdk-tools 2026.11.25.1
 
 - `submit-to-community-catalog` now runs the connector locally via `tools/run_connector.py` before submission and records the Python and SDK versions used.
-- Local test uses a 300-second debug timeout and resets local state when a schema or primary-key change requires it.
 
 ### fivetran-connector-sdk-tools 2026.11.24.1
 
