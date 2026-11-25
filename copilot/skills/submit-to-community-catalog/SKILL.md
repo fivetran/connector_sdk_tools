@@ -50,6 +50,7 @@ Run this section before the review-and-fix workflow. Static checks do not need c
    ```bash
    <venv-python> "<plugin>/tools/run_connector.py" "<connector_dir>" --timeout-seconds 300
    ```
+   If a required key in `configuration.json` is still missing, ask the contributor to fill it in locally, either directly in the file or with `fivetran configuration`. If they can't or won't, ask whether to skip the local run. If they skip it, do the static review and report the connector as not verified. Never invent a value or use placeholders as test input.
    Plaintext configuration works without an encryption key. Exit code `0` means the connector ran successfully. If it fails, report whether the issue is code, credentials/configuration, or infrastructure. Do not say the connector ran successfully when the test could not run.
 4. Optionally record versions in `pyproject.toml`. Ask the contributor whether to add or update it. If they skip it, change nothing here; the versions from step 2 still go in the README and PR Validation note.
    - If `requirements.txt` exists and `pyproject.toml` does not, ask the contributor: "pyproject.toml takes precedence over requirements.txt when both exist. Keep using requirements.txt, or migrate to pyproject.toml?"
@@ -58,7 +59,7 @@ Run this section before the review-and-fix workflow. Static checks do not need c
    - If both files already exist, `pyproject.toml` still controls the runtime dependencies, so "keep requirements.txt" cannot take effect. Explain this to the contributor and get explicit approval before removing, renaming, or changing either file. Do not record a choice until approved.
    - Set `[tool.package-metadata].python_version` to the tested interpreter's `major.minor` version. It must be a Connector SDK-supported version; otherwise stop and ask. Preserve all other metadata keys.
    - Record the exact installed SDK version as `fivetran_connector_sdk = "X.Y.Z"` in `[tool.package-metadata]`. This is validation provenance, not a dependency: do not add the SDK to `requirements.txt` or `[project].dependencies`, because it is preinstalled by the Connector SDK runtime.
-   - When creating or updating the file, use a valid `[project]` name/version, set `requires-python` to the supported range, include ALL dependencies from `requirements.txt` (or existing dependencies if already using pyproject.toml), and add `[tool.package-metadata]` with `python_version`.
+   - When creating or updating the file, use a valid `[project]` name/version, include ALL dependencies from `requirements.txt` (or existing dependencies if already using pyproject.toml), and add `[tool.package-metadata]` with `python_version`.
    - Parse it with `<venv-python> -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"` after editing.
 
 ## Review and fix workflow
@@ -134,7 +135,7 @@ Apply these submission rules in both repositories:
   - For a Community Connector, use its complete path relative to the Community Connectors repository root, with no `connectors/` prefix. For example, use `fivetran init --template github` for `github/`, or `fivetran init --template veeva_vault/basic_auth` for `veeva_vault/basic_auth/`.
   - For a Connector SDK example, use its complete path relative to the Connector SDK repository, including `examples/`. For example, use `fivetran init --template examples/quickstart/hello` or `fivetran init --template examples/common_patterns/authentication/api_key`.
   - Preserve an existing correct directory. Otherwise, derive it from the contribution's actual directory. If the directory does not map to one of these locations, ask the contributor rather than guessing.
-- Requirements documentation must use the general Connector SDK preinstalled-packages link rather than naming only `fivetran_connector_sdk` and `requests`. State the tested Python version and SDK validation version measured in validation step 2; mention `requires-python` only if a `pyproject.toml` is used.
+- Requirements documentation must use the general Connector SDK preinstalled-packages link rather than naming only `fivetran_connector_sdk` and `requests`. If validation ran, state the tested Python version and SDK validation version measured in validation step 2. If validation was skipped, say so and do not state versions.
 - Use plain Markdown examples rather than quoted examples.
 
 Keep configuration names and descriptions aligned across `configuration.json`, `connector.py`, and `README.md`. If resolving a discrepancy requires product knowledge, show the discrepancy and ask rather than guessing.
@@ -166,7 +167,7 @@ After every edit, repeat applicable validation, configuration, Python-comment, R
 Report:
 
 - files changed and why;
-- versions used: tested Python, the exact SDK validation version, and `requires-python` when a `pyproject.toml` is used;
+- versions used, only if validation ran: tested Python and the exact SDK validation version;
 - checks passed, grouped by validation (compile, import, run), configuration, Python, README, TOML, Black, and Flake8;
   * For dependency strategy: state which file lists dependencies (requirements.txt or pyproject.toml) and confirm the contributor's choice was applied (e.g., "requirements.txt retained, pyproject.toml not created" or "dependencies migrated to pyproject.toml");
 - warnings or manually reviewed items that need contributor confirmation; and
