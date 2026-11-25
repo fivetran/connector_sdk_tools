@@ -46,9 +46,10 @@ Run this section before the review-and-fix workflow. Static checks do not need c
    ```
    Plaintext configuration works without an encryption key. Exit code `0` means the connector ran successfully. If it fails, report whether the issue is code, credentials/configuration, or infrastructure. Do not say the connector ran successfully when the test could not run.
 4. Optionally record versions in `pyproject.toml`. Ask the contributor whether to add or update it. If they skip it, change nothing here; the versions from step 2 still go in the README and PR Validation note.
-   - Check if `requirements.txt` exists. If it does, ask the contributor: "PyProject.toml takes precedence over requirements.txt when both exist. Keep using requirements.txt, or migrate to pyproject.toml?"
-     * If keeping `requirements.txt`: Do NOT create or modify `pyproject.toml`. Skip to the next step.
-     * If migrating to `pyproject.toml`: Continue with the steps below.
+   - If `requirements.txt` exists and `pyproject.toml` does not, ask the contributor: "pyproject.toml takes precedence over requirements.txt when both exist. Keep using requirements.txt, or migrate to pyproject.toml?"
+     * If keeping `requirements.txt`: do NOT create `pyproject.toml`. Skip to the next step.
+     * If migrating to `pyproject.toml`: continue with the steps below.
+   - If both files already exist, `pyproject.toml` still controls the runtime dependencies, so "keep requirements.txt" cannot take effect. Explain this to the contributor and get explicit approval before removing, renaming, or changing either file. Do not record a choice until approved.
    - Set `[tool.package-metadata].python_version` to the tested interpreter's `major.minor` version. It must be a Connector SDK-supported version; otherwise stop and ask. Preserve all other metadata keys.
    - Record the exact installed SDK version as `fivetran_connector_sdk = "X.Y.Z"` in `[tool.package-metadata]`. This is validation provenance, not a dependency: do not add the SDK to `requirements.txt` or `[project].dependencies`, because it is preinstalled by the Connector SDK runtime.
    - When creating or updating the file, use a valid `[project]` name/version, set `requires-python` to the supported range, include ALL dependencies from `requirements.txt` (or existing dependencies if already using pyproject.toml), and add `[tool.package-metadata]` with `python_version`.
