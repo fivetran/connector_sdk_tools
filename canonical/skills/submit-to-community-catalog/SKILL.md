@@ -1,6 +1,6 @@
 ---
 name: submit-to-community-catalog
-description: Prepare a Community Connector or Fivetran Connector SDK example for a first pull request by applying the target repository's GitHub review instructions, sanitizing configuration.json, and running Black and Flake8.
+description: Prepare a Community Connector or Fivetran Connector SDK example for a first pull request by applying the target repository's GitHub review instructions, sanitizing configuration.json, validating a runnable example, recording Python and SDK versions, and running Black and Flake8.
 argument-hint: "Connector directory name or path (e.g., 'github_connector' or './github_connector')"
 ---
 
@@ -31,6 +31,28 @@ Use this skill immediately before a contributor opens their first Connector SDK 
 Before making any edits, including non-behavioral compliance edits such as comments, README formatting, placeholders, or Black formatting, ask the contributor whether they want to run the host's `evaluate-connector` skill to identify performance bottlenecks and other quality improvements.
 
 If they agree, invoke the evaluation skill and apply only changes the contributor authorizes. Then continue with this submission skill's review-and-fix workflow on the evaluated connector. If they decline, continue directly with the review-and-fix workflow.
+
+## Validate the connector and record versions
+
+Run this section before the review-and-fix workflow. Static checks do not need credentials.
+
+1. Use the connector's `.venv` if it exists. Otherwise, ask before creating one or installing packages. With approval, create it and install the connector's declared dependencies plus `fivetran_connector_sdk`, using the `test-connector` pattern. The SDK installation is local test tooling only: do not add it to `requirements.txt` or `pyproject.toml` dependencies because it is preinstalled by the Connector SDK runtime. If the contributor declines, skip steps 2-4 and the local run, continue with the static review (configuration, README, Black, Flake8). 
+2. Select the venv interpreter and use it for every command below: `.venv/bin/python` on macOS/Linux or `.venv\Scripts\python.exe` on Windows. Record its Python version with `<venv-python> --version` and compare it with the supported Python versions in `sdk-reference.md` before running validation; if unsupported, stop and ask the contributor to select a supported interpreter. Record the installed SDK version with `uv pip show --python <venv-python> fivetran-connector-sdk`; never use global Python or a global SDK CLI. Preserve these measured versions for reporting in README and the PR (they are used in step 4 if `pyproject.toml` is created, and in final reporting regardless).
+3. **Enter configuration and run the connector.** Follow **Configuration entry** in `sdk-reference.md`: reuse local values, use `fivetran configuration` for missing values, offer a setup form when absent, or fill ordinary JSON values as agreed with the contributor. Do not force custom encryption. Collect missing secrets through the form or the contributor's local editor/terminal; never ask them to paste secrets into chat.
+
+   Once configuration is ready, run:
+   ```bash
+   <venv-python> "<plugin>/tools/run_connector.py" "<connector_dir>" --timeout-seconds 300
+   ```
+   Plaintext configuration works without an encryption key. Exit code `0` means the connector ran successfully. If it fails, report whether the issue is code, credentials/configuration, or infrastructure. Do not say the connector ran successfully when the test could not run.
+4. Optionally record versions in `pyproject.toml`. Ask the contributor whether to add or update it. If they skip it, change nothing here; the versions from step 2 still go in the README and PR Validation note.
+   - Check if `requirements.txt` exists. If it does, ask the contributor: "PyProject.toml takes precedence over requirements.txt when both exist. Keep using requirements.txt, or migrate to pyproject.toml?"
+     * If keeping `requirements.txt`: Do NOT create or modify `pyproject.toml`. Skip to the next step.
+     * If migrating to `pyproject.toml`: Continue with the steps below.
+   - Set `[tool.package-metadata].python_version` to the tested interpreter's `major.minor` version. It must be a Connector SDK-supported version; otherwise stop and ask. Preserve all other metadata keys.
+   - Record the exact installed SDK version as `fivetran_connector_sdk = "X.Y.Z"` in `[tool.package-metadata]`. This is validation provenance, not a dependency: do not add the SDK to `requirements.txt` or `[project].dependencies`, because it is preinstalled by the Connector SDK runtime.
+   - When creating or updating the file, use a valid `[project]` name/version, set `requires-python` to the supported range, include ALL dependencies from `requirements.txt` (or existing dependencies if already using pyproject.toml), and add `[tool.package-metadata]` with `python_version`.
+   - Parse it with `<venv-python> -c "import tomllib; tomllib.load(open('pyproject.toml', 'rb'))"` after editing.
 
 ## Review and fix workflow
 
@@ -105,7 +127,7 @@ Apply these submission rules in both repositories:
   - For a Community Connector, use its complete path relative to the Community Connectors repository root, with no `connectors/` prefix. For example, use `fivetran init --template github` for `github/`, or `fivetran init --template veeva_vault/basic_auth` for `veeva_vault/basic_auth/`.
   - For a Connector SDK example, use its complete path relative to the Connector SDK repository, including `examples/`. For example, use `fivetran init --template examples/quickstart/hello` or `fivetran init --template examples/common_patterns/authentication/api_key`.
   - Preserve an existing correct directory. Otherwise, derive it from the contribution's actual directory. If the directory does not map to one of these locations, ask the contributor rather than guessing.
-- Requirements documentation must use the general Connector SDK preinstalled-packages link rather than naming only `fivetran_connector_sdk` and `requests`.
+- Requirements documentation must use the general Connector SDK preinstalled-packages link rather than naming only `fivetran_connector_sdk` and `requests`. State the tested Python version and SDK validation version measured in validation step 2; mention `requires-python` only if a `pyproject.toml` is used.
 - Use plain Markdown examples rather than quoted examples.
 
 Keep configuration names and descriptions aligned across `configuration.json`, `connector.py`, and `README.md`. If resolving a discrepancy requires product knowledge, show the discrepancy and ask rather than guessing.
@@ -132,12 +154,14 @@ Apply the formatter's changes. Fix clear, behavior-preserving Flake8 failures; a
 
 ## Final verification and report
 
-After every edit, repeat applicable configuration, Python-comment, README, Black, and Flake8 checks.
+After every edit, repeat applicable validation, configuration, Python-comment, README, TOML, Black, and Flake8 checks. For connector code changed after the initial debug run, ask the contributor to restore their real local values to `configuration.json` only through their local editor or terminal, run the venv-based runner again, and restore safe placeholders immediately afterward. Never read or print the real values. Re-scan the restored placeholder file and the outgoing commits before handoff.
 
 Report:
 
 - files changed and why;
-- checks passed, grouped by configuration, Python, README, Black, and Flake8;
+- versions used: tested Python, the exact SDK validation version, and `requires-python` when a `pyproject.toml` is used;
+- checks passed, grouped by validation (compile, import, run), configuration, Python, README, TOML, Black, and Flake8;
+  * For dependency strategy: state which file lists dependencies (requirements.txt or pyproject.toml) and confirm the contributor's choice was applied (e.g., "requirements.txt retained, pyproject.toml not created" or "dependencies migrated to pyproject.toml");
 - warnings or manually reviewed items that need contributor confirmation; and
 - blocking issues left unresolved.
 
@@ -160,6 +184,7 @@ Fill the Description section with a brief, factual explanation of what the conne
 For connector code changes, attach lightweight proof that the code ran successfully,
 such as a screenshot of `fivetran debug` output or a short relevant log excerpt.
 Remove credentials, personal data, customer information, and other sensitive values.
+State the Python and SDK versions used for the run (measured in validation step 2).
 
 For documentation-only or repository-maintenance changes, briefly describe any
 validation appropriate to the change. A detailed test report is not required.
